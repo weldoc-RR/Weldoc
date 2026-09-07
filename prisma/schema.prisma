@@ -1,0 +1,358 @@
+// ============================================================================
+// WELDOC — MODÈLE DE DONNÉES (socle)
+// ============================================================================
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum NiveauDecision {
+  NIVEAU_1
+  NIVEAU_2
+  NIVEAU_3
+}
+
+model Personnel {
+  id              String   @id @default(cuid())
+  matricule       String   @unique
+  nom             String
+  prenom          String
+  societe         String
+  niveau          NiveauDecision
+  qrCodeValeur    String   @unique
+  pinHash         String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  fonctions       PersonnelFonction[]
+  qualifications  Qualification[]
+  chartesAcceptees ChartAcceptation[]
+  jointsSoudes    Joint[]              @relation("Soudeur")
+  controlesRealises ControleDimensionnel[] @relation("Controleur")
+  signatures      Signature[]
+
+  @@index([societe])
+}
+
+model PersonnelFonction {
+  id          String    @id @default(cuid())
+  personnel   Personnel @relation(fields: [personnelId], references: [id])
+  personnelId String
+  fonction    String
+
+  @@unique([personnelId, fonction])
+}
+
+enum TypeQualification {
+  SOUDAGE
+  CND
+}
+
+enum StatutQualification {
+  VALIDE
+  BIENTOT_ECHEANCE
+  EXPIRE
+  EN_RENOUVELLEMENT
+  SUSPENDU
+}
+
+model Qualification {
+  id             String              @id @default(cuid())
+  personnel      Personnel           @relation(fields: [personnelId], references: [id])
+  personnelId    String
+  type           TypeQualification
+  reference      String
+  norme          String
+  procede        String?
+  materiaux      String?
+  domaineValidite String?
+  dateObtention  DateTime
+  dateExpiration DateTime?
+  statut         StatutQualification @default(VALIDE)
+  certificatUrl  String?
+
+  evenements     QualificationEvenement[]
+
+  @@index([personnelId, type])
+}
+
+enum TypeEvenementQualification {
+  OBTENTION
+  RECONDUCTION_PROPOSEE
+  RECONDUCTION_VALIDEE
+  SUSPENSION
+  EXPIRATION
+}
+
+model QualificationEvenement {
+  id              String                      @id @default(cuid())
+  qualification   Qualification               @relation(fields: [qualificationId], references: [id])
+  qualificationId String
+  type            TypeEvenementQualification
+  date            DateTime                    @default(now())
+  preuveJointIds  String[]
+  valideParId     String?
+  commentaire     String?
+}
+
+model ChartVersion {
+  id            String   @id @default(cuid())
+  version       String   @unique
+  contenu       String
+  publieLe      DateTime @default(now())
+  acceptations  ChartAcceptation[]
+}
+
+model ChartAcceptation {
+  id             String       @id @default(cuid())
+  personnel      Personnel    @relation(fields: [personnelId], references: [id])
+  personnelId    String
+  chartVersion   ChartVersion @relation(fields: [chartVersionId], references: [id])
+  chartVersionId String
+  dateAcceptation DateTime    @default(now())
+
+  @@unique([personnelId, chartVersionId])
+}
+
+model Affaire {
+  id                String   @id @default(cuid())
+  numero            String   @unique
+  client            String
+  projet            String
+  chantier          String
+  site              String
+  responsableId     String?
+  chargeAffairesId  String?
+  coordinateurSoudageId String?
+  dateDebut         DateTime?
+  dateFin           DateTime?
+  cahierDesChargesUrl String?
+  createdAt         DateTime @default(now())
+
+  referentiels      AffaireReferentiel[]
+  matieres          Matiere[]
+  joints            Joint[]
+  fncs              FNC[]
+  sequences         Sequence[]
+}
+
+model Referentiel {
+  id          String  @id @default(cuid())
+  code        String  @unique
+  domaine     String
+  version     String?
+  affaires    AffaireReferentiel[]
+}
+
+model AffaireReferentiel {
+  id            String      @id @default(cuid())
+  affaire       Affaire     @relation(fields: [affaireId], references: [id])
+  affaireId     String
+  referentiel   Referentiel @relation(fields: [referentielId], references: [id])
+  referentielId String
+
+  @@unique([affaireId, referentielId])
+}
+
+model Sequence {
+  id         String   @id @default(cuid())
+  affaire    Affaire  @relation(fields: [affaireId], references: [id])
+  affaireId  String
+  ordre      Int
+  nom        String
+  phases     Phase[]
+}
+
+enum StatutPhase {
+  A_FAIRE
+  EN_COURS
+  TERMINEE
+  NON_APPLICABLE
+}
+
+model Phase {
+  id           String      @id @default(cuid())
+  sequence     Sequence    @relation(fields: [sequenceId], references: [id])
+  sequenceId   String
+  ordre        Int
+  nom          String
+  obligatoire  Boolean     @default(true)
+  statut       StatutPhase @default(A_FAIRE)
+  justificationNA String?
+}
+
+model Matiere {
+  id             String   @id @default(cuid())
+  affaire        Affaire  @relation(fields: [affaireId], references: [id])
+  affaireId      String
+  fournisseur    String
+  designation    String
+  normeProduit   String
+  nuance         String
+  diametre       Float?
+  epaisseur      Float?
+  finition       String?
+  numeroCoulee   String
+  numeroLot      String?
+  ccpuDocumentUrl String?
+  certificatUrl  String?
+
+  joints         Joint[]
+
+  @@index([numeroCoulee])
+}
+
+model Joint {
+  id              String   @id @default(cuid())
+  numero          String
+  affaire         Affaire  @relation(fields: [affaireId], references: [id])
+  affaireId       String
+  ligne           String?
+  spool           String?
+  typeJoint       String?
+  dn              String?
+  diametre        Float?
+  epaisseur       Float?
+  matiere         Matiere? @relation(fields: [matiereId], references: [id])
+  matiereId       String?
+  wpsReference    String?
+  qmosReference   String?
+  qsReference     String?
+  soudeur         Personnel? @relation("Soudeur", fields: [soudeurId], references: [id])
+  soudeurId       String?
+  consommableLot  String?
+
+  jointParent     Joint?   @relation("Reparations", fields: [jointParentId], references: [id])
+  jointParentId   String?
+  reparations     Joint[]  @relation("Reparations")
+  indiceReparation Int     @default(0)
+
+  ficheSoudage    FicheTechniqueSoudage?
+  controlesDim    ControleDimensionnel[]
+  fncs            FNC[]
+
+  @@unique([affaireId, numero, indiceReparation])
+  @@index([affaireId])
+}
+
+model FicheTechniqueSoudage {
+  id                    String   @id @default(cuid())
+  joint                 Joint    @relation(fields: [jointId], references: [id])
+  jointId               String   @unique
+  procede               String?
+  preechauffageC        Float?
+  temperatureInterpasses Float?
+  postchauffageC        Float?
+  tensionV              Float?
+  intensiteA            Float?
+  vitesseMmMin          Float?
+  nombrePasses          Int?
+  tempsMin              Float?
+  observations          String?
+  photosUrls            String[]
+  signatureId           String?
+}
+
+enum StatutOutil {
+  VALIDE
+  EXPIRE
+  HORS_SERVICE
+}
+
+model Outil {
+  id              String      @id @default(cuid())
+  reference       String      @unique
+  type            String
+  fabricant       String?
+  numeroSerie     String?
+  dateVerification DateTime?
+  dateEcheance    DateTime?
+  statut          StatutOutil @default(VALIDE)
+  certificatUrl   String?
+  qrCodeValeur    String      @unique
+
+  controles       ControleDimensionnel[]
+}
+
+enum ResultatConformite {
+  CONFORME
+  HORS_TOLERANCE
+  A_VERIFIER
+}
+
+model ControleDimensionnel {
+  id             String              @id @default(cuid())
+  joint          Joint               @relation(fields: [jointId], references: [id])
+  jointId        String
+  controleur     Personnel           @relation("Controleur", fields: [controleurId], references: [id])
+  controleurId   String
+  outil          Outil?              @relation(fields: [outilId], references: [id])
+  outilId        String?
+  dateControle   DateTime            @default(now())
+  mesures        Json
+  criteresAppliques Json
+  resultat       ResultatConformite
+  signatureId    String?
+
+  fncsGenerees   FNC[]
+}
+
+enum StatutFNC {
+  DETECTION
+  ANALYSE
+  ACTION_CORRECTIVE
+  CONTROLE
+  VALIDATION
+  CLOTUREE
+}
+
+enum ImpactFNC {
+  BLOQUANTE
+  NON_BLOQUANTE
+  REGLEMENTAIREMENT_SENSIBLE
+}
+
+model FNC {
+  id                String    @id @default(cuid())
+  reference         String    @unique
+  affaire           Affaire   @relation(fields: [affaireId], references: [id])
+  affaireId         String
+  joint             Joint?    @relation(fields: [jointId], references: [id])
+  jointId           String?
+  controleOrigine   ControleDimensionnel? @relation(fields: [controleOrigineId], references: [id])
+  controleOrigineId String?
+  description       String
+  impact            ImpactFNC
+  statut            StatutFNC @default(DETECTION)
+  actionCorrective  String?
+  dateCreation      DateTime  @default(now())
+  dateCloture       DateTime?
+  valideeParId      String?
+}
+
+model Signature {
+  id             String    @id @default(cuid())
+  personnel      Personnel @relation(fields: [personnelId], references: [id])
+  personnelId    String
+  documentType   String
+  documentId     String
+  dateSignature  DateTime  @default(now())
+  versionDocument String
+
+  @@index([documentType, documentId])
+}
+
+model AuditTrail {
+  id            String   @id @default(cuid())
+  utilisateurId String
+  date          DateTime @default(now())
+  entite        String
+  entiteId      String
+  ancienneValeur Json?
+  nouvelleValeur Json?
+  motif         String?
+}

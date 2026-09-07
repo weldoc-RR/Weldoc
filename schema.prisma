@@ -1,0 +1,409 @@
+// ============================================================================
+// WELDOC — MODÈLE DE DONNÉES (socle)
+// ============================================================================
+// Principe directeur : "une donnée n'est saisie qu'une seule fois" — chaque
+// entité ci-dessous est une source unique de vérité, référencée (jamais
+// dupliquée) par les modules qui en ont besoin (contrôles, FNC, rapports...).
+// ============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ----------------------------------------------------------------------------
+// 1. PERSONNEL, RÔLES, NIVEAUX, QUALIFICATIONS
+// ----------------------------------------------------------------------------
+
+enum NiveauDecision {
+  NIVEAU_1 // exécutant
+  NIVEAU_2 // chargé de travaux / contrôle intermédiaire
+  NIVEAU_3 // pouvoir de décision / modification documentaire
+}
+
+model Personnel {
+  id              String   @id @default(cuid())
+  matricule       String   @unique
+  nom             String
+  prenom          String
+  societe         String
+  niveau          NiveauDecision
+  qrCodeValeur    String   @unique // valeur encodée dans le QR personnel (identification rapide, PAS une signature)
+  pinHash         String?  // hash du code PIN utilisé pour l'authentification de signature
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  fonctions       PersonnelFonction[]
+  qualifications  Qualification[]
+  chartesAcceptees ChartAcceptation[]
+  jointsSoudes    Joint[]              @relation("Soudeur")
+  controlesRealises ControleDimensionnel[] @relation("Controleur")
+  signatures      Signature[]
+
+  @@index([societe])
+}
+
+model PersonnelFonction {
+  id          String    @id @default(cuid())
+  personnel   Personnel @relation(fields: [personnelId], references: [id])
+  personnelId String
+  fonction    String    // soudeur, contrôleur CND, chargé de travaux, ingénieur soudage, etc. (configurable par l'entreprise)
+
+  @@unique([personnelId, fonction])
+}
+
+enum TypeQualification {
+  SOUDAGE
+  CND
+}
+
+enum StatutQualification {
+  VALIDE
+  BIENTOT_ECHEANCE
+  EXPIRE
+  EN_RENOUVELLEMENT
+  SUSPENDU
+}
+
+model Qualification {
+  id             String              @id @default(cuid())
+  personnel      Personnel           @relation(fields: [personnelId], references: [id])
+  personnelId    String
+  type           TypeQualification
+  reference      String
+  norme          String
+  procede        String?
+  materiaux      String?
+  domaineValidite String?            // épaisseurs, diamètres, positions, assemblages couverts
+  dateObtention  DateTime
+  dateExpiration DateTime?
+  statut         StatutQualification @default(VALIDE)
+  certificatUrl  String?
+
+  // Une qualification n'est jamais écrasée : chaque reconduction est un nouvel événement historisé.
+  evenements     QualificationEvenement[]
+
+  @@index([personnelId, type])
+}
+
+enum TypeEvenementQualification {
+  OBTENTION
+  RECONDUCTION_PROPOSEE   // Weldoc a détecté des preuves potentielles et prépare le dossier
+  RECONDUCTION_VALIDEE    // validée par une personne habilitée — jamais automatique
+  SUSPENSION
+  EXPIRATION
+}
+
+model QualificationEvenement {
+  id              String                      @id @default(cuid())
+  qualification   Qualification               @relation(fields: [qualificationId], references: [id])
+  qualificationId String
+  type            TypeEvenementQualification
+  date            DateTime                    @default(now())
+  preuveJointIds  String[]                    // joints utilisés comme preuve pour une reconduction
+  valideParId     String?                     // Personnel.id de la personne habilitée qui valide (jamais automatique)
+  commentaire     String?
+}
+
+// ----------------------------------------------------------------------------
+// 2. CHARTE D'UTILISATION (préalable obligatoire à toute signature)
+// ----------------------------------------------------------------------------
+
+model ChartVersion {
+  id            String   @id @default(cuid())
+  version       String   @unique
+  contenu       String
+  publieLe      DateTime @default(now())
+  acceptations  ChartAcceptation[]
+}
+
+model ChartAcceptation {
+  id             String       @id @default(cuid())
+  personnel      Personnel    @relation(fields: [personnelId], references: [id])
+  personnelId    String
+  chartVersion   ChartVersion @relation(fields: [chartVersionId], references: [id])
+  chartVersionId String
+  dateAcceptation DateTime    @default(now())
+
+  @@unique([personnelId, chartVersionId])
+}
+
+// ----------------------------------------------------------------------------
+// 3. AFFAIRE / CHANTIER
+// ----------------------------------------------------------------------------
+
+model Affaire {
+  id                String   @id @default(cuid())
+  numero            String   @unique
+  client            String
+  projet            String
+  chantier          String
+  site              String
+  responsableId     String?
+  chargeAffairesId  String?
+  coordinateurSoudageId String?
+  dateDebut         DateTime?
+  dateFin           DateTime?
+  cahierDesChargesUrl String?
+  createdAt         DateTime @default(now())
+
+  referentiels      AffaireReferentiel[]
+  matieres          Matiere[]
+  joints            Joint[]
+  fncs              FNC[]
+  sequences         Sequence[]
+}
+
+model Referentiel {
+  id          String  @id @default(cuid())
+  code        String  @unique // ex: "EN 13480", "ASME B31.3", "ISO 15614"
+  domaine     String  // tuyauterie, ESP, nucléaire, structures métalliques, etc.
+  version     String?
+  affaires    AffaireReferentiel[]
+}
+
+model AffaireReferentiel {
+  id            String      @id @default(cuid())
+  affaire       Affaire     @relation(fields: [affaireId], references: [id])
+  affaireId     String
+  referentiel   Referentiel @relation(fields: [referentielId], references: [id])
+  referentielId String
+
+  @@unique([affaireId, referentielId])
+}
+
+// ----------------------------------------------------------------------------
+// 4. SÉQUENCES ET PHASES
+// ----------------------------------------------------------------------------
+
+model Sequence {
+  id         String   @id @default(cuid())
+  affaire    Affaire  @relation(fields: [affaireId], references: [id])
+  affaireId  String
+  ordre      Int
+  nom        String
+  phases     Phase[]
+}
+
+enum StatutPhase {
+  A_FAIRE
+  EN_COURS
+  TERMINEE
+  NON_APPLICABLE
+}
+
+model Phase {
+  id           String      @id @default(cuid())
+  sequence     Sequence    @relation(fields: [sequenceId], references: [id])
+  sequenceId   String
+  ordre        Int
+  nom          String
+  obligatoire  Boolean     @default(true)
+  statut       StatutPhase @default(A_FAIRE)
+  justificationNA String?
+}
+
+// ----------------------------------------------------------------------------
+// 5. MATIÈRES / CCPU
+// ----------------------------------------------------------------------------
+
+model Matiere {
+  id             String   @id @default(cuid())
+  affaire        Affaire  @relation(fields: [affaireId], references: [id])
+  affaireId      String
+  fournisseur    String
+  designation    String
+  normeProduit   String
+  nuance         String
+  diametre       Float?
+  epaisseur      Float?
+  finition       String?
+  numeroCoulee   String
+  numeroLot      String?
+  ccpuDocumentUrl String?
+  certificatUrl  String?
+
+  joints         Joint[]
+
+  @@index([numeroCoulee])
+}
+
+// ----------------------------------------------------------------------------
+// 6. JOINTS DE SOUDAGE (cœur du système — numérotation M800, M801...)
+// ----------------------------------------------------------------------------
+
+model Joint {
+  id              String   @id @default(cuid())
+  numero          String   // M800, M801, M802...
+  affaire         Affaire  @relation(fields: [affaireId], references: [id])
+  affaireId       String
+  ligne           String?
+  spool           String?
+  typeJoint       String?
+  dn              String?
+  diametre        Float?
+  epaisseur       Float?
+  matiere         Matiere? @relation(fields: [matiereId], references: [id])
+  matiereId       String?
+  wpsReference    String?
+  qmosReference   String?
+  qsReference     String?
+  soudeur         Personnel? @relation("Soudeur", fields: [soudeurId], references: [id])
+  soudeurId       String?
+  consommableLot  String?
+
+  // Une réparation ne remplace jamais le joint initial : elle référence son parent (M800 -> M800 R1 -> M800 R2)
+  jointParent     Joint?   @relation("Reparations", fields: [jointParentId], references: [id])
+  jointParentId   String?
+  reparations     Joint[]  @relation("Reparations")
+  indiceReparation Int     @default(0) // 0 = joint initial, 1 = R1, 2 = R2...
+
+  ficheSoudage    FicheTechniqueSoudage?
+  controlesDim    ControleDimensionnel[]
+  fncs            FNC[]
+
+  @@unique([affaireId, numero, indiceReparation])
+  @@index([affaireId])
+}
+
+model FicheTechniqueSoudage {
+  id                    String   @id @default(cuid())
+  joint                 Joint    @relation(fields: [jointId], references: [id])
+  jointId               String   @unique
+  procede               String?
+  preechauffageC        Float?
+  temperatureInterpasses Float?
+  postchauffageC        Float?
+  tensionV              Float?
+  intensiteA            Float?
+  vitesseMmMin          Float?
+  nombrePasses          Int?
+  tempsMin              Float?
+  observations          String?
+  photosUrls            String[]
+  signatureId           String?
+}
+
+// ----------------------------------------------------------------------------
+// 7. MÉTROLOGIE / OUTILLAGE
+// ----------------------------------------------------------------------------
+
+enum StatutOutil {
+  VALIDE
+  EXPIRE
+  HORS_SERVICE
+}
+
+model Outil {
+  id              String      @id @default(cuid())
+  reference       String      @unique
+  type            String
+  fabricant       String?
+  numeroSerie     String?
+  dateVerification DateTime?
+  dateEcheance    DateTime?
+  statut          StatutOutil @default(VALIDE)
+  certificatUrl   String?
+  qrCodeValeur    String      @unique
+
+  controles       ControleDimensionnel[]
+}
+
+// ----------------------------------------------------------------------------
+// 8. CONTRÔLES DIMENSIONNELS (avec moteur de tolérances — voir src/lib/tolerances.ts)
+// ----------------------------------------------------------------------------
+
+enum ResultatConformite {
+  CONFORME
+  HORS_TOLERANCE
+  A_VERIFIER
+}
+
+model ControleDimensionnel {
+  id             String              @id @default(cuid())
+  joint          Joint               @relation(fields: [jointId], references: [id])
+  jointId        String
+  controleur     Personnel           @relation("Controleur", fields: [controleurId], references: [id])
+  controleurId   String
+  outil          Outil?              @relation(fields: [outilId], references: [id])
+  outilId        String?
+  dateControle   DateTime            @default(now())
+  mesures        Json                // ex: [{ position: "0°", diametre: 163.2 }, { position: "90°", diametre: 163.0 }]
+  criteresAppliques Json             // valeurs mini/maxi déterminées automatiquement (traçabilité du calcul)
+  resultat       ResultatConformite
+  signatureId    String?
+
+  fncsGenerees   FNC[]
+}
+
+// ----------------------------------------------------------------------------
+// 9. FNC — FICHES DE NON-CONFORMITÉ
+// ----------------------------------------------------------------------------
+
+enum StatutFNC {
+  DETECTION
+  ANALYSE
+  ACTION_CORRECTIVE
+  CONTROLE
+  VALIDATION
+  CLOTUREE
+}
+
+enum ImpactFNC {
+  BLOQUANTE
+  NON_BLOQUANTE
+  REGLEMENTAIREMENT_SENSIBLE
+}
+
+model FNC {
+  id                String    @id @default(cuid())
+  reference         String    @unique
+  affaire           Affaire   @relation(fields: [affaireId], references: [id])
+  affaireId         String
+  joint             Joint?    @relation(fields: [jointId], references: [id])
+  jointId           String?
+  controleOrigine   ControleDimensionnel? @relation(fields: [controleOrigineId], references: [id])
+  controleOrigineId String?
+  description       String
+  impact            ImpactFNC
+  statut            StatutFNC @default(DETECTION)
+  actionCorrective  String?
+  dateCreation      DateTime  @default(now())
+  dateCloture       DateTime?
+  valideeParId      String?   // Personnel.id (niveau 3 le plus souvent)
+}
+
+// ----------------------------------------------------------------------------
+// 10. SIGNATURE (QR + PIN, jamais QR seul)
+// ----------------------------------------------------------------------------
+
+model Signature {
+  id             String    @id @default(cuid())
+  personnel      Personnel @relation(fields: [personnelId], references: [id])
+  personnelId    String
+  documentType   String    // "ControleDimensionnel", "FicheTechniqueSoudage", "FNC", etc.
+  documentId     String
+  dateSignature  DateTime  @default(now())
+  versionDocument String   // hash ou version du contenu signé, conservée pour preuve
+
+  @@index([documentType, documentId])
+}
+
+// ----------------------------------------------------------------------------
+// 11. AUDIT TRAIL (jamais supprimé)
+// ----------------------------------------------------------------------------
+
+model AuditTrail {
+  id            String   @id @default(cuid())
+  utilisateurId String
+  date          DateTime @default(now())
+  entite        String
+  entiteId      String
+  ancienneValeur Json?
+  nouvelleValeur Json?
+  motif         String?
+}

@@ -19,6 +19,13 @@ const COULEUR_STATUT: Record<StatutAffichageProcedure, string> = {
   ANCIENNE_VERSION: "#898781",
   RETIREE: "#d03b3b",
 };
+const LIBELLE_TYPE_ASSEMBLAGE: Record<string, string> = {
+  BOUT_A_BOUT: "Bout à bout",
+  ANGLE: "Angle",
+  EMMANCHE_SOUDE: "Emmanché-soudé",
+  RECHARGEMENT: "Rechargement",
+  AUTRE: "Autre",
+};
 
 function BadgeStatut({ statut }: { statut: StatutAffichageProcedure }) {
   return (
@@ -45,7 +52,7 @@ export default async function ProceduresPage() {
 
   const [wpsList, qmosList] = await Promise.all([
     prisma.wps.findMany({
-      include: { qmos: { select: { reference: true, version: true } } },
+      include: { qmos: { select: { reference: true, version: true } }, passes: { orderBy: { ordre: "asc" } } },
       orderBy: [{ reference: "asc" }, { dateEmission: "desc" }],
     }),
     prisma.qmos.findMany({ orderBy: [{ reference: "asc" }, { createdAt: "desc" }] }),
@@ -91,7 +98,9 @@ export default async function ProceduresPage() {
         <ul style={{ listStyle: "none", padding: 0, marginTop: "1.5rem" }}>
           {wpsAnnotes.map((w) => (
             <li key={w.id} style={{ marginBottom: "0.6rem", borderBottom: "1px solid #ddd", paddingBottom: "0.4rem" }}>
-              <strong>{w.reference}</strong> ({w.version}) — {w.procede} — {w.normeReference}
+              <strong>{w.reference}</strong> ({w.version})
+              {w.typeAssemblage && ` — ${LIBELLE_TYPE_ASSEMBLAGE[w.typeAssemblage]}`} — {w.procede} —{" "}
+              {w.normeReference}
               {w.materiaux && ` — ${w.materiaux}`}
               {w.groupeMateriaux && ` — groupe matériau ${w.groupeMateriaux}`}
               {(w.epaisseurMinMm || w.epaisseurMaxMm) && (
@@ -103,6 +112,64 @@ export default async function ProceduresPage() {
               {w.qmos && ` — justifié par ${w.qmos.reference} (${w.qmos.version})`}
               <BadgeStatut statut={w.statutAffiche} />
               <RetirerProcedure endpoint="/api/wps" id={w.id} retiree={w.retiree} />
+              {w.preparationNotes && (
+                <div style={{ fontSize: "0.85rem", color: "#52514e", marginTop: "0.2rem" }}>
+                  Préparation : {w.preparationNotes}
+                </div>
+              )}
+              {w.passes.length > 0 && (
+                <details style={{ marginTop: "0.3rem" }}>
+                  <summary style={{ fontSize: "0.85rem", cursor: "pointer" }}>
+                    {w.passes.length} passe(s) — détail
+                  </summary>
+                  <div style={{ overflowX: "auto" }}>
+                    <table style={{ fontSize: "0.8rem", borderCollapse: "collapse", marginTop: "0.3rem" }}>
+                      <thead>
+                        <tr>
+                          {[
+                            "N°",
+                            "Procédé",
+                            "Mode",
+                            "Position",
+                            "Métal d'apport",
+                            "Ø (mm)",
+                            "Gaz endroit",
+                            "Courant",
+                            "I (A)",
+                            "U (V)",
+                          ].map((th) => (
+                            <th key={th} style={{ textAlign: "left", padding: "0.2rem 0.5rem", borderBottom: "1px solid #ddd" }}>
+                              {th}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {w.passes.map((p) => (
+                          <tr key={p.id}>
+                            <td style={{ padding: "0.2rem 0.5rem" }}>{p.ordre}</td>
+                            <td style={{ padding: "0.2rem 0.5rem" }}>{p.procede}</td>
+                            <td style={{ padding: "0.2rem 0.5rem" }}>{p.modeOperatoire ?? "—"}</td>
+                            <td style={{ padding: "0.2rem 0.5rem" }}>{p.position ?? "—"}</td>
+                            <td style={{ padding: "0.2rem 0.5rem" }}>
+                              {p.metalApportDesignationNormalisee ?? p.metalApportDesignationCommerciale ?? "—"}
+                            </td>
+                            <td style={{ padding: "0.2rem 0.5rem" }}>{p.metalApportDiametreMm ?? "—"}</td>
+                            <td style={{ padding: "0.2rem 0.5rem" }}>{p.gazEndroitNature ?? "—"}</td>
+                            <td style={{ padding: "0.2rem 0.5rem" }}>{p.natureCourantPolarite ?? "—"}</td>
+                            <td style={{ padding: "0.2rem 0.5rem" }}>
+                              {p.intensiteAMin || p.intensiteAMax ? `${p.intensiteAMin ?? "?"}–${p.intensiteAMax ?? "?"}` : "—"}
+                            </td>
+                            <td style={{ padding: "0.2rem 0.5rem" }}>
+                              {p.tensionVMin || p.tensionVMax ? `${p.tensionVMin ?? "?"}–${p.tensionVMax ?? "?"}` : "—"}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </details>
+              )}
             </li>
           ))}
         </ul>

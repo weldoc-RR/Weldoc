@@ -870,10 +870,21 @@ model Qmos {
   @@index([reference])
 }
 
+// Type d'assemblage soudé, terminologie générique (pas propre à un
+// référentiel) : bout-à-bout, angle, emmanché-soudé, rechargement.
+enum TypeAssemblageSoudure {
+  BOUT_A_BOUT
+  ANGLE
+  EMMANCHE_SOUDE
+  RECHARGEMENT
+  AUTRE
+}
+
 model Wps {
   id             String    @id @default(cuid())
   reference      String
   version        String    @default("Rev 0")
+  typeAssemblage TypeAssemblageSoudure?
   procede        String
   normeReference String
   materiaux      String?
@@ -887,6 +898,10 @@ model Wps {
   diametreMinMm  Float?
   diametreMaxMm  Float?
   positions      String?
+  // Notes libres sur la préparation (talon, jeu, mode de préparation,
+  // support envers...) : le schéma lui-même (image/PDF) reste dans
+  // documentUrl, pas reproduit en texte ici.
+  preparationNotes String?
   qmos           Qmos?     @relation(fields: [qmosId], references: [id])
   qmosId         String?
   documentUrl    String?
@@ -895,7 +910,40 @@ model Wps {
   createdAt      DateTime  @default(now())
 
   joints         Joint[]
+  passes         WpsPasse[]
 
   @@unique([reference, version])
   @@index([reference])
+}
+
+// Détail passe par passe d'un WPS/DMOS : ce qu'un soudeur suit réellement
+// pendant le soudage. Créé avec le WPS et jamais modifié ensuite (comme le
+// reste d'une révision) — une correction se fait via une nouvelle révision
+// du WPS, avec ses propres passes.
+model WpsPasse {
+  id             String  @id @default(cuid())
+  wps            Wps     @relation(fields: [wpsId], references: [id])
+  wpsId          String
+  ordre          Int
+  procede        String
+  modeOperatoire String?
+  position       String?
+  metalApportType String?
+  metalApportDesignationNormalisee  String?
+  metalApportDesignationCommerciale String?
+  metalApportDiametreMm Float?
+  gazEndroitNature   String?
+  gazEndroitDebit    String?
+  gazEnversNature    String?
+  gazEnversDebit     String?
+  natureCourantPolarite String?
+  intensiteAMin      Float?
+  intensiteAMax      Float?
+  tensionVMin        Float?
+  tensionVMax        Float?
+  temperatureMiniPieceC       Float?
+  temperatureMaxiEntrePassesC Float?
+  observations   String?
+
+  @@index([wpsId])
 }

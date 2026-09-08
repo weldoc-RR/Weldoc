@@ -254,7 +254,13 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   version / retirée" est recalculé à la lecture (jamais stocké), comme le
   statut des qualifications ou de l'outillage ailleurs dans l'application.
   Un WPS peut être relié à la QMOS qui le justifie. `Joint.wpsId`/`qmosId`
-  pointent vers la bibliothèque quand la fiche y existe.
+  pointent vers la bibliothèque quand la fiche y existe. Un WPS porte
+  aussi un type d'assemblage (bout-à-bout/angle/emmanché-soudé/
+  rechargement/autre) et le détail passe par passe (`WpsPasse` : procédé,
+  position, métal d'apport, gaz, courant, intensité, tension... ce qu'un
+  soudeur suit réellement pendant le soudage), créé en même temps que le
+  WPS et jamais modifié ensuite — une correction se fait via une nouvelle
+  révision.
 - `src/lib/verificationQS.ts` — rapproche les qualifications soudage
   actives d'un soudeur avec le domaine d'un WPS (procédé, groupe de
   matériaux, épaisseur, diamètre), pour aider à vérifier qu'il est bien

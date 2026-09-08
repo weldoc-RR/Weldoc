@@ -2,13 +2,24 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { EditeurPasse } from "./editeur-passe";
+import { passeVide, passeVersJson, type PasseWpsFormulaire } from "./passe-wps";
 
 type Qmos = { id: string; reference: string; version: string };
+
+const LIBELLE_TYPE_ASSEMBLAGE: Record<string, string> = {
+  BOUT_A_BOUT: "Bout à bout",
+  ANGLE: "Angle",
+  EMMANCHE_SOUDE: "Emmanché-soudé",
+  RECHARGEMENT: "Rechargement",
+  AUTRE: "Autre",
+};
 
 export function AjouterWps({ qmosDisponibles }: { qmosDisponibles: Qmos[] }) {
   const router = useRouter();
   const [reference, setReference] = useState("");
   const [version, setVersion] = useState("Rev 0");
+  const [typeAssemblage, setTypeAssemblage] = useState("");
   const [procede, setProcede] = useState("");
   const [normeReference, setNormeReference] = useState("");
   const [materiaux, setMateriaux] = useState("");
@@ -18,11 +29,23 @@ export function AjouterWps({ qmosDisponibles }: { qmosDisponibles: Qmos[] }) {
   const [diametreMinMm, setDiametreMinMm] = useState("");
   const [diametreMaxMm, setDiametreMaxMm] = useState("");
   const [positions, setPositions] = useState("");
+  const [preparationNotes, setPreparationNotes] = useState("");
   const [qmosId, setQmosId] = useState("");
   const [documentUrl, setDocumentUrl] = useState("");
   const [dateEmission, setDateEmission] = useState("");
+  const [passes, setPasses] = useState<PasseWpsFormulaire[]>([]);
   const [erreur, setErreur] = useState<string | null>(null);
   const [enCours, setEnCours] = useState(false);
+
+  function ajouterPasse() {
+    setPasses((actuelles) => [...actuelles, passeVide(actuelles.length + 1)]);
+  }
+  function majPasse(index: number, passe: PasseWpsFormulaire) {
+    setPasses((actuelles) => actuelles.map((p, i) => (i === index ? passe : p)));
+  }
+  function supprimerPasse(index: number) {
+    setPasses((actuelles) => actuelles.filter((_, i) => i !== index).map((p, i) => ({ ...p, ordre: i + 1 })));
+  }
 
   async function ajouter(e: React.FormEvent) {
     e.preventDefault();
@@ -35,6 +58,7 @@ export function AjouterWps({ qmosDisponibles }: { qmosDisponibles: Qmos[] }) {
       body: JSON.stringify({
         reference,
         version,
+        typeAssemblage: typeAssemblage || undefined,
         procede,
         normeReference,
         materiaux: materiaux || undefined,
@@ -44,9 +68,11 @@ export function AjouterWps({ qmosDisponibles }: { qmosDisponibles: Qmos[] }) {
         diametreMinMm: diametreMinMm ? Number(diametreMinMm) : undefined,
         diametreMaxMm: diametreMaxMm ? Number(diametreMaxMm) : undefined,
         positions: positions || undefined,
+        preparationNotes: preparationNotes || undefined,
         qmosId: qmosId || undefined,
         documentUrl: documentUrl || undefined,
         dateEmission: new Date(dateEmission).toISOString(),
+        passes: passes.map(passeVersJson),
       }),
     });
 
@@ -57,6 +83,7 @@ export function AjouterWps({ qmosDisponibles }: { qmosDisponibles: Qmos[] }) {
     }
     setReference("");
     setVersion("Rev 0");
+    setTypeAssemblage("");
     setProcede("");
     setNormeReference("");
     setMateriaux("");
@@ -66,14 +93,16 @@ export function AjouterWps({ qmosDisponibles }: { qmosDisponibles: Qmos[] }) {
     setDiametreMinMm("");
     setDiametreMaxMm("");
     setPositions("");
+    setPreparationNotes("");
     setQmosId("");
     setDocumentUrl("");
     setDateEmission("");
+    setPasses([]);
     router.refresh();
   }
 
   return (
-    <form onSubmit={ajouter} style={{ display: "flex", flexDirection: "column", gap: "0.5rem", maxWidth: 480 }}>
+    <form onSubmit={ajouter} style={{ display: "flex", flexDirection: "column", gap: "0.5rem", maxWidth: 700 }}>
       <label>
         Référence (ex. DMOS-001)
         <input required type="text" value={reference} onChange={(e) => setReference(e.target.value)} style={{ display: "block", width: "100%", padding: "0.4rem" }} />
@@ -81,6 +110,17 @@ export function AjouterWps({ qmosDisponibles }: { qmosDisponibles: Qmos[] }) {
       <label>
         Version
         <input required type="text" value={version} onChange={(e) => setVersion(e.target.value)} style={{ display: "block", width: "100%", padding: "0.4rem" }} />
+      </label>
+      <label>
+        Type d&apos;assemblage (optionnel)
+        <select value={typeAssemblage} onChange={(e) => setTypeAssemblage(e.target.value)} style={{ display: "block", width: "100%", padding: "0.4rem" }}>
+          <option value="">— non précisé —</option>
+          {Object.entries(LIBELLE_TYPE_ASSEMBLAGE).map(([valeur, libelle]) => (
+            <option key={valeur} value={valeur}>
+              {libelle}
+            </option>
+          ))}
+        </select>
       </label>
       <label>
         Procédé (ex. 141 / TIG)
@@ -123,6 +163,10 @@ export function AjouterWps({ qmosDisponibles }: { qmosDisponibles: Qmos[] }) {
         <input type="text" value={positions} onChange={(e) => setPositions(e.target.value)} style={{ display: "block", width: "100%", padding: "0.4rem" }} />
       </label>
       <label>
+        Notes de préparation (talon, jeu, mode de préparation... optionnel)
+        <input type="text" value={preparationNotes} onChange={(e) => setPreparationNotes(e.target.value)} style={{ display: "block", width: "100%", padding: "0.4rem" }} />
+      </label>
+      <label>
         QMOS justifiant ce WPS (optionnel)
         <select value={qmosId} onChange={(e) => setQmosId(e.target.value)} style={{ display: "block", width: "100%", padding: "0.4rem" }}>
           <option value="">— non précisée —</option>
@@ -141,6 +185,17 @@ export function AjouterWps({ qmosDisponibles }: { qmosDisponibles: Qmos[] }) {
         Date d&apos;émission
         <input required type="date" value={dateEmission} onChange={(e) => setDateEmission(e.target.value)} style={{ display: "block", width: "100%", padding: "0.4rem" }} />
       </label>
+      <div>
+        <p style={{ margin: "0.5rem 0 0.3rem 0", fontWeight: "bold" }}>
+          Passes ({passes.length}) — ce que le soudeur doit suivre pour chaque passe, dans l&apos;ordre
+        </p>
+        {passes.map((p, i) => (
+          <EditeurPasse key={i} passe={p} onChange={(passe) => majPasse(i, passe)} onSupprimer={() => supprimerPasse(i)} />
+        ))}
+        <button type="button" onClick={ajouterPasse}>
+          + Ajouter une passe
+        </button>
+      </div>
       <button type="submit" disabled={enCours}>
         {enCours ? "Création..." : "Créer le WPS/DMOS"}
       </button>

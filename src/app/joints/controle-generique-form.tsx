@@ -8,6 +8,8 @@ import { indicationVersJson, type IndicationFormulaire } from "./indications";
 import { EditeurConditionsExamen } from "./editeur-conditions-examen";
 import { conditionsExamenVide, conditionsExamenVersJson, type ConditionsExamenFormulaire } from "./conditions-examen";
 
+type Outil = { id: string; reference: string; type: string };
+
 // Formulaire partagé pour les contrôles à indications (visuel, ressuage,
 // magnétoscopie, radiographie, ultrasons — voir src/lib/controles.ts) :
 // même forme jointId/procédure/indications/signature, seul l'endpoint
@@ -20,6 +22,7 @@ export function ControleGeneriqueForm({
   onAnnuler,
   extra,
   extraJson,
+  outils,
 }: {
   endpoint: string;
   jointId: string;
@@ -29,10 +32,16 @@ export function ControleGeneriqueForm({
   // insérés dans le formulaire et fusionnés dans le corps envoyé.
   extra?: React.ReactNode;
   extraJson?: () => Record<string, unknown> | null;
+  // Équipement/banc de la bibliothèque métrologie (voir Outil) : fourni
+  // seulement par les méthodes concernées (magnétoscopie, radiographie,
+  // ultrasons — le contrôle visuel n'en a pas besoin), sinon aucun
+  // sélecteur ne s'affiche.
+  outils?: Outil[];
 }) {
   const router = useRouter();
   const [procedureRef, setProcedureRef] = useState("");
   const [procedureVersion, setProcedureVersion] = useState("");
+  const [outilId, setOutilId] = useState("");
   const [indications, setIndications] = useState<IndicationFormulaire[]>([]);
   const [conditionsExamen, setConditionsExamen] = useState<ConditionsExamenFormulaire>(conditionsExamenVide());
   const [signatureId, setSignatureId] = useState<string | null>(null);
@@ -55,6 +64,7 @@ export function ControleGeneriqueForm({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         jointId,
+        outilId: outils ? outilId || undefined : undefined,
         procedureRef,
         procedureVersion: procedureVersion || undefined,
         indications: indications.map(indicationVersJson),
@@ -65,7 +75,8 @@ export function ControleGeneriqueForm({
     });
     setEnCours(false);
     if (!res.ok) {
-      setErreur("Impossible d'enregistrer ce contrôle (au moins une indication requise).");
+      const corps = await res.json().catch(() => null);
+      setErreur(corps?.error ?? "Impossible d'enregistrer ce contrôle (au moins une indication requise).");
       return;
     }
     onCree();
@@ -82,6 +93,19 @@ export function ControleGeneriqueForm({
         Version de la procédure (optionnel)
         <input type="text" value={procedureVersion} onChange={(e) => setProcedureVersion(e.target.value)} style={{ display: "block", width: "100%", padding: "0.3rem" }} />
       </label>
+      {outils && (
+        <label style={{ fontSize: "0.85rem" }}>
+          Équipement utilisé (optionnel)
+          <select value={outilId} onChange={(e) => setOutilId(e.target.value)} style={{ display: "block", width: "100%", padding: "0.3rem" }}>
+            <option value="">— non précisé —</option>
+            {outils.map((o) => (
+              <option key={o.id} value={o.id}>
+                {o.reference} ({o.type})
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
       {extra}
       <EditeurIndications indications={indications} onChange={setIndications} />
       <EditeurConditionsExamen valeurs={conditionsExamen} onChange={setConditionsExamen} />

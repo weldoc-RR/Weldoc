@@ -3,7 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { determinerCriteres, evaluerConformite, type Mesure } from "@/lib/tolerances";
 import { requireAuth } from "@/lib/auth";
-import { calculerStatutOutil, outilUtilisable } from "@/lib/statutOutil";
+import { verifierOutilPourControle } from "@/lib/statutOutil";
 import { avancerFNCApresControleConforme } from "@/lib/remiseEnConformite";
 
 const MesureSchema = z.object({
@@ -47,20 +47,9 @@ export async function POST(req: NextRequest) {
   // comme demandé au cahier des charges) : un outil expiré ou hors service
   // bloque le contrôle, une mesure prise avec un outil non vérifié n'étant
   // pas exploitable.
-  if (outilId) {
-    const outil = await prisma.outil.findUnique({ where: { id: outilId } });
-    if (!outil) {
-      return NextResponse.json({ error: "Outil introuvable." }, { status: 422 });
-    }
-    const statutOutil = calculerStatutOutil(outil.dateEcheance, { horsService: outil.statut === "HORS_SERVICE" });
-    if (!outilUtilisable(statutOutil)) {
-      return NextResponse.json(
-        {
-          error: `Outil "${outil.reference}" ${statutOutil === "HORS_SERVICE" ? "hors service" : "avec vérification expirée"} : contrôle refusé.`,
-        },
-        { status: 422 }
-      );
-    }
+  const verifOutil = await verifierOutilPourControle(outilId);
+  if (!verifOutil.ok) {
+    return NextResponse.json({ error: verifOutil.erreur }, { status: 422 });
   }
 
   let criteres;

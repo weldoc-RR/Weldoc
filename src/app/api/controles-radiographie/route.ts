@@ -4,10 +4,15 @@ import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
 import { IndicationSchema, ConditionsExamenSchema, calculerResultat, extraireConditionsExamen } from "@/lib/controles";
 import { avancerFNCApresControleConforme } from "@/lib/remiseEnConformite";
+import { verifierOutilPourControle } from "@/lib/statutOutil";
 
 const CreateControleSchema = z
   .object({
     jointId: z.string().min(1),
+    // Appareil/source radiographique utilisé (bibliothèque métrologie/
+    // outillage partagée, voir POST /api/outils) : optionnel, mais bloque
+    // le contrôle s'il est expiré ou hors service.
+    outilId: z.string().optional(),
     procedureRef: z.string().min(1),
     procedureVersion: z.string().optional(),
     indications: z.array(IndicationSchema),
@@ -26,7 +31,7 @@ export async function GET(req: NextRequest) {
   const jointId = req.nextUrl.searchParams.get("jointId");
   const controles = await prisma.controleRadiographie.findMany({
     where: { jointId: jointId ?? undefined },
-    include: { consommables: { include: { consommable: true } } },
+    include: { outil: { select: { reference: true, type: true } }, consommables: { include: { consommable: true } } },
     orderBy: { dateControle: "desc" },
   });
   return NextResponse.json(controles);
@@ -44,11 +49,16 @@ export async function POST(req: NextRequest) {
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
-  const { jointId, procedureRef, procedureVersion, indications, consommableIds, signatureId } = parsed.data;
+  const { jointId, outilId, procedureRef, procedureVersion, indications, consommableIds, signatureId } = parsed.data;
 
   const joint = await prisma.joint.findUnique({ where: { id: jointId } });
   if (!joint) {
     return NextResponse.json({ error: "Joint introuvable." }, { status: 404 });
+  }
+
+  const verifOutil = await verifierOutilPourControle(outilId);
+  if (!verifOutil.ok) {
+    return NextResponse.json({ error: verifOutil.erreur }, { status: 422 });
   }
 
   const resultat = calculerResultat(indications);
@@ -57,6 +67,7 @@ export async function POST(req: NextRequest) {
     data: {
       jointId,
       controleurId: auth.utilisateur.personnelId,
+      outilId,
       procedureRef,
       procedureVersion,
       indications: indications as object[],

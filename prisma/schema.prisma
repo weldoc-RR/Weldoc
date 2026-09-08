@@ -466,6 +466,9 @@ model Outil {
   qrCodeValeur    String      @unique
 
   controles       ControleDimensionnel[]
+  controlesMagnetoscopie ControleMagnetoscopie[]
+  controlesRadiographie  ControleRadiographie[]
+  controlesUltrasons     ControleUltrasons[]
 }
 
 enum ResultatConformite {
@@ -634,6 +637,11 @@ model ControleMagnetoscopie {
   jointId        String
   controleur     Personnel         @relation("ControleurMagnetoscopie", fields: [controleurId], references: [id])
   controleurId   String
+  // Équipement/banc utilisé (bibliothèque métrologie/outillage partagée
+  // avec le contrôle dimensionnel — voir Outil) : un outil expiré ou hors
+  // service bloque le contrôle, comme pour le contrôle dimensionnel.
+  outil          Outil?            @relation(fields: [outilId], references: [id])
+  outilId        String?
   procedureRef   String
   procedureVersion String?
   numeroPV       String?
@@ -673,6 +681,11 @@ model ControleRadiographie {
   jointId        String
   controleur     Personnel         @relation("ControleurRadiographie", fields: [controleurId], references: [id])
   controleurId   String
+  // Appareil/source radiographique utilisé (voir Outil, même bibliothèque
+  // que le contrôle dimensionnel) : un outil expiré ou hors service
+  // bloque le contrôle.
+  outil          Outil?            @relation(fields: [outilId], references: [id])
+  outilId        String?
   procedureRef   String
   procedureVersion String?
   numeroPV       String?
@@ -712,6 +725,11 @@ model ControleUltrasons {
   jointId        String
   controleur     Personnel         @relation("ControleurUltrasons", fields: [controleurId], references: [id])
   controleurId   String
+  // Appareil ultrasons utilisé (voir Outil, même bibliothèque que le
+  // contrôle dimensionnel) : un outil expiré ou hors service bloque le
+  // contrôle.
+  outil          Outil?            @relation(fields: [outilId], references: [id])
+  outilId        String?
   procedureRef   String
   procedureVersion String?
   numeroPV       String?

@@ -1,3 +1,4 @@
+import { prisma } from "@/lib/prisma";
 import { SEUIL_BIENTOT_ECHEANCE_JOURS } from "@/lib/statutValidite";
 
 // Distinct du StatutOutil stocké en base (VALIDE/EXPIRE/HORS_SERVICE) : ici
@@ -40,6 +41,30 @@ const DUREE_VALIDITE_MOIS_PAR_DEFAUT = 12;
 const DUREES_VALIDITE_MOIS_PAR_TYPE: Record<string, number> = {
   "pince ampèremétrique": 6,
 };
+
+// Vérification partagée par les contrôles qui rattachent un outil/équipement
+// au PV (dimensionnel, magnétoscopie, radiographie, ultrasons — voir le
+// cahier des charges, "MÉTROLOGIE ET OUTILLAGE" : "vérification de
+// validité"). Un outil expiré ou hors service bloque le contrôle : ce n'est
+// pas une décision réglementaire prise par Weldoc, juste un fait métrologique
+// (une mesure prise avec un outil non vérifié n'est pas exploitable).
+export async function verifierOutilPourControle(
+  outilId: string | undefined
+): Promise<{ ok: true } | { ok: false; erreur: string }> {
+  if (!outilId) return { ok: true };
+
+  const outil = await prisma.outil.findUnique({ where: { id: outilId } });
+  if (!outil) return { ok: false, erreur: "Outil introuvable." };
+
+  const statut = calculerStatutOutil(outil.dateEcheance, { horsService: outil.statut === "HORS_SERVICE" });
+  if (!outilUtilisable(statut)) {
+    return {
+      ok: false,
+      erreur: `Outil "${outil.reference}" ${statut === "HORS_SERVICE" ? "hors service" : "avec vérification expirée"} : contrôle refusé.`,
+    };
+  }
+  return { ok: true };
+}
 
 export function calculerDateEcheance(type: string, dateVerification: Date): Date {
   const typeNormalise = type.trim().toLowerCase();

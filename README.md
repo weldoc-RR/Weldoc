@@ -159,7 +159,16 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
     non conforme), et comme le ressuage peuvent référencer les
     consommables utilisés (`controle-cnd-consommables-form.tsx`, page
     `/joints` : chaque méthode ne propose que les types de consommables
-    qui la concernent).
+    qui la concernent). Elles acceptent maintenant aussi un `outilId`
+    (équipement/banc utilisé) qui pointe vers la même bibliothèque
+    métrologie que le contrôle dimensionnel (`Outil`, voir
+    `src/lib/statutOutil.ts`) : un outil expiré ou hors service **bloque**
+    le contrôle (`verifierOutilPourControle`, factorisé et repris par les
+    quatre méthodes concernées — dimensionnel, magnétoscopie,
+    radiographie, ultrasons), contrairement aux autres vérifications de
+    l'application qui restent purement indicatives. Ce n'est pas une
+    décision réglementaire de Weldoc : une mesure prise avec un outil non
+    vérifié n'est simplement pas exploitable, c'est un fait métrologique.
   - `POST /api/indisponibilites` — déclarer une période d'indisponibilité
     (congé, maladie, formation, autre), utilisée pour détecter les
     conflits de planning (niveau 2 minimum)
@@ -432,12 +441,6 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   contrôle (voir ci-dessus). Il reste la fiche technique de soudage
   (`FicheTechniqueSoudage`, qui a bien un champ `signatureId` dans le
   modèle) : pas encore d'API ni d'écran de saisie du tout pour elle.
-- La traçabilité de l'équipement/la source pour MT/RT/UT (banc
-  magnétoscopie, source ou appareil radiographique/ultrasons, numéro de
-  série, étalonnage) : la bibliothèque de consommables couvre maintenant
-  les quatre méthodes (voir ci-dessus), mais le lien vers l'équipement
-  utilisé lui-même n'est pas encore modélisé — à rapprocher du module
-  métrologie/outillage existant.
 - La proposition automatique d'affectation adaptée en cas d'alerte
   (le cahier des charges évoque "peut proposer une affectation adaptée") :
   pour l'instant Weldoc détecte et signale, mais ne suggère pas encore

@@ -65,6 +65,7 @@ export function ControlesJoint({
           endpoint="/api/controles-magnetoscopie"
           jointId={jointId}
           consommables={consommables.filter((c) => TYPES_PAR_METHODE.MT.includes(c.type))}
+          outils={outils}
           onCree={fermer}
           onAnnuler={fermer}
         />
@@ -74,6 +75,7 @@ export function ControlesJoint({
           endpoint="/api/controles-radiographie"
           jointId={jointId}
           consommables={consommables.filter((c) => TYPES_PAR_METHODE.RT.includes(c.type))}
+          outils={outils}
           onCree={fermer}
           onAnnuler={fermer}
         />
@@ -83,6 +85,7 @@ export function ControlesJoint({
           endpoint="/api/controles-ultrasons"
           jointId={jointId}
           consommables={consommables.filter((c) => TYPES_PAR_METHODE.UT.includes(c.type))}
+          outils={outils}
           onCree={fermer}
           onAnnuler={fermer}
         />

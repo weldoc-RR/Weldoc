@@ -33,7 +33,11 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   - `POST /api/auth/login` — connexion (matricule + mot de passe)
   - `POST /api/auth/logout` — déconnexion (révoque la session côté serveur)
   - `GET /api/auth/me` — utilisateur actuellement connecté
-  - `POST /api/affaires` — créer une affaire (authentification requise)
+  - `POST /api/affaires` — créer une affaire (authentification requise) ;
+    peut préciser le responsable, le chargé d'affaires, le coordinateur
+    soudage
+  - `PATCH /api/affaires` — modifier ces rôles après coup (niveau 2
+    minimum) ; ils alimentent l'organigramme (voir plus bas)
   - `POST /api/joints` — créer un joint (numérotation automatique,
     authentification requise)
   - `POST /api/controles-dimensionnels` — réaliser un contrôle (le
@@ -73,6 +77,25 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
     contrôle visuel (résultat déduit des indications, FNC automatique si
     non conforme). Pas de bibliothèque de consommables pour ces trois-là
     dans cette première version (voir plus bas).
+  - `POST /api/indisponibilites` — déclarer une période d'indisponibilité
+    (congé, maladie, formation, autre), utilisée pour détecter les
+    conflits de planning (niveau 2 minimum)
+  - `POST /api/affectations` — affecter une personne à une affaire (et
+    éventuellement un joint précis). Vérifie compétence, qualification,
+    habilitation et disponibilité, mais **ne bloque jamais** la création :
+    les alertes sont renvoyées dans la réponse (et tracées dans l'audit
+    trail s'il y en a), la décision de passer outre reste humaine, comme
+    demandé au cahier des charges ("signale... peut proposer")
+  - `GET /api/affaires/[id]/organigramme` — généré automatiquement à
+    partir des rôles de l'affaire et des affectations actuellement
+    actives ; rien n'est stocké séparément, donc toujours à jour par
+    construction
+- `src/lib/planning.ts` — la vérification avant affectation. **Limite
+  assumée** : la correspondance fonction → type de qualification requis
+  (ex. "soudeur" → qualification SOUDAGE) est une liste en dur, pas une
+  règle configurable par l'entreprise ; et on ne sait pas quelle
+  habilitation précise est requise pour quelle fonction, donc on se
+  contente de signaler les habilitations déjà expirées.
 - `src/lib/qualifications.ts` — quand un soudeur réalise un joint, Weldoc
   vérifie si l'une de ses qualifications soudage arrive à échéance et, le
   cas échéant, propose automatiquement une reconduction (avec le joint
@@ -122,8 +145,12 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
 - La bibliothèque de consommables pour MT/RT/UT (elle n'existe que pour
   le ressuage) : leur traçabilité porte surtout sur l'équipement, la
   source ou le film, pas encore couverte.
-- L'essentiel des ~50 modules du cahier des charges (TQC, planning,
-  rapports de fin de fabrication, dossier réglementaire, REX, etc.).
+- La proposition automatique d'affectation adaptée en cas d'alerte
+  (le cahier des charges évoque "peut proposer une affectation adaptée") :
+  pour l'instant Weldoc détecte et signale, mais ne suggère pas encore
+  d'alternative.
+- L'essentiel des ~50 modules du cahier des charges (TQC, rapports de fin
+  de fabrication, dossier réglementaire, REX, etc.).
 - Une vraie interface tablette soignée (ici, des pages HTML minimales).
 - Les vraies valeurs de tolérances normatives (voir avertissement ci-dessus).
 - Les tests automatisés et le déploiement.

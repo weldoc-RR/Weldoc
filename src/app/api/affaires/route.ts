@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { requireAuth } from "@/lib/auth";
+import { requireAuth, requireNiveau } from "@/lib/auth";
 
 const CreateAffaireSchema = z.object({
   numero: z.string().min(1),
@@ -9,6 +9,9 @@ const CreateAffaireSchema = z.object({
   projet: z.string().min(1),
   chantier: z.string().min(1),
   site: z.string().min(1),
+  responsableId: z.string().optional(),
+  chargeAffairesId: z.string().optional(),
+  coordinateurSoudageId: z.string().optional(),
   dateDebut: z.string().datetime().optional(),
   dateFin: z.string().datetime().optional(),
 });
@@ -46,4 +49,29 @@ export async function POST(req: NextRequest) {
   });
 
   return NextResponse.json(affaire, { status: 201 });
+}
+
+const UpdateRolesSchema = z.object({
+  id: z.string().min(1),
+  responsableId: z.string().nullable().optional(),
+  chargeAffairesId: z.string().nullable().optional(),
+  coordinateurSoudageId: z.string().nullable().optional(),
+});
+
+// PATCH /api/affaires — met à jour les rôles d'une affaire (responsable,
+// chargé d'affaires, coordinateur soudage), utilisés pour générer
+// automatiquement l'organigramme (GET /api/affaires/[id]/organigramme).
+export async function PATCH(req: NextRequest) {
+  const droits = await requireNiveau(req, "NIVEAU_2");
+  if ("erreur" in droits) return droits.erreur;
+
+  const body = await req.json();
+  const parsed = UpdateRolesSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+  }
+  const { id, ...updates } = parsed.data;
+
+  const affaire = await prisma.affaire.update({ where: { id }, data: updates });
+  return NextResponse.json(affaire);
 }

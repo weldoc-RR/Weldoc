@@ -41,6 +41,8 @@ model Personnel {
   controlesRadiographieRealises  ControleRadiographie[]  @relation("ControleurRadiographie")
   controlesUltrasonsRealises     ControleUltrasons[]     @relation("ControleurUltrasons")
   signatures      Signature[]
+  indisponibilites Indisponibilite[]
+  affectations    Affectation[]
   compte          Compte?
 
   @@index([societe])
@@ -240,6 +242,7 @@ model Affaire {
   joints            Joint[]
   fncs              FNC[]
   sequences         Sequence[]
+  affectations      Affectation[]
 }
 
 model Referentiel {
@@ -341,6 +344,7 @@ model Joint {
   controlesRadiographie  ControleRadiographie[]
   controlesUltrasons     ControleUltrasons[]
   fncs            FNC[]
+  affectations    Affectation[]
 
   @@unique([affaireId, numero, indiceReparation])
   @@index([affaireId])
@@ -626,4 +630,52 @@ model AuditTrail {
   ancienneValeur Json?
   nouvelleValeur Json?
   motif         String?
+}
+
+// ============================================================================
+// PLANNING ET ORGANIGRAMME
+// ============================================================================
+// Une indisponibilité déclarée (congé, maladie, formation, autre) : sert de
+// base à la détection de conflit avant affectation.
+model Indisponibilite {
+  id          String    @id @default(cuid())
+  personnel   Personnel @relation(fields: [personnelId], references: [id])
+  personnelId String
+  dateDebut   DateTime
+  dateFin     DateTime
+  motif       String
+  createdAt   DateTime  @default(now())
+
+  @@index([personnelId])
+}
+
+enum StatutAffectation {
+  PLANIFIEE
+  EN_COURS
+  TERMINEE
+  ANNULEE
+}
+
+// Affecter une personne à une affaire (et éventuellement un joint précis).
+// La vérification (qualification, habilitation, disponibilité, compétence)
+// se fait à la création et produit des alertes — voir src/lib/planning.ts —
+// mais ne bloque jamais la création : conformément au cahier des charges
+// ("signale... peut proposer"), Weldoc alerte, la décision reste humaine.
+model Affectation {
+  id          String            @id @default(cuid())
+  personnel   Personnel         @relation(fields: [personnelId], references: [id])
+  personnelId String
+  affaire     Affaire           @relation(fields: [affaireId], references: [id])
+  affaireId   String
+  joint       Joint?            @relation(fields: [jointId], references: [id])
+  jointId     String?
+  fonction    String
+  dateDebut   DateTime
+  dateFin     DateTime
+  statut      StatutAffectation @default(PLANIFIEE)
+  creeParId   String
+  createdAt   DateTime          @default(now())
+
+  @@index([personnelId])
+  @@index([affaireId])
 }

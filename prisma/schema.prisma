@@ -254,6 +254,7 @@ model Affaire {
   sequences         Sequence[]
   affectations      Affectation[]
   demandesSequencement DemandeModificationSequencement[]
+  pieces            Piece[]
 }
 
 model Referentiel {
@@ -738,5 +739,35 @@ model DemandeModificationSequencement {
   commentaireDecision String?
   conditions          String?
 
+  @@index([affaireId])
+}
+
+// ============================================================================
+// PIÈCES (fabrication en atelier)
+// ============================================================================
+// Contrairement au chantier, où les joints d'une affaire sont en général
+// connus à l'avance, une fabrication en atelier reçoit souvent des pièces
+// au fil de l'eau. Une Pièce trace sa prise en charge (référence, photos
+// des repères présents dessus comme preuve) et son statut au fil de
+// l'activité — indépendamment des joints, qui restent la soudure elle-même.
+enum StatutPiece {
+  PRISE_EN_CHARGE
+  EN_FABRICATION
+  TERMINEE
+  EXPEDIEE
+}
+
+model Piece {
+  id                 String      @id @default(cuid())
+  affaire            Affaire     @relation(fields: [affaireId], references: [id])
+  affaireId          String
+  reference          String
+  designation        String?
+  photosUrls         String[]
+  priseEnChargeParId String
+  datePriseEnCharge  DateTime    @default(now())
+  statut             StatutPiece @default(PRISE_EN_CHARGE)
+
+  @@unique([affaireId, reference])
   @@index([affaireId])
 }

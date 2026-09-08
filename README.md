@@ -41,6 +41,13 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
     `typeRealisation` vaut `CHANTIER` (défaut) ou `ATELIER` — dans ce
     second cas, `chantier`/`site` (qui n'ont pas forcément de sens pour une
     fabrication en atelier) restent facultatifs
+  - `POST /api/pieces` — prise en charge d'une pièce en atelier (référence,
+    désignation, photos des repères présents dessus comme preuve).
+    Contrairement aux joints d'un chantier, une pièce peut être ajoutée à
+    tout moment, au fil de l'eau, pas seulement planifiée à l'avance
+  - `PATCH /api/pieces` — fait avancer le statut d'une pièce (prise en
+    charge → en fabrication → terminée → expédiée), pour un suivi de
+    traçabilité tout au long de l'activité
   - `PATCH /api/affaires` — modifier ces rôles après coup (niveau 2
     minimum) ; ils alimentent l'organigramme (voir plus bas)
   - `POST /api/sequences`, `POST /api/phases` — ajouter une séquence
@@ -168,9 +175,10 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   réservé aux personnes connectées).
 - `src/app/personnel/page.tsx` — liste du personnel, ses fonctions et le
   statut de ses qualifications.
-- `src/app/alertes/page.tsx` — outils bientôt à échéance ou expirés,
-  visible dans l'application sans rien configurer. Pas encore d'envoi par
-  email (voir "Ce qui n'est pas encore fait").
+- `src/app/alertes/page.tsx` — outils bientôt à échéance ou expirés, et
+  bibliothèque des destinataires du récapitulatif hebdomadaire par email.
+- `src/app/pieces/page.tsx` — prise en charge de pièces (atelier) et suivi
+  de leur statut.
 - `prisma.config.ts` — configuration Prisma (schéma, migrations) : utilise
   `DATABASE_URL` en connexion PostgreSQL classique, utilisée par la CLI
   (`prisma migrate`, etc.).
@@ -231,11 +239,15 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   chaque fiche) mais n'est pas encore centralisée ici.
 - L'adaptation complète à la fabrication en atelier : le cahier des
   charges est écrit en vocabulaire "chantier" (organigramme chantier,
-  prise en charge du chantier...). Pour l'instant, `Affaire.typeRealisation`
-  (`CHANTIER`/`ATELIER`) existe et `chantier`/`site` sont facultatifs, mais
-  aucun module n'adapte encore son comportement selon ce type (ex. une
-  "prise en charge et restitution" façon atelier, différente de celle
-  d'un chantier, reste à définir).
+  prise en charge du chantier...). `Affaire.typeRealisation`
+  (`CHANTIER`/`ATELIER`), `chantier`/`site` facultatifs, et la prise en
+  charge de pièces (`Piece`) existent, mais le lien entre une pièce et les
+  joints/contrôles qui la concernent au fil de la fabrication n'est pas
+  encore modélisé — pour l'instant `Piece` et `Joint` restent deux objets
+  indépendants.
+- L'upload réel de photos : `Piece.photosUrls` (comme `photosUrls`
+  ailleurs dans l'application) attend des URLs déjà hébergées quelque
+  part, il n'y a pas encore de téléversement de fichier intégré à Weldoc.
 - L'essentiel des ~50 modules du cahier des charges (TQC, rapports de fin
   de fabrication, dossier réglementaire, REX, etc.).
 - Une vraie interface tablette soignée (ici, des pages HTML minimales).

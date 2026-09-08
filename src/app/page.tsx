@@ -30,13 +30,13 @@ export default async function HomePage() {
       </div>
       <p>
         Squelette de démonstration : liste des affaires, joints et FNC. <Link href="/personnel">Personnel →</Link>{" "}
-        <Link href="/alertes">Alertes →</Link>
+        <Link href="/alertes">Alertes →</Link> <Link href="/pieces">Pièces (atelier) →</Link>
       </p>
       <ul>
         {affaires.map((a) => (
           <li key={a.id}>
-            <strong>{a.numero}</strong> — {a.client} / {a.projet} — {a.joints.length} joint(s),{" "}
-            {a.fncs.length} FNC
+            <strong>{a.numero}</strong> — {a.client} / {a.projet} ({a.typeRealisation.toLowerCase()}) —{" "}
+            {a.joints.length} joint(s), {a.fncs.length} FNC
           </li>
         ))}
       </ul>

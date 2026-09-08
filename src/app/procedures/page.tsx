@@ -93,8 +93,12 @@ export default async function ProceduresPage() {
             <li key={w.id} style={{ marginBottom: "0.6rem", borderBottom: "1px solid #ddd", paddingBottom: "0.4rem" }}>
               <strong>{w.reference}</strong> ({w.version}) — {w.procede} — {w.normeReference}
               {w.materiaux && ` — ${w.materiaux}`}
+              {w.groupeMateriaux && ` — groupe matériau ${w.groupeMateriaux}`}
               {(w.epaisseurMinMm || w.epaisseurMaxMm) && (
                 <> — épaisseur {w.epaisseurMinMm ?? "?"} à {w.epaisseurMaxMm ?? "?"} mm</>
+              )}
+              {(w.diametreMinMm || w.diametreMaxMm) && (
+                <> — diamètre {w.diametreMinMm ?? "?"} à {w.diametreMaxMm ?? "?"} mm</>
               )}
               {w.qmos && ` — justifié par ${w.qmos.reference} (${w.qmos.version})`}
               <BadgeStatut statut={w.statutAffiche} />

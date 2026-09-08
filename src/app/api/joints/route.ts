@@ -3,6 +3,8 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
 import { detecterPreuvesReconduction } from "@/lib/qualifications";
+import { calculerStatut } from "@/lib/statutValidite";
+import { verifierQS, type ResultatVerificationQS } from "@/lib/verificationQS";
 
 const CreateJointSchema = z.object({
   affaireId: z.string().min(1),
@@ -64,7 +66,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  if (parsed.data.wpsId && !(await prisma.wps.findUnique({ where: { id: parsed.data.wpsId } }))) {
+  const wps = parsed.data.wpsId ? await prisma.wps.findUnique({ where: { id: parsed.data.wpsId } }) : null;
+  if (parsed.data.wpsId && !wps) {
     return NextResponse.json({ error: "WPS introuvable." }, { status: 422 });
   }
   if (parsed.data.qmosId && !(await prisma.qmos.findUnique({ where: { id: parsed.data.qmosId } }))) {
@@ -81,5 +84,18 @@ export async function POST(req: NextRequest) {
     await detecterPreuvesReconduction(joint.soudeurId, joint.id);
   }
 
-  return NextResponse.json(joint, { status: 201 });
+  // Rapprochement QS/WPS, non bloquant (voir src/lib/verificationQS.ts) :
+  // signale sans jamais empêcher la création du joint.
+  let verificationQS: ResultatVerificationQS | null = null;
+  if (joint.soudeurId && wps) {
+    const qualifications = await prisma.qualification.findMany({
+      where: { personnelId: joint.soudeurId, type: "SOUDAGE" },
+    });
+    const qualificationsActives = qualifications.filter(
+      (q) => calculerStatut(q.dateExpiration, { suspendu: q.statut === "SUSPENDU" }) !== "EXPIRE" && q.statut !== "SUSPENDU"
+    );
+    verificationQS = verifierQS(qualificationsActives, wps);
+  }
+
+  return NextResponse.json({ ...joint, verificationQS }, { status: 201 });
 }

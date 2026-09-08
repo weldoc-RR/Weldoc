@@ -12,8 +12,11 @@ export function AjouterWps({ qmosDisponibles }: { qmosDisponibles: Qmos[] }) {
   const [procede, setProcede] = useState("");
   const [normeReference, setNormeReference] = useState("");
   const [materiaux, setMateriaux] = useState("");
+  const [groupeMateriaux, setGroupeMateriaux] = useState("");
   const [epaisseurMinMm, setEpaisseurMinMm] = useState("");
   const [epaisseurMaxMm, setEpaisseurMaxMm] = useState("");
+  const [diametreMinMm, setDiametreMinMm] = useState("");
+  const [diametreMaxMm, setDiametreMaxMm] = useState("");
   const [positions, setPositions] = useState("");
   const [qmosId, setQmosId] = useState("");
   const [documentUrl, setDocumentUrl] = useState("");
@@ -35,8 +38,11 @@ export function AjouterWps({ qmosDisponibles }: { qmosDisponibles: Qmos[] }) {
         procede,
         normeReference,
         materiaux: materiaux || undefined,
+        groupeMateriaux: groupeMateriaux || undefined,
         epaisseurMinMm: epaisseurMinMm ? Number(epaisseurMinMm) : undefined,
         epaisseurMaxMm: epaisseurMaxMm ? Number(epaisseurMaxMm) : undefined,
+        diametreMinMm: diametreMinMm ? Number(diametreMinMm) : undefined,
+        diametreMaxMm: diametreMaxMm ? Number(diametreMaxMm) : undefined,
         positions: positions || undefined,
         qmosId: qmosId || undefined,
         documentUrl: documentUrl || undefined,
@@ -54,8 +60,11 @@ export function AjouterWps({ qmosDisponibles }: { qmosDisponibles: Qmos[] }) {
     setProcede("");
     setNormeReference("");
     setMateriaux("");
+    setGroupeMateriaux("");
     setEpaisseurMinMm("");
     setEpaisseurMaxMm("");
+    setDiametreMinMm("");
+    setDiametreMaxMm("");
     setPositions("");
     setQmosId("");
     setDocumentUrl("");
@@ -85,6 +94,10 @@ export function AjouterWps({ qmosDisponibles }: { qmosDisponibles: Qmos[] }) {
         Matériaux couverts (optionnel)
         <input type="text" value={materiaux} onChange={(e) => setMateriaux(e.target.value)} style={{ display: "block", width: "100%", padding: "0.4rem" }} />
       </label>
+      <label>
+        Groupe de matériaux (ex. ISO/TR 15608 — sert au rapprochement avec les qualifications, optionnel)
+        <input type="text" value={groupeMateriaux} onChange={(e) => setGroupeMateriaux(e.target.value)} style={{ display: "block", width: "100%", padding: "0.4rem" }} />
+      </label>
       <div style={{ display: "flex", gap: "0.5rem" }}>
         <label style={{ flex: 1 }}>
           Épaisseur min (mm)
@@ -93,6 +106,16 @@ export function AjouterWps({ qmosDisponibles }: { qmosDisponibles: Qmos[] }) {
         <label style={{ flex: 1 }}>
           Épaisseur max (mm)
           <input type="number" step="0.1" value={epaisseurMaxMm} onChange={(e) => setEpaisseurMaxMm(e.target.value)} style={{ display: "block", width: "100%", padding: "0.4rem" }} />
+        </label>
+      </div>
+      <div style={{ display: "flex", gap: "0.5rem" }}>
+        <label style={{ flex: 1 }}>
+          Diamètre min (mm)
+          <input type="number" step="0.1" value={diametreMinMm} onChange={(e) => setDiametreMinMm(e.target.value)} style={{ display: "block", width: "100%", padding: "0.4rem" }} />
+        </label>
+        <label style={{ flex: 1 }}>
+          Diamètre max (mm)
+          <input type="number" step="0.1" value={diametreMaxMm} onChange={(e) => setDiametreMaxMm(e.target.value)} style={{ display: "block", width: "100%", padding: "0.4rem" }} />
         </label>
       </div>
       <label>

@@ -247,6 +247,13 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   statut des qualifications ou de l'outillage ailleurs dans l'application.
   Un WPS peut être relié à la QMOS qui le justifie. `Joint.wpsId`/`qmosId`
   pointent vers la bibliothèque quand la fiche y existe.
+- `src/lib/verificationQS.ts` — rapproche les qualifications soudage
+  actives d'un soudeur avec le domaine d'un WPS (procédé, groupe de
+  matériaux, épaisseur, diamètre), pour aider à vérifier qu'il est bien
+  qualifié avant soudage. Purement indicatif, jamais bloquant : affiché
+  comme alerte sur `/joints` (créer un joint, ou consulter un joint
+  existant, avec soudeur ET WPS renseignés) et exposé en API via
+  `GET /api/qualifications/verification-qs?personnelId=...&wpsId=...`.
 - `prisma.config.ts` — configuration Prisma (schéma, migrations) : utilise
   `DATABASE_URL` en connexion PostgreSQL classique, utilisée par la CLI
   (`prisma migrate`, etc.).
@@ -262,12 +269,19 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
 
 ## Ce qui n'est PAS encore fait (volontairement)
 
-- La "QS" (vérification que la qualification soudage du soudeur couvre bien
-  le WPS affecté à un joint — procédé, matériaux, épaisseur, position) :
-  le cahier des charges l'évoque dans le scénario MVP ("vérification
-  QS/WPS/QMOS"), mais ce rapprochement n'est pas encore automatisé ; la
-  qualification (`Qualification`, type SOUDAGE) et le WPS (`Wps`) existent
-  déjà séparément, il reste à les croiser.
+- La "QS" (vérification que la qualification soudage du soudeur couvre
+  bien le WPS affecté à un joint) est maintenant faite, mais reste
+  volontairement simple : `src/lib/verificationQS.ts` compare seulement
+  les champs structurés (procédé, groupe de matériaux, plages
+  d'épaisseur/diamètre) entre les qualifications actives du soudeur et le
+  WPS du joint. Elle ne connaît pas les règles d'extension d'un
+  référentiel (ex. une qualification FW qui étend la validité d'une
+  qualification BW) — ces règles sont propres à chaque norme/entreprise et
+  ne sont pas reproduites dans Weldoc (voir l'avertissement sur les
+  normes protégées). Le résultat est purement indicatif : affiché comme
+  alerte non bloquante sur `/joints` (badge orange) et disponible via
+  `GET /api/qualifications/verification-qs`, jamais une décision
+  automatique — la vérification finale reste humaine.
 - La correspondance fine entre l'activité d'un joint (procédé, matériaux,
   diamètre) et le domaine de validité d'une qualification, pour la
   proposition automatique de reconduction (voir la limite assumée

@@ -3,6 +3,8 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
 import { detecterPreuvesReconduction } from "@/lib/qualifications";
+import { calculerStatut } from "@/lib/statutValidite";
+import { verifierQS, type ResultatVerificationQS } from "@/lib/verificationQS";
 
 const CreateReparationSchema = z.object({
   typeAction: z.enum(["REPARATION", "MEULAGE", "RESURFACAGE", "REPRISE", "REMPLACEMENT", "CONTROLE_COMPLEMENTAIRE"]),
@@ -57,7 +59,9 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       );
     }
   }
-  if (overrides.wpsId && !(await prisma.wps.findUnique({ where: { id: overrides.wpsId } }))) {
+  const wpsIdFinal = overrides.wpsId ?? jointOrigine.wpsId;
+  const wps = wpsIdFinal ? await prisma.wps.findUnique({ where: { id: wpsIdFinal } }) : null;
+  if (overrides.wpsId && !wps) {
     return NextResponse.json({ error: "WPS introuvable." }, { status: 422 });
   }
   if (overrides.qmosId && !(await prisma.qmos.findUnique({ where: { id: overrides.qmosId } }))) {
@@ -104,5 +108,17 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     });
   }
 
-  return NextResponse.json({ reparation, fnc }, { status: 201 });
+  // Rapprochement QS/WPS, non bloquant (voir src/lib/verificationQS.ts).
+  let verificationQS: ResultatVerificationQS | null = null;
+  if (reparation.soudeurId && wps) {
+    const qualifications = await prisma.qualification.findMany({
+      where: { personnelId: reparation.soudeurId, type: "SOUDAGE" },
+    });
+    const qualificationsActives = qualifications.filter(
+      (q) => calculerStatut(q.dateExpiration, { suspendu: q.statut === "SUSPENDU" }) !== "EXPIRE" && q.statut !== "SUSPENDU"
+    );
+    verificationQS = verifierQS(qualificationsActives, wps);
+  }
+
+  return NextResponse.json({ reparation, fnc, verificationQS }, { status: 201 });
 }

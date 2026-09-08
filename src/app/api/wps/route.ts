@@ -10,6 +10,7 @@ const CreateWpsSchema = z.object({
   procede: z.string().min(1),
   normeReference: z.string().min(1),
   materiaux: z.string().optional(),
+  groupeMateriaux: z.string().optional(),
   epaisseurMinMm: z.number().optional(),
   epaisseurMaxMm: z.number().optional(),
   diametreMinMm: z.number().optional(),

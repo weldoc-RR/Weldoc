@@ -873,6 +873,11 @@ model Wps {
   procede        String
   normeReference String
   materiaux      String?
+  // Groupe de matériaux (ex. ISO/TR 15608), structuré comme sur
+  // Qualification.groupeMateriaux — c'est ce champ, avec procede, qui sert
+  // de base au rapprochement automatique QS/WPS (voir
+  // src/lib/verificationQS.ts), pas le texte libre `materiaux` ci-dessus.
+  groupeMateriaux String?
   epaisseurMinMm Float?
   epaisseurMaxMm Float?
   diametreMinMm  Float?

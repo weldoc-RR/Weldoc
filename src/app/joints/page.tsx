@@ -3,6 +3,8 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getUtilisateurConnecteServeur } from "@/lib/auth";
 import { annoterStatutProcedures } from "@/lib/procedures";
+import { calculerStatut } from "@/lib/statutValidite";
+import { verifierQS } from "@/lib/verificationQS";
 import { AjouterJoint } from "./ajouter-joint";
 import { DeclarerReparation } from "./declarer-reparation";
 import { BadgeControle } from "./badge-controle";
@@ -24,9 +26,39 @@ export default async function JointsPage() {
     prisma.joint.findMany({
       include: {
         affaire: { select: { numero: true, client: true } },
-        soudeur: { select: { nom: true, prenom: true } },
+        soudeur: {
+          select: {
+            nom: true,
+            prenom: true,
+            qualifications: {
+              where: { type: "SOUDAGE" },
+              select: {
+                id: true,
+                procede: true,
+                groupeMateriaux: true,
+                epaisseurMinMm: true,
+                epaisseurMaxMm: true,
+                diametreMinMm: true,
+                diametreMaxMm: true,
+                dateExpiration: true,
+                statut: true,
+              },
+            },
+          },
+        },
         matiere: { select: { designation: true, nuance: true } },
-        wps: { select: { reference: true, version: true } },
+        wps: {
+          select: {
+            reference: true,
+            version: true,
+            procede: true,
+            groupeMateriaux: true,
+            epaisseurMinMm: true,
+            epaisseurMaxMm: true,
+            diametreMinMm: true,
+            diametreMaxMm: true,
+          },
+        },
         controlesDim: { select: { dateControle: true, resultat: true } },
         controlesVisuels: { select: { dateControle: true, resultat: true } },
         controlesRessuage: { select: { dateControle: true, resultat: true } },
@@ -93,6 +125,26 @@ export default async function JointsPage() {
                 const estDernierDeLaChaine = !jointsAffaire.some(
                   (autre) => autre.numero === j.numero && autre.indiceReparation === j.indiceReparation + 1
                 );
+
+                // Rapprochement QS/WPS, purement indicatif — voir
+                // src/lib/verificationQS.ts. Affiché seulement quand il y a
+                // un constat net (non couvert, ou aucune qualification
+                // soudage) : pas de bruit quand les données manquent juste
+                // pour conclure.
+                let alerteQS: string | null = null;
+                if (j.soudeur && j.wps) {
+                  const qualificationsActives = j.soudeur.qualifications.filter(
+                    (q) =>
+                      calculerStatut(q.dateExpiration, { suspendu: q.statut === "SUSPENDU" }) !== "EXPIRE" &&
+                      q.statut !== "SUSPENDU"
+                  );
+                  const resultatQS = verifierQS(qualificationsActives, j.wps);
+                  if (resultatQS.statut === "NON_COUVERT") {
+                    alerteQS = `QS : aucune qualification ne couvre ce WPS (${resultatQS.ecarts.join(" ; ")})`;
+                  } else if (resultatQS.statut === "AUCUNE_QUALIFICATION") {
+                    alerteQS = "QS : ce soudeur n'a aucune qualification soudage enregistrée";
+                  }
+                }
                 return (
                   <li
                     key={j.id}
@@ -120,6 +172,11 @@ export default async function JointsPage() {
                     {fncsOuvertes.length > 0 && (
                       <span style={{ marginLeft: "0.6rem", color: "#d03b3b" }}>
                         {fncsOuvertes.length} FNC ouverte(s) : {fncsOuvertes.map((f) => f.reference).join(", ")}
+                      </span>
+                    )}
+                    {alerteQS && (
+                      <span style={{ marginLeft: "0.6rem", color: "#fab219" }} title="Vérification indicative, à confirmer par une personne compétente">
+                        ⚠ {alerteQS}
                       </span>
                     )}
                     {estDernierDeLaChaine && <DeclarerReparation jointId={j.id} fncsOuvertes={fncsOuvertes} />}

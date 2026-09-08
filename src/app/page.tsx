@@ -29,7 +29,8 @@ export default async function HomePage() {
         </div>
       </div>
       <p>
-        Squelette de démonstration : liste des affaires, joints et FNC. <Link href="/personnel">Personnel →</Link>
+        Squelette de démonstration : liste des affaires, joints et FNC. <Link href="/personnel">Personnel →</Link>{" "}
+        <Link href="/alertes">Alertes →</Link>
       </p>
       <ul>
         {affaires.map((a) => (

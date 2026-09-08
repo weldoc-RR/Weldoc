@@ -3,7 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { determinerCriteres, evaluerConformite, type Mesure } from "@/lib/tolerances";
 import { requireAuth } from "@/lib/auth";
-import { calculerStatutOutil } from "@/lib/statutOutil";
+import { calculerStatutOutil, outilUtilisable } from "@/lib/statutOutil";
 
 const MesureSchema = z.object({
   position: z.string(),
@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Outil introuvable." }, { status: 422 });
     }
     const statutOutil = calculerStatutOutil(outil.dateEcheance, { horsService: outil.statut === "HORS_SERVICE" });
-    if (statutOutil !== "VALIDE") {
+    if (!outilUtilisable(statutOutil)) {
       return NextResponse.json(
         {
           error: `Outil "${outil.reference}" ${statutOutil === "HORS_SERVICE" ? "hors service" : "avec vérification expirée"} : contrôle refusé.`,

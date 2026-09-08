@@ -61,6 +61,9 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   - `GET /api/outils/qr/[valeur]` — identification d'un outil à partir
     d'un scan QR, avec vérification de validité immédiate (échéance,
     hors service)
+  - `GET /api/alertes` — outils bientôt à échéance (60 jours, même seuil
+    que pour les qualifications) ou déjà expirés ; voir aussi la page
+    `/alertes`
   - `PATCH /api/fnc` — faire avancer le workflow d'une FNC ; faire passer
     une FNC en VALIDATION ou CLOTUREE est réservé au niveau 3 et
     enregistré dans l'audit trail (traçabilité de la décision de validation)
@@ -132,6 +135,9 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   réservé aux personnes connectées).
 - `src/app/personnel/page.tsx` — liste du personnel, ses fonctions et le
   statut de ses qualifications.
+- `src/app/alertes/page.tsx` — outils bientôt à échéance ou expirés,
+  visible dans l'application sans rien configurer. Pas encore d'envoi par
+  email (voir "Ce qui n'est pas encore fait").
 - `prisma.config.ts` — configuration Prisma (schéma, migrations) : utilise
   `DATABASE_URL` en connexion PostgreSQL classique, utilisée par la CLI
   (`prisma migrate`, etc.).
@@ -174,6 +180,16 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
 - L'import du CCPU et la reconnaissance de caractères sur étiquette
   (consommables comme matières) : pour l'instant les URLs de documents se
   renseignent à la main.
+- L'envoi des alertes par email : pour l'instant elles ne sont visibles
+  que dans l'application (`/alertes`). L'envoi réel demande un service
+  d'envoi d'emails (ex. Resend, Postmark) à configurer avec vos
+  identifiants, et de savoir qui doit recevoir quoi (Personnel n'a pas
+  encore de champ email).
+- Les autres types d'alertes évoqués au cahier des charges (qualifications
+  à échéance, habilitations expirées, FNC ouvertes, validations niveau 3
+  en attente...) : pour l'instant `/api/alertes` ne couvre que
+  l'outillage ; l'information existe déjà ailleurs (`statutCalcule` sur
+  chaque fiche) mais n'est pas encore centralisée ici.
 - L'essentiel des ~50 modules du cahier des charges (TQC, rapports de fin
   de fabrication, dossier réglementaire, REX, etc.).
 - Une vraie interface tablette soignée (ici, des pages HTML minimales).

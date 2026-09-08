@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
-import { calculerStatutOutil } from "@/lib/statutOutil";
+import { calculerStatutOutil, outilUtilisable } from "@/lib/statutOutil";
 
 // GET /api/outils/qr/[valeur] — identification d'un outil à partir de la
 // valeur lue au scan (caméra tablette ou douchette), avec vérification de
@@ -22,6 +22,6 @@ export async function GET(req: NextRequest, { params }: { params: { valeur: stri
   return NextResponse.json({
     ...outil,
     statutCalcule,
-    valide: statutCalcule === "VALIDE",
+    valide: outilUtilisable(statutCalcule),
   });
 }

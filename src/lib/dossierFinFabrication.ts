@@ -66,6 +66,7 @@ export interface DossierFinFabrication {
     jointNumero: string | null;
   }[];
   elementsManquants: ElementManquant[];
+  photosCount: number;
   validation: { personnel: { nom: string; prenom: string }; dateSignature: Date } | null;
 }
 
@@ -80,7 +81,7 @@ export async function compilerDossierFinFabrication(affaireId: string): Promise<
     (id): id is string => Boolean(id)
   );
 
-  const [personnesRoles, joints, fncs, validation] = await Promise.all([
+  const [personnesRoles, joints, fncs, validation, photosCount] = await Promise.all([
     prisma.personnel.findMany({ where: { id: { in: idsRoles } }, select: { id: true, nom: true, prenom: true } }),
     prisma.joint.findMany({
       where: { affaireId },
@@ -123,6 +124,7 @@ export async function compilerDossierFinFabrication(affaireId: string): Promise<
       orderBy: { dateSignature: "desc" },
       include: { personnel: { select: { nom: true, prenom: true } } },
     }),
+    prisma.photo.count({ where: { affaireId } }),
   ]);
 
   const avancement = await calculerAvancementAffaire(affaireId);
@@ -278,6 +280,7 @@ export async function compilerDossierFinFabrication(affaireId: string): Promise<
       jointNumero: f.joint?.numero ?? null,
     })),
     elementsManquants,
+    photosCount,
     validation: validation ? { personnel: validation.personnel, dateSignature: validation.dateSignature } : null,
   };
 }

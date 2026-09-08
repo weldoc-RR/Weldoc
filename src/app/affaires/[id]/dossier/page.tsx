@@ -24,7 +24,8 @@ export default async function DossierPage({ params }: { params: { id: string } }
     <main style={{ fontFamily: "sans-serif", padding: "2rem", maxWidth: 900 }}>
       <style>{`@media print { .no-print { display: none; } }`}</style>
       <p className="no-print">
-        <Link href="/">← Affaires</Link> · <Link href={`/avancement/${dossier.affaire.id}`}>Avancement détaillé →</Link>
+        <Link href="/">← Affaires</Link> · <Link href={`/avancement/${dossier.affaire.id}`}>Avancement détaillé →</Link> ·{" "}
+        <Link href={`/affaires/${dossier.affaire.id}/photos`}>Book photo ({dossier.photosCount}) →</Link>
       </p>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start" }}>
         <h1>Rapport de fin de fabrication</h1>

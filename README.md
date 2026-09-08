@@ -212,6 +212,20 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
     pas de génération de PDF côté serveur pour l'instant, ce qui
     ajouterait une dépendance à choisir avec vous). Lien depuis la page
     d'accueil, à côté de chaque affaire.
+- Modèle `Photo` — "book photo" du cahier des charges : photos horodatées
+  rattachées à une affaire et, optionnellement, à une phase/un joint/une
+  FNC précis. `url` reste du texte libre pour l'instant (comme
+  `FicheTechniqueSoudage.photosUrls`/`Piece.photosUrls` ailleurs dans le
+  modèle) : une vraie prise en charge de fichiers suppose de choisir un
+  hébergeur, ce qui engage un coût récurrent à discuter avec vous avant de
+  s'engager.
+  - `GET`/`POST /api/photos` — filtrable par affaire/joint/phase/FNC ;
+    l'auteur est toujours la personne connectée.
+  - `src/app/affaires/[id]/photos/page.tsx` — le book photo d'une
+    affaire : galerie + formulaire d'ajout (adresse de la photo, légende,
+    et rattachement optionnel à un joint/une phase/une FNC). Lien depuis
+    la page d'accueil et depuis le rapport de fin de fabrication (qui
+    affiche aussi le nombre de photos).
 - `src/lib/planning.ts` — la vérification avant affectation. **Limite
   assumée** : la correspondance fonction → type de qualification requis
   (ex. "soudeur" → qualification SOUDAGE) est une liste en dur, pas une
@@ -461,15 +475,23 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   joints/contrôles qui la concernent au fil de la fabrication n'est pas
   encore modélisé — pour l'instant `Piece` et `Joint` restent deux objets
   indépendants.
-- L'upload réel de photos : `Piece.photosUrls` (comme `photosUrls`
-  ailleurs dans l'application) attend des URLs déjà hébergées quelque
-  part, il n'y a pas encore de téléversement de fichier intégré à Weldoc.
+- L'upload réel de photos : `Piece.photosUrls`, `FicheTechniqueSoudage.photosUrls`
+  et maintenant le modèle `Photo` (book photo) attendent tous des URLs déjà
+  hébergées quelque part, il n'y a pas encore de téléversement de fichier
+  intégré à Weldoc.
 - L'avancement (`/avancement`) reste au niveau des phases du séquencement,
   pas encore joint par joint (ex. "38 joints soudés sur 120 prévus") : ça
   suppose de connaître à l'avance le nombre de joints prévus sur l'affaire,
   ce qui n'est pas encore saisi dans Weldoc.
-- L'essentiel des ~50 modules du cahier des charges (TQC, REX, etc.). Le
-  rapport de fin de fabrication a une première version (voir ci-dessus),
+- L'essentiel des ~50 modules du cahier des charges (REX, etc.). Le book
+  photo a une première version (voir ci-dessus), mais pas le TQC ("tel que
+  construit") lui-même : les trois méthodes prévues au cahier des charges
+  (ISO manuel au stylet sur tablette, ISO issu d'un scan 3D externe, book
+  photo pour localiser/identifier les soudures) restent à construire au-delà
+  du book photo — l'annotation au stylet et l'intégration d'un scan 3D sont
+  des chantiers UI/technique nettement plus lourds que ce qui a été fait
+  jusqu'ici. Le rapport de fin de fabrication a une première version (voir
+  ci-dessus),
   mais le "dossier réglementaire" à proprement parler — le suivi, point
   par point, des exigences réglementaires avec ses 5 statuts (non
   bloquant / bloquant / sous réserve / attente décision / déblocage

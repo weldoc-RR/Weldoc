@@ -44,6 +44,7 @@ model Personnel {
   indisponibilites Indisponibilite[]
   affectations    Affectation[]
   compte          Compte?
+  photosAjoutees  Photo[]              @relation("AuteurPhoto")
 
   @@index([societe])
 }
@@ -300,6 +301,7 @@ model Affaire {
   affectations      Affectation[]
   demandesSequencement DemandeModificationSequencement[]
   pieces            Piece[]
+  photos            Photo[]
 }
 
 model Referentiel {
@@ -346,6 +348,7 @@ model Phase {
   obligatoire  Boolean     @default(true)
   statut       StatutPhase @default(A_FAIRE)
   justificationNA String?
+  photos       Photo[]
 }
 
 model Matiere {
@@ -420,6 +423,7 @@ model Joint {
   // de `fncs`, qui liste les FNC ouvertes SUR ce joint.
   fncsResolues    FNC[]    @relation("ActionCorrectiveFNC")
   affectations    Affectation[]
+  photos          Photo[]
 
   @@unique([affaireId, numero, indiceReparation])
   @@index([affaireId])
@@ -791,6 +795,36 @@ model FNC {
   dateCreation      DateTime  @default(now())
   dateCloture       DateTime?
   valideeParId      String?
+  photos            Photo[]
+}
+
+// Book photo (voir le cahier des charges) : photos horodatées rattachées à
+// une affaire et, optionnellement, à une phase/un joint/une FNC précis —
+// utilisées pour la prise en charge, le suivi, les contrôles, les FNC, le
+// TQC et la restitution. `url` reste du texte libre pour l'instant : pas
+// encore de téléversement de fichier intégré à Weldoc (comme
+// `FicheTechniqueSoudage.photosUrls`/`Piece.photosUrls` ailleurs dans le
+// modèle) — une vraie prise en charge de fichiers suppose de choisir un
+// hébergeur, à discuter avec l'entreprise avant de s'engager sur un coût
+// récurrent.
+model Photo {
+  id          String    @id @default(cuid())
+  affaire     Affaire   @relation(fields: [affaireId], references: [id])
+  affaireId   String
+  phase       Phase?    @relation(fields: [phaseId], references: [id])
+  phaseId     String?
+  joint       Joint?    @relation(fields: [jointId], references: [id])
+  jointId     String?
+  fnc         FNC?      @relation(fields: [fncId], references: [id])
+  fncId       String?
+  url         String
+  commentaire String?
+  auteur      Personnel @relation("AuteurPhoto", fields: [auteurId], references: [id])
+  auteurId    String
+  dateAjout   DateTime  @default(now())
+
+  @@index([affaireId])
+  @@index([jointId])
 }
 
 // Actions possibles de remise en conformité, comme listées au cahier des

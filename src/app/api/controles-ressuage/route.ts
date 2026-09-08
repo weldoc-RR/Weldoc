@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
 import { IndicationSchema, calculerResultat } from "@/lib/controles";
+import { avancerFNCApresControleConforme } from "@/lib/remiseEnConformite";
 
 const CreateControleRessuageSchema = z.object({
   jointId: z.string().min(1),
@@ -94,6 +95,8 @@ export async function POST(req: NextRequest) {
         statut: "DETECTION",
       },
     });
+  } else if (resultat === "CONFORME") {
+    await avancerFNCApresControleConforme(jointId);
   }
 
   return NextResponse.json({ controle, fncCreee: fnc }, { status: 201 });

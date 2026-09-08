@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { determinerCriteres, evaluerConformite, type Mesure } from "@/lib/tolerances";
 import { requireAuth } from "@/lib/auth";
 import { calculerStatutOutil, outilUtilisable } from "@/lib/statutOutil";
+import { avancerFNCApresControleConforme } from "@/lib/remiseEnConformite";
 
 const MesureSchema = z.object({
   position: z.string(),
@@ -97,6 +98,11 @@ export async function POST(req: NextRequest) {
         statut: "DETECTION",
       },
     });
+  } else if (resultat === "CONFORME") {
+    // Si ce contrôle porte sur un joint de réparation et répond à une FNC en
+    // action corrective, la FNC avance à CONTROLE (jamais plus loin sans
+    // décision niveau 3 — voir src/lib/remiseEnConformite.ts).
+    await avancerFNCApresControleConforme(jointId);
   }
 
   return NextResponse.json({ controle, criteres, fncCreee: fnc }, { status: 201 });

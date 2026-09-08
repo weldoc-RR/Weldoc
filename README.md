@@ -104,6 +104,16 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   - `PATCH /api/fnc` — faire avancer le workflow d'une FNC ; faire passer
     une FNC en VALIDATION ou CLOTUREE est réservé au niveau 3 et
     enregistré dans l'audit trail (traçabilité de la décision de validation)
+  - `POST /api/joints/[id]/reparation` — remise en conformité (réparation,
+    meulage, resurfaçage, reprise, remplacement, contrôle complémentaire) :
+    crée un nouveau joint lié au joint d'origine (même numéro, indice de
+    réparation incrémenté — M800 → M800 R1 → M800 R2...), qui n'est jamais
+    modifié ni écrasé. Si elle répond à une FNC, celle-ci passe en
+    ACTION_CORRECTIVE et s'y rattache. Un nouveau contrôle conforme réalisé
+    ensuite sur ce joint fait automatiquement avancer la FNC jusqu'à
+    CONTROLE (jamais plus loin sans décision niveau 3, voir `PATCH /api/fnc`
+    ci-dessus) — ce comportement est branché sur les six types de
+    contrôles existants
   - `POST /api/personnel/[id]/fonctions` — ajouter une fonction (soudeur,
     contrôleur, chargé de travaux...) à une personne (niveau 2 minimum)
   - `GET /api/personnel/[id]` — fiche complète : fonctions, qualifications,
@@ -151,6 +161,8 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
 - `src/lib/sequencement.ts` — crée les 5 séquences par défaut, et vérifie
   qu'une phase peut démarrer (séquences précédentes terminées, ou
   dérogation acceptée par le niveau 3).
+- `src/lib/remiseEnConformite.ts` — fait avancer une FNC de ACTION_CORRECTIVE
+  à CONTROLE après un contrôle conforme sur le joint qui la résout.
 - `src/lib/planning.ts` — la vérification avant affectation. **Limite
   assumée** : la correspondance fonction → type de qualification requis
   (ex. "soudeur" → qualification SOUDAGE) est une liste en dur, pas une
@@ -248,6 +260,10 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
 - L'upload réel de photos : `Piece.photosUrls` (comme `photosUrls`
   ailleurs dans l'application) attend des URLs déjà hébergées quelque
   part, il n'y a pas encore de téléversement de fichier intégré à Weldoc.
+- Une page listant les joints d'une affaire (avec leurs réparations
+  affichées "M800 R1", "M800 R2"...) : les joints ne sont pour l'instant
+  consultables que par l'API, comme le reste avant cette session pour les
+  matières/outillage.
 - L'essentiel des ~50 modules du cahier des charges (TQC, rapports de fin
   de fabrication, dossier réglementaire, REX, etc.).
 - Une vraie interface tablette soignée (ici, des pages HTML minimales).

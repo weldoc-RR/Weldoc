@@ -349,6 +349,9 @@ model Joint {
   jointParentId   String?
   reparations     Joint[]  @relation("Reparations")
   indiceReparation Int     @default(0)
+  // Nature de l'action de remise en conformité pour ce joint, quand c'est
+  // une réparation (null pour un joint d'origine, indiceReparation 0).
+  typeAction      TypeActionRemiseEnConformite?
 
   ficheSoudage    FicheTechniqueSoudage?
   controlesDim    ControleDimensionnel[]
@@ -358,6 +361,9 @@ model Joint {
   controlesRadiographie  ControleRadiographie[]
   controlesUltrasons     ControleUltrasons[]
   fncs            FNC[]
+  // FNC dont CE joint (une réparation) est l'action corrective — distinct
+  // de `fncs`, qui liste les FNC ouvertes SUR ce joint.
+  fncsResolues    FNC[]    @relation("ActionCorrectiveFNC")
   affectations    Affectation[]
 
   @@unique([affaireId, numero, indiceReparation])
@@ -618,9 +624,25 @@ model FNC {
   impact            ImpactFNC
   statut            StatutFNC @default(DETECTION)
   actionCorrective  String?
+  // Le joint de réparation qui constitue l'action corrective de cette FNC
+  // (voir POST /api/joints/[id]/reparation). Distinct de `joint` ci-dessus,
+  // qui est le joint sur lequel la FNC a été détectée.
+  actionCorrectiveJoint   Joint?    @relation("ActionCorrectiveFNC", fields: [actionCorrectiveJointId], references: [id])
+  actionCorrectiveJointId String?
   dateCreation      DateTime  @default(now())
   dateCloture       DateTime?
   valideeParId      String?
+}
+
+// Actions possibles de remise en conformité, comme listées au cahier des
+// charges.
+enum TypeActionRemiseEnConformite {
+  REPARATION
+  MEULAGE
+  RESURFACAGE
+  REPRISE
+  REMPLACEMENT
+  CONTROLE_COMPLEMENTAIRE
 }
 
 model Signature {

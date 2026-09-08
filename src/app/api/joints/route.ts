@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { requireAuth } from "@/lib/auth";
 
 const CreateJointSchema = z.object({
   affaireId: z.string().min(1),
@@ -33,6 +34,9 @@ async function prochainNumeroJoint(affaireId: string): Promise<string> {
 
 // GET /api/joints?affaireId=... — liste les joints d'une affaire
 export async function GET(req: NextRequest) {
+  const auth = await requireAuth(req);
+  if ("erreur" in auth) return auth.erreur;
+
   const affaireId = req.nextUrl.searchParams.get("affaireId");
   const joints = await prisma.joint.findMany({
     where: affaireId ? { affaireId } : undefined,
@@ -44,6 +48,9 @@ export async function GET(req: NextRequest) {
 
 // POST /api/joints — crée un nouveau joint avec numérotation automatique (M800, M801...)
 export async function POST(req: NextRequest) {
+  const auth = await requireAuth(req);
+  if ("erreur" in auth) return auth.erreur;
+
   const body = await req.json();
   const parsed = CreateJointSchema.safeParse(body);
 

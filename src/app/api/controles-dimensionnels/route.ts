@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { determinerCriteres, evaluerConformite, type Mesure } from "@/lib/tolerances";
+import { requireAuth } from "@/lib/auth";
 
 const MesureSchema = z.object({
   position: z.string(),
@@ -11,7 +12,6 @@ const MesureSchema = z.object({
 
 const CreateControleSchema = z.object({
   jointId: z.string().min(1),
-  controleurId: z.string().min(1),
   outilId: z.string().optional(),
   normeProduit: z.string().min(1),
   diametreNominalMm: z.number(),
@@ -24,6 +24,9 @@ const CreateControleSchema = z.object({
 // 2) évalue la conformité des mesures saisies par le contrôleur
 // 3) si hors tolérance, ouvre automatiquement une FNC liée au joint et au contrôle
 export async function POST(req: NextRequest) {
+  const auth = await requireAuth(req);
+  if ("erreur" in auth) return auth.erreur;
+
   const body = await req.json();
   const parsed = CreateControleSchema.safeParse(body);
 
@@ -31,8 +34,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const { jointId, controleurId, outilId, normeProduit, diametreNominalMm, epaisseurNominaleMm, mesures } =
-    parsed.data;
+  // Le contrôleur est la personne authentifiée qui saisit le contrôle, jamais
+  // une valeur transmise par le client : on ne peut pas signer le travail de
+  // quelqu'un d'autre.
+  const controleurId = auth.utilisateur.personnelId;
+  const { jointId, outilId, normeProduit, diametreNominalMm, epaisseurNominaleMm, mesures } = parsed.data;
 
   let criteres;
   try {

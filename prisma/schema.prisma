@@ -33,8 +33,49 @@ model Personnel {
   jointsSoudes    Joint[]              @relation("Soudeur")
   controlesRealises ControleDimensionnel[] @relation("Controleur")
   signatures      Signature[]
+  compte          Compte?
 
   @@index([societe])
+}
+
+// ============================================================================
+// AUTHENTIFICATION ET DROITS
+// ============================================================================
+// Le compte porte uniquement les identifiants de connexion. L'identifiant de
+// connexion est le matricule déjà présent sur Personnel (jamais dupliqué).
+// Le niveau de décision (1/2/3) qui détermine les droits reste sur Personnel :
+// un compte ne fait qu'authentifier une personne qui existe déjà.
+enum StatutCompte {
+  ACTIF
+  SUSPENDU
+}
+
+model Compte {
+  id                String       @id @default(cuid())
+  personnel         Personnel    @relation(fields: [personnelId], references: [id])
+  personnelId       String       @unique
+  motDePasseHash    String
+  statut            StatutCompte @default(ACTIF)
+  derniereConnexion DateTime?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  sessions          Session[]
+}
+
+// Sessions stockées côté serveur (et non un simple jeton auto-suffisant) afin
+// de pouvoir les révoquer immédiatement (compte suspendu, déconnexion) et
+// garder une trace des connexions.
+model Session {
+  id         String    @id @default(cuid())
+  compte     Compte    @relation(fields: [compteId], references: [id])
+  compteId   String
+  tokenHash  String    @unique
+  creeLe     DateTime  @default(now())
+  expireLe   DateTime
+  revoqueLe  DateTime?
+
+  @@index([compteId])
 }
 
 model PersonnelFonction {

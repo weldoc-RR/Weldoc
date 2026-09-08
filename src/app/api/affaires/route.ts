@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { requireAuth } from "@/lib/auth";
 
 const CreateAffaireSchema = z.object({
   numero: z.string().min(1),
@@ -13,7 +14,10 @@ const CreateAffaireSchema = z.object({
 });
 
 // GET /api/affaires — liste toutes les affaires
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const auth = await requireAuth(req);
+  if ("erreur" in auth) return auth.erreur;
+
   const affaires = await prisma.affaire.findMany({
     orderBy: { createdAt: "desc" },
     include: { joints: true, fncs: true },
@@ -23,6 +27,9 @@ export async function GET() {
 
 // POST /api/affaires — crée une nouvelle affaire (le "conteneur" principal)
 export async function POST(req: NextRequest) {
+  const auth = await requireAuth(req);
+  if ("erreur" in auth) return auth.erreur;
+
   const body = await req.json();
   const parsed = CreateAffaireSchema.safeParse(body);
 

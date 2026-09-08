@@ -1,8 +1,16 @@
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { getUtilisateurConnecteServeur } from "@/lib/auth";
+import { LogoutButton } from "./logout-button";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
+  const utilisateur = await getUtilisateurConnecteServeur();
+  if (!utilisateur) {
+    redirect("/login");
+  }
+
   const affaires = await prisma.affaire.findMany({
     include: { joints: true, fncs: true },
     orderBy: { createdAt: "desc" },
@@ -10,7 +18,15 @@ export default async function HomePage() {
 
   return (
     <main style={{ fontFamily: "sans-serif", padding: "2rem" }}>
-      <h1>Weldoc — Affaires</h1>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <h1>Weldoc — Affaires</h1>
+        <div style={{ textAlign: "right" }}>
+          <p>
+            Connecté : {utilisateur.prenom} {utilisateur.nom} ({utilisateur.niveau})
+          </p>
+          <LogoutButton />
+        </div>
+      </div>
       <p>Squelette de démonstration : liste des affaires, joints et FNC.</p>
       <ul>
         {affaires.map((a) => (

@@ -26,12 +26,29 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   traçable vers une norme et une version, comme demandé dans le cahier des
   charges.
 - `src/app/api/` — points d'entrée de l'application :
-  - `POST /api/affaires` — créer une affaire
-  - `POST /api/joints` — créer un joint (numérotation automatique)
-  - `POST /api/controles-dimensionnels` — réaliser un contrôle, avec
-    ouverture automatique de FNC si hors tolérance
-  - `PATCH /api/fnc` — faire avancer le workflow d'une FNC
-- `src/app/page.tsx` — page d'accueil minimale listant les affaires.
+  - `POST /api/personnel` — créer une fiche personne minimale (identité + niveau)
+  - `POST /api/auth/comptes` — créer le compte de connexion d'une personne
+    (le tout premier compte de l'entreprise s'amorce librement ; les suivants
+    exigent d'être créés par une personne de niveau 3)
+  - `POST /api/auth/login` — connexion (matricule + mot de passe)
+  - `POST /api/auth/logout` — déconnexion (révoque la session côté serveur)
+  - `GET /api/auth/me` — utilisateur actuellement connecté
+  - `POST /api/affaires` — créer une affaire (authentification requise)
+  - `POST /api/joints` — créer un joint (numérotation automatique,
+    authentification requise)
+  - `POST /api/controles-dimensionnels` — réaliser un contrôle (le
+    contrôleur est automatiquement la personne connectée), avec ouverture
+    automatique de FNC si hors tolérance
+  - `PATCH /api/fnc` — faire avancer le workflow d'une FNC ; faire passer
+    une FNC en VALIDATION ou CLOTUREE est réservé au niveau 3 et
+    enregistré dans l'audit trail (traçabilité de la décision de validation)
+- `src/lib/auth.ts` — briques d'authentification : mots de passe (hachés,
+  jamais stockés en clair), sessions côté serveur (révocables
+  immédiatement, par ex. si un compte est suspendu), vérification du
+  niveau d'accès requis pour une action.
+- `src/app/login/page.tsx` — page de connexion.
+- `src/app/page.tsx` — page d'accueil listant les affaires (accès
+  réservé aux personnes connectées).
 - `prisma.config.ts` — configuration Prisma (schéma, migrations) : utilise
   `DATABASE_URL` en connexion PostgreSQL classique, utilisée par la CLI
   (`prisma migrate`, etc.).
@@ -44,10 +61,19 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
 
 ## Ce qui n'est PAS encore fait (volontairement)
 
-- L'authentification réelle (comptes, rôles, droits par niveau).
+- Le module personnel/qualifications complet (fonctions, qualifications,
+  habilitations, formations, acuités visuelles...) : l'authentification ne
+  crée qu'une fiche personne minimale (identité + niveau).
+- Les droits contextuels fins évoqués au cahier des charges ("selon le
+  contexte de l'affaire") : pour l'instant, les droits ne dépendent que du
+  niveau (1/2/3) de la personne, pas encore de son rôle ni de l'affaire
+  concernée.
+- L'identification QR + PIN pour la signature de documents (distincte de la
+  connexion à l'application) : le champ `pinHash` existe sur Personnel mais
+  n'est pas encore utilisé.
 - L'essentiel des ~50 modules du cahier des charges (CND, TQC, planning,
   rapports de fin de fabrication, dossier réglementaire, REX, etc.).
-- Une vraie interface tablette soignée (ici, une page HTML minimale).
+- Une vraie interface tablette soignée (ici, des pages HTML minimales).
 - Les vraies valeurs de tolérances normatives (voir avertissement ci-dessus).
 - Les tests automatisés et le déploiement.
 
@@ -65,6 +91,24 @@ npm run dev
 ```
 
 L'application sera disponible sur http://localhost:3000
+
+La page d'accueil demande maintenant une connexion. Pour créer le tout
+premier compte (sur une base vide) :
+
+```bash
+# 1) créer une fiche personne (niveau 3 recommandé pour ce premier compte)
+curl -X POST http://localhost:3000/api/personnel \
+  -H "Content-Type: application/json" \
+  -d '{"matricule":"ADMIN-001","nom":"...","prenom":"...","societe":"...","niveau":"NIVEAU_3"}'
+
+# 2) créer son compte de connexion (l'id personnelId vient de l'étape précédente)
+curl -X POST http://localhost:3000/api/auth/comptes \
+  -H "Content-Type: application/json" \
+  -d '{"personnelId":"...","motDePasse":"..."}'
+```
+
+Ensuite, se connecter normalement sur http://localhost:3000/login avec ce
+matricule et ce mot de passe.
 
 ## Prochaine étape recommandée
 

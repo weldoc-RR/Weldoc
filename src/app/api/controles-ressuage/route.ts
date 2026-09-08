@@ -14,6 +14,7 @@ const CreateControleRessuageSchema = z.object({
   // Références vers la bibliothèque (POST /api/consommables-cnd), pas les
   // produits ressaisis ici.
   consommableIds: z.array(z.string()).optional(),
+  signatureId: z.string().optional(),
 });
 
 // GET /api/controles-ressuage?jointId=...
@@ -43,7 +44,7 @@ export async function POST(req: NextRequest) {
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
-  const { jointId, controleVisuelPrealableId, procedureRef, procedureVersion, indications, consommableIds } =
+  const { jointId, controleVisuelPrealableId, procedureRef, procedureVersion, indications, consommableIds, signatureId } =
     parsed.data;
 
   const joint = await prisma.joint.findUnique({ where: { id: jointId } });
@@ -70,6 +71,7 @@ export async function POST(req: NextRequest) {
       procedureVersion,
       indications: indications as object[],
       resultat,
+      signatureId,
     },
   });
 

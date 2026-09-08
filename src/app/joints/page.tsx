@@ -5,9 +5,11 @@ import { getUtilisateurConnecteServeur } from "@/lib/auth";
 import { annoterStatutProcedures } from "@/lib/procedures";
 import { calculerStatut } from "@/lib/statutValidite";
 import { verifierQS } from "@/lib/verificationQS";
+import { calculerStatutOutil, outilUtilisable } from "@/lib/statutOutil";
 import { AjouterJoint } from "./ajouter-joint";
 import { DeclarerReparation } from "./declarer-reparation";
 import { BadgeControle } from "./badge-controle";
+import { ControlesJoint } from "./controles-joint";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +24,7 @@ export default async function JointsPage() {
     redirect("/login");
   }
 
-  const [joints, affaires, soudeurs, matieres, wpsList] = await Promise.all([
+  const [joints, affaires, soudeurs, matieres, wpsList, consommablesList, outilsList] = await Promise.all([
     prisma.joint.findMany({
       include: {
         affaire: { select: { numero: true, client: true } },
@@ -60,7 +62,7 @@ export default async function JointsPage() {
           },
         },
         controlesDim: { select: { dateControle: true, resultat: true } },
-        controlesVisuels: { select: { dateControle: true, resultat: true } },
+        controlesVisuels: { select: { id: true, dateControle: true, resultat: true, procedureRef: true } },
         controlesRessuage: { select: { dateControle: true, resultat: true } },
         controlesMagnetoscopie: { select: { dateControle: true, resultat: true } },
         controlesRadiographie: { select: { dateControle: true, resultat: true } },
@@ -77,6 +79,14 @@ export default async function JointsPage() {
     }),
     prisma.matiere.findMany({ select: { id: true, affaireId: true, designation: true, nuance: true } }),
     prisma.wps.findMany({ select: { id: true, reference: true, version: true, dateEmission: true, retiree: true } }),
+    prisma.consommableCND.findMany({
+      select: { id: true, type: true, fabricant: true, reference: true, lot: true },
+      orderBy: { fabricant: "asc" },
+    }),
+    prisma.outil.findMany({
+      where: { statut: { not: "HORS_SERVICE" } },
+      select: { id: true, reference: true, type: true, dateEcheance: true, statut: true },
+    }),
   ]);
   // Seules les révisions en vigueur (les plus récentes, non retirées) sont
   // proposées pour un nouveau joint — les anciennes restent visibles mais
@@ -84,6 +94,11 @@ export default async function JointsPage() {
   const wpsEnVigueur = annoterStatutProcedures(wpsList, (w) => w.dateEmission).filter(
     (w) => w.statutAffiche === "EN_VIGUEUR"
   );
+  // Seuls les outils encore utilisables (voir POST /api/controles-dimensionnels,
+  // qui refuse un outil expiré ou hors service) sont proposés.
+  const outilsUtilisables = outilsList
+    .filter((o) => outilUtilisable(calculerStatutOutil(o.dateEcheance, { horsService: o.statut === "HORS_SERVICE" })))
+    .map((o) => ({ id: o.id, reference: o.reference, type: o.type }));
 
   // Regroupement par affaire puis par numéro de joint (les réparations
   // partagent le même numéro, avec un indiceReparation croissant), pour
@@ -180,6 +195,16 @@ export default async function JointsPage() {
                       </span>
                     )}
                     {estDernierDeLaChaine && <DeclarerReparation jointId={j.id} fncsOuvertes={fncsOuvertes} />}
+                    <ControlesJoint
+                      jointId={j.id}
+                      controlesVisuels={j.controlesVisuels.map((cv) => ({
+                        id: cv.id,
+                        procedureRef: cv.procedureRef,
+                        dateControle: cv.dateControle.toISOString(),
+                      }))}
+                      consommables={consommablesList}
+                      outils={outilsUtilisables}
+                    />
                   </li>
                 );
               })}

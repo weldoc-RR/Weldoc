@@ -10,6 +10,7 @@ const CreateControleSchema = z.object({
   procedureRef: z.string().min(1),
   procedureVersion: z.string().optional(),
   indications: z.array(IndicationSchema),
+  signatureId: z.string().optional(),
 });
 
 // GET /api/controles-ultrasons?jointId=...
@@ -37,7 +38,7 @@ export async function POST(req: NextRequest) {
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
-  const { jointId, procedureRef, procedureVersion, indications } = parsed.data;
+  const { jointId, procedureRef, procedureVersion, indications, signatureId } = parsed.data;
 
   const joint = await prisma.joint.findUnique({ where: { id: jointId } });
   if (!joint) {
@@ -54,6 +55,7 @@ export async function POST(req: NextRequest) {
       procedureVersion,
       indications: indications as object[],
       resultat,
+      signatureId,
     },
   });
 

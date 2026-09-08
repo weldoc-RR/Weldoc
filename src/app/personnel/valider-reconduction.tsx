@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { SignerQrPin } from "./signer-qr-pin";
+import { SignerQrPin } from "@/components/signer-qr-pin";
 
 export function ValiderReconduction({ qualificationId }: { qualificationId: string }) {
   const router = useRouter();

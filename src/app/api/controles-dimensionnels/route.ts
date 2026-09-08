@@ -19,6 +19,7 @@ const CreateControleSchema = z.object({
   diametreNominalMm: z.number(),
   epaisseurNominaleMm: z.number(),
   mesures: z.array(MesureSchema).min(1),
+  signatureId: z.string().optional(),
 });
 
 // POST /api/controles-dimensionnels
@@ -40,7 +41,7 @@ export async function POST(req: NextRequest) {
   // une valeur transmise par le client : on ne peut pas signer le travail de
   // quelqu'un d'autre.
   const controleurId = auth.utilisateur.personnelId;
-  const { jointId, outilId, normeProduit, diametreNominalMm, epaisseurNominaleMm, mesures } = parsed.data;
+  const { jointId, outilId, normeProduit, diametreNominalMm, epaisseurNominaleMm, mesures, signatureId } = parsed.data;
 
   // Vérification de l'outil de mesure (rattachement automatique au PV,
   // comme demandé au cahier des charges) : un outil expiré ou hors service
@@ -79,6 +80,7 @@ export async function POST(req: NextRequest) {
       mesures: mesures as object,
       criteresAppliques: criteres as unknown as object,
       resultat,
+      signatureId,
     },
   });
 

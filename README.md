@@ -281,7 +281,17 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   les FNC ouvertes ; permet aussi de déclarer une remise en conformité
   directement depuis la page (utilise l'API déjà existante). Le WPS peut
   être choisi dans la bibliothèque (voir ci-dessous) ou saisi en texte
-  libre si la fiche n'y est pas encore.
+  libre si la fiche n'y est pas encore. Chaque joint a maintenant ses
+  boutons "+ DIM/VT/PT/MT/RT/UT" pour saisir un contrôle directement
+  depuis la page : les cinq méthodes à indications (VT, PT, MT, RT, UT)
+  partagent le même formulaire (`controle-generique-form.tsx` — une seule
+  indication non conforme rend le contrôle entier non conforme), le
+  ressuage (PT) y ajoute le contrôle visuel préalable obligatoire et les
+  consommables utilisés, et le contrôle dimensionnel a son propre
+  formulaire (outil de mesure, norme produit, mesures — le résultat est
+  toujours calculé côté serveur, jamais saisi). Chaque contrôle exige une
+  signature QR/matricule + PIN avant de pouvoir être enregistré (voir
+  `src/lib/signature.ts`).
 - `src/lib/procedures.ts` — bibliothèque des WPS/DMOS et des QMOS
   (`GET`/`POST`/`PATCH /api/wps` et `/api/qmos`, page `/procedures`) :
   une nouvelle révision (Rev 0, Rev 1...) n'écrase jamais la précédente,
@@ -347,12 +357,11 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   (voir ci-dessus) identifie et authentifie la personne, mais Weldoc ne
   vérifie pas encore qu'elle a le droit de signer ce document précis
   au-delà du niveau requis pour l'action elle-même.
-- La signature QR + PIN n'est branchée que sur la validation d'une
-  reconduction et sur la confirmation de validité de qualification (voir
-  ci-dessus) : les six types de contrôle et la fiche technique de soudage
-  ont bien un champ `signatureId` dans le modèle, mais pas encore de
-  formulaire de saisie du tout (contrôles API seulement) — le brancher
-  s'y fera avec l'interface de saisie de chaque contrôle, à construire.
+- La signature QR + PIN couvre maintenant la validation d'une reconduction,
+  la confirmation de validité de qualification et les six types de
+  contrôle (voir ci-dessus). Il reste la fiche technique de soudage
+  (`FicheTechniqueSoudage`, qui a bien un champ `signatureId` dans le
+  modèle) : pas encore d'API ni d'écran de saisie du tout pour elle.
 - La bibliothèque de consommables pour MT/RT/UT (elle n'existe que pour
   le ressuage) : leur traçabilité porte surtout sur l'équipement, la
   source ou le film, pas encore couverte.

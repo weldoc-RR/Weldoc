@@ -49,7 +49,14 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
     certificat, coulée/lot...), niveau 2 minimum ; réutilisée ensuite sur
     chaque joint (`Joint.matiereId`) sans être ressaisie
   - `POST /api/outils` — enregistrer un outil de métrologie/outillage,
-    avec un QR code généré automatiquement (niveau 2 minimum)
+    avec un QR code généré automatiquement (niveau 2 minimum). Si la date
+    d'échéance n'est pas saisie, elle est calculée automatiquement à
+    partir de la date de vérification : **1 an par défaut, 6 mois pour
+    une pince ampèremétrique** (règle dans `src/lib/statutOutil.ts`,
+    comparaison sur le type d'outil — à étendre là si d'autres exceptions
+    doivent être déclarées)
+  - `PATCH /api/outils` — enregistrer une nouvelle vérification (recalcule
+    l'échéance selon la même règle)
   - `GET /api/outils/qr/[valeur]` — identification d'un outil à partir
     d'un scan QR, avec vérification de validité immédiate (échéance,
     hors service)

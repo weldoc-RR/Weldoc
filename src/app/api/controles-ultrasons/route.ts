@@ -2,16 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
-import { IndicationSchema, calculerResultat } from "@/lib/controles";
+import { IndicationSchema, ConditionsExamenSchema, calculerResultat, extraireConditionsExamen } from "@/lib/controles";
 import { avancerFNCApresControleConforme } from "@/lib/remiseEnConformite";
 
-const CreateControleSchema = z.object({
-  jointId: z.string().min(1),
-  procedureRef: z.string().min(1),
-  procedureVersion: z.string().optional(),
-  indications: z.array(IndicationSchema),
-  signatureId: z.string().optional(),
-});
+const CreateControleSchema = z
+  .object({
+    jointId: z.string().min(1),
+    procedureRef: z.string().min(1),
+    procedureVersion: z.string().optional(),
+    indications: z.array(IndicationSchema),
+    signatureId: z.string().optional(),
+  })
+  .merge(ConditionsExamenSchema);
 
 // GET /api/controles-ultrasons?jointId=...
 export async function GET(req: NextRequest) {
@@ -56,6 +58,7 @@ export async function POST(req: NextRequest) {
       indications: indications as object[],
       resultat,
       signatureId,
+      ...extraireConditionsExamen(parsed.data),
     },
   });
 

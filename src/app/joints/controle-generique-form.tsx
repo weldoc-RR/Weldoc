@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { SignerQrPin } from "@/components/signer-qr-pin";
 import { EditeurIndications } from "./editeur-indications";
 import { indicationVersJson, type IndicationFormulaire } from "./indications";
+import { EditeurConditionsExamen } from "./editeur-conditions-examen";
+import { conditionsExamenVide, conditionsExamenVersJson, type ConditionsExamenFormulaire } from "./conditions-examen";
 
 // Formulaire partagé pour les contrôles à indications (visuel, ressuage,
 // magnétoscopie, radiographie, ultrasons — voir src/lib/controles.ts) :
@@ -32,6 +34,7 @@ export function ControleGeneriqueForm({
   const [procedureRef, setProcedureRef] = useState("");
   const [procedureVersion, setProcedureVersion] = useState("");
   const [indications, setIndications] = useState<IndicationFormulaire[]>([]);
+  const [conditionsExamen, setConditionsExamen] = useState<ConditionsExamenFormulaire>(conditionsExamenVide());
   const [signatureId, setSignatureId] = useState<string | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
   const [enCours, setEnCours] = useState(false);
@@ -56,6 +59,7 @@ export function ControleGeneriqueForm({
         procedureVersion: procedureVersion || undefined,
         indications: indications.map(indicationVersJson),
         signatureId: signatureId ?? undefined,
+        ...conditionsExamenVersJson(conditionsExamen),
         ...champsExtra,
       }),
     });
@@ -80,6 +84,7 @@ export function ControleGeneriqueForm({
       </label>
       {extra}
       <EditeurIndications indications={indications} onChange={setIndications} />
+      <EditeurConditionsExamen valeurs={conditionsExamen} onChange={setConditionsExamen} />
       <div style={{ marginTop: "0.4rem" }}>
         <p style={{ fontSize: "0.8rem", margin: "0 0 0.2rem 0" }}>Signature du contrôleur (matricule/QR + PIN) :</p>
         <SignerQrPin

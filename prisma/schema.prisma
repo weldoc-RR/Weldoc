@@ -500,6 +500,13 @@ enum ResultatControle {
   A_VERIFIER
 }
 
+// Les 6 champs numeroPV.../moyensUtilises ci-dessous (et sur les 4 autres
+// méthodes de contrôle plus bas) sont propres au procès-verbal lui-même,
+// distincts de ce qui est déjà tracé ailleurs (type de joint, diamètre,
+// épaisseur, matière restent sur Joint ; jamais redemandés ici, voir le
+// PRINCIPE CENTRAL du cahier des charges). Tous facultatifs et en texte
+// libre : leurs valeurs possibles dépendent du référentiel de l'entreprise,
+// jamais imposées par Weldoc.
 model ControleVisuel {
   id             String            @id @default(cuid())
   joint          Joint             @relation(fields: [jointId], references: [id])
@@ -508,6 +515,16 @@ model ControleVisuel {
   controleurId   String
   procedureRef   String
   procedureVersion String?
+  numeroPV       String?
+  referentielAcceptation String?
+  editionReferentiel     String?
+  categorieConstruction  String?
+  niveauExamen           String?
+  methodeExamen          String?
+  surfacesExaminees      String?
+  etatSurface            String?
+  eclairage              String?
+  moyensUtilises         String?
   dateControle   DateTime          @default(now())
   // Indications : localisation, nature, dimensions, critère applicable,
   // conforme (bool), commentaire, photoUrl — une indication conforme reste
@@ -557,6 +574,16 @@ model ControleRessuage {
   controleVisuelPrealableId String
   procedureRef   String
   procedureVersion String?
+  numeroPV       String?
+  referentielAcceptation String?
+  editionReferentiel     String?
+  categorieConstruction  String?
+  niveauExamen           String?
+  methodeExamen          String?
+  surfacesExaminees      String?
+  etatSurface            String?
+  eclairage              String?
+  moyensUtilises         String?
   dateControle   DateTime          @default(now())
   indications    Json
   resultat       ResultatControle
@@ -591,6 +618,16 @@ model ControleMagnetoscopie {
   controleurId   String
   procedureRef   String
   procedureVersion String?
+  numeroPV       String?
+  referentielAcceptation String?
+  editionReferentiel     String?
+  categorieConstruction  String?
+  niveauExamen           String?
+  methodeExamen          String?
+  surfacesExaminees      String?
+  etatSurface            String?
+  eclairage              String?
+  moyensUtilises         String?
   dateControle   DateTime          @default(now())
   indications    Json
   resultat       ResultatControle
@@ -609,6 +646,16 @@ model ControleRadiographie {
   controleurId   String
   procedureRef   String
   procedureVersion String?
+  numeroPV       String?
+  referentielAcceptation String?
+  editionReferentiel     String?
+  categorieConstruction  String?
+  niveauExamen           String?
+  methodeExamen          String?
+  surfacesExaminees      String?
+  etatSurface            String?
+  eclairage              String?
+  moyensUtilises         String?
   dateControle   DateTime          @default(now())
   indications    Json
   resultat       ResultatControle
@@ -627,6 +674,16 @@ model ControleUltrasons {
   controleurId   String
   procedureRef   String
   procedureVersion String?
+  numeroPV       String?
+  referentielAcceptation String?
+  editionReferentiel     String?
+  categorieConstruction  String?
+  niveauExamen           String?
+  methodeExamen          String?
+  surfacesExaminees      String?
+  etatSurface            String?
+  eclairage              String?
+  moyensUtilises         String?
   dateControle   DateTime          @default(now())
   indications    Json
   resultat       ResultatControle

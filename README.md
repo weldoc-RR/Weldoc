@@ -292,6 +292,18 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   toujours calculé côté serveur, jamais saisi). Chaque contrôle exige une
   signature QR/matricule + PIN avant de pouvoir être enregistré (voir
   `src/lib/signature.ts`).
+  - Les cinq contrôles à indications (VT, PT, MT, RT, UT) portent aussi une
+    section facultative, repliée par défaut ("N° de PV, critères
+    d'acceptation et conditions d'examen") — `ConditionsExamenSchema` dans
+    `src/lib/controles.ts` : numéro de PV, référentiel d'acceptation et son
+    édition, catégorie de construction, niveau d'examen, méthode d'examen,
+    surfaces examinées, état de la surface, éclairage, moyens utilisés.
+    Tout est en texte libre : ces valeurs dépendent du référentiel du
+    client ou de l'entreprise (CODETI, CODAP, RCC-M...) et ne sont jamais
+    imposées par Weldoc. Ces champs sont propres au procès-verbal
+    lui-même : les données déjà portées par le joint (type de joint,
+    diamètre, épaisseur, matière) ne sont volontairement pas ressaisies
+    ici, conformément au principe "une donnée saisie une seule fois".
 - `src/lib/procedures.ts` — bibliothèque des WPS/DMOS et des QMOS
   (`GET`/`POST`/`PATCH /api/wps` et `/api/qmos`, page `/procedures`) :
   une nouvelle révision (Rev 0, Rev 1...) n'écrase jamais la précédente,

@@ -86,6 +86,7 @@ export default async function PersonnelPage() {
                       {(q.diametreMinMm || q.diametreMaxMm) && (
                         <> — diamètre {q.diametreMinMm ?? "?"} à {q.diametreMaxMm ?? "?"} mm</>
                       )}
+                      {q.organismeExamen && ` — examinée par ${q.organismeExamen}`}
                       {confirmation.prochaineDateDue && q.statut !== "SUSPENDU" && (
                         <>
                           {" — "}
@@ -93,7 +94,7 @@ export default async function PersonnelPage() {
                             confirmation {confirmation.enRetard ? "en retard depuis" : "due avant"} le{" "}
                             {confirmation.prochaineDateDue.toLocaleDateString("fr-FR")}
                           </span>
-                          <ConfirmerValidite qualificationId={q.id} />
+                          <ConfirmerValidite qualificationId={q.id} personnelId={p.id} />
                         </>
                       )}
                     </li>

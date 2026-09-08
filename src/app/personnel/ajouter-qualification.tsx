@@ -15,6 +15,7 @@ export function AjouterQualification({ personnel, referentiels }: { personnel: P
   const [reference, setReference] = useState("");
   const [norme, setNorme] = useState("");
   const [referentielId, setReferentielId] = useState("");
+  const [organismeExamen, setOrganismeExamen] = useState("");
   const [procede, setProcede] = useState("");
   const [codeQualification, setCodeQualification] = useState("");
   const [groupeMateriaux, setGroupeMateriaux] = useState("");
@@ -51,6 +52,7 @@ export function AjouterQualification({ personnel, referentiels }: { personnel: P
         reference,
         norme,
         referentielId: referentielId || undefined,
+        organismeExamen: organismeExamen || undefined,
         procede: procede || undefined,
         codeQualification: codeQualification || undefined,
         groupeMateriaux: groupeMateriaux || undefined,
@@ -72,6 +74,7 @@ export function AjouterQualification({ personnel, referentiels }: { personnel: P
     }
     setReference("");
     setNorme("");
+    setOrganismeExamen("");
     setProcede("");
     setCodeQualification("");
     setGroupeMateriaux("");
@@ -120,6 +123,10 @@ export function AjouterQualification({ personnel, referentiels }: { personnel: P
           </select>
         </label>
       )}
+      <label>
+        Organisme (ou personne) ayant examiné/délivré la qualification (optionnel)
+        <input type="text" value={organismeExamen} onChange={(e) => setOrganismeExamen(e.target.value)} style={{ display: "block", width: "100%", padding: "0.4rem" }} />
+      </label>
       <label>
         Procédé (ex. 141 / TIG, optionnel)
         <input type="text" value={procede} onChange={(e) => setProcede(e.target.value)} style={{ display: "block", width: "100%", padding: "0.4rem" }} />

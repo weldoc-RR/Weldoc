@@ -218,7 +218,15 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   `CONFIRMATION_VALIDITE` (ou de la date d'obtention s'il n'y en a pas
   encore eu), comme les autres statuts calculés de l'application. Alerte
   "bientôt due" (30 jours) ou "en retard" sur la page `/alertes` et dans
-  le récapitulatif hebdomadaire par email.
+  le récapitulatif hebdomadaire par email. Une confirmation peut se
+  justifier par un essai (rien à préciser) ou par l'activité réelle : le
+  bouton "Confirmer la validité" (`/personnel`) permet de citer des
+  joints déjà soudés par la personne comme preuve (`preuveJointIds` sur
+  l'événement, comme pour `RECONDUCTION_PROPOSEE`) — les joints indiqués
+  sont vérifiés (ils doivent exister et appartenir à cette personne).
+  `Qualification.organismeExamen` trace, en texte libre, qui a
+  examiné/délivré la qualification (pas forcément l'entreprise
+  elle-même).
 - `src/lib/auth.ts` — briques d'authentification : mots de passe (hachés,
   jamais stockés en clair), sessions côté serveur (révocables
   immédiatement, par ex. si un compte est suspendu), vérification du

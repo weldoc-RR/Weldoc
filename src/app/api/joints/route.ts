@@ -40,14 +40,17 @@ async function prochainNumeroJoint(affaireId: string): Promise<string> {
   return `M${dernierNum + 1}`;
 }
 
-// GET /api/joints?affaireId=... — liste les joints d'une affaire
+// GET /api/joints?affaireId=...&soudeurId=... — liste les joints d'une
+// affaire et/ou d'un soudeur (ex. pour choisir des joints comme preuve
+// d'une confirmation/reconduction de qualification)
 export async function GET(req: NextRequest) {
   const auth = await requireAuth(req);
   if ("erreur" in auth) return auth.erreur;
 
   const affaireId = req.nextUrl.searchParams.get("affaireId");
+  const soudeurId = req.nextUrl.searchParams.get("soudeurId");
   const joints = await prisma.joint.findMany({
-    where: affaireId ? { affaireId } : undefined,
+    where: { affaireId: affaireId ?? undefined, soudeurId: soudeurId ?? undefined },
     include: { soudeur: true, matiere: true, controlesDim: true, fncs: true },
     orderBy: { numero: "asc" },
   });

@@ -24,6 +24,9 @@ const CreateQualificationSchema = z.object({
   diametreMinMm: z.number().optional(),
   diametreMaxMm: z.number().optional(),
   domaineValidite: z.string().optional(),
+  // Organisme (ou personne) ayant examiné/délivré la qualification, sous sa
+  // responsabilité — pas forcément l'entreprise elle-même.
+  organismeExamen: z.string().optional(),
   // Périodicité des confirmations de validité exigées entre l'obtention et
   // l'échéance finale (ex. 6 pour "tous les 6 mois"), propre au
   // référentiel/à l'entreprise — voir src/lib/confirmationQualification.ts.

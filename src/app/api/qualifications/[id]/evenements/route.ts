@@ -21,6 +21,10 @@ const EvenementSchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("CONFIRMATION_VALIDITE"),
     commentaire: z.string().optional(),
+    // Justification par l'activité réelle (des joints soudés qui répondent
+    // aux critères), en plus ou à la place d'un essai — optionnel, comme
+    // RECONDUCTION_PROPOSEE.
+    preuveJointIds: z.array(z.string()).optional(),
   }),
 ]);
 
@@ -98,11 +102,29 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     // simple jalon périodique, distinct d'une reconduction/prolongation.
     // La prochaine échéance de confirmation est recalculée à la lecture à
     // partir de cet événement (voir src/lib/confirmationQualification.ts).
+    // La confirmation peut se justifier soit par un essai (rien à
+    // renseigner de plus), soit par l'activité réelle : les joints soudés
+    // par cette personne, cités comme preuve — mêmes joints doivent lui
+    // appartenir.
+    if (parsed.data.preuveJointIds && parsed.data.preuveJointIds.length > 0) {
+      const joints = await prisma.joint.findMany({ where: { id: { in: parsed.data.preuveJointIds } } });
+      const tousValides =
+        joints.length === parsed.data.preuveJointIds.length &&
+        joints.every((j) => j.soudeurId === qualification.personnelId);
+      if (!tousValides) {
+        return NextResponse.json(
+          { error: "Un ou plusieurs joints indiqués comme preuve sont introuvables ou ne concernent pas cette personne." },
+          { status: 422 }
+        );
+      }
+    }
+
     const evenement = await prisma.qualificationEvenement.create({
       data: {
         qualificationId: qualification.id,
         type: "CONFIRMATION_VALIDITE",
         commentaire: parsed.data.commentaire,
+        preuveJointIds: parsed.data.preuveJointIds ?? [],
         valideParId: utilisateur.personnelId,
       },
     });

@@ -140,6 +140,10 @@ model Qualification {
   diametreMinMm     Float?
   diametreMaxMm     Float?
   domaineValidite String?
+  // Organisme (ou personne) qui a examiné/délivré la qualification, sous sa
+  // responsabilité — pas forcément l'entreprise elle-même. Texte libre : sa
+  // forme dépend du référentiel et de qui réalise l'examen.
+  organismeExamen String?
   dateObtention  DateTime
   dateExpiration DateTime?
   // Certains référentiels exigent, en plus de l'échéance finale, des

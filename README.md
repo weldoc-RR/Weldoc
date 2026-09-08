@@ -65,8 +65,10 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
     que pour les qualifications) ou déjà expirés ; voir aussi la page
     `/alertes`
   - `POST /api/destinataires-alertes`, `DELETE /api/destinataires-alertes/[id]`
-    — gérer les adresses email qui reçoivent le récapitulatif hebdomadaire
-    (niveau 2 minimum) ; interface dans la page `/alertes`
+    — bibliothèque des destinataires du récapitulatif hebdomadaire (nom +
+    email, niveau 2 minimum) ; réenregistrer une adresse déjà présente met
+    à jour son nom plutôt que de la dupliquer ; interface dans la page
+    `/alertes`
   - `GET`/`POST /api/alertes/recapitulatif` — construit et envoie le
     récapitulatif hebdomadaire (chaque lundi 7h UTC via `vercel.json`, ou
     déclenchable à la main par une personne de niveau 3). **Sans effet
@@ -188,18 +190,13 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
 - L'import du CCPU et la reconnaissance de caractères sur étiquette
   (consommables comme matières) : pour l'instant les URLs de documents se
   renseignent à la main.
-- L'envoi réel des alertes par email : tout le mécanisme est prêt
-  (contenu du récapitulatif, gestion des destinataires, programmation
-  chaque lundi via `vercel.json`), il ne manque que la configuration du
-  service d'envoi. Pour l'activer :
-  1. Créer un compte sur [resend.com](https://resend.com) (offre gratuite
-     suffisante pour ce volume) et y vérifier un domaine d'expédition.
-  2. Renseigner `RESEND_API_KEY` (la clé API Resend) et
-     `ALERTES_EMAIL_FROM` (l'adresse d'expédition, ex.
-     `alertes@votredomaine.fr`) dans les variables d'environnement du
-     projet (fichier `.env` en local, ou dans les paramètres de
-     l'hébergeur en production).
-  3. Ajouter les adresses destinataires depuis la page `/alertes`.
+- L'envoi à plusieurs destinataires réels : `RESEND_API_KEY` est
+  configurée et l'envoi fonctionne (testé), mais `ALERTES_EMAIL_FROM`
+  utilise encore l'adresse de test de Resend (`onboarding@resend.dev`),
+  qui ne peut envoyer qu'à l'adresse associée à votre compte Resend. Pour
+  envoyer à toute l'équipe, il faut vérifier votre propre nom de domaine
+  dans Resend puis remplacer `ALERTES_EMAIL_FROM` par une adresse de ce
+  domaine (ex. `alertes@votredomaine.fr`).
   La programmation "chaque lundi" (`vercel.json`) ne prend effet que si
   le projet est déployé sur Vercel ; sur un autre hébergeur, il faudra un
   déclencheur équivalent qui appelle `GET /api/alertes/recapitulatif`

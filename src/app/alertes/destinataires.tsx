@@ -3,10 +3,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-type Destinataire = { id: string; email: string; actif: boolean };
+type Destinataire = { id: string; nom: string | null; email: string; actif: boolean };
 
 export function Destinataires({ initiaux }: { initiaux: Destinataire[] }) {
   const router = useRouter();
+  const [nom, setNom] = useState("");
   const [email, setEmail] = useState("");
   const [erreur, setErreur] = useState<string | null>(null);
   const [enCours, setEnCours] = useState(false);
@@ -19,7 +20,7 @@ export function Destinataires({ initiaux }: { initiaux: Destinataire[] }) {
     const res = await fetch("/api/destinataires-alertes", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
+      body: JSON.stringify({ nom: nom || undefined, email }),
     });
 
     setEnCours(false);
@@ -27,6 +28,7 @@ export function Destinataires({ initiaux }: { initiaux: Destinataire[] }) {
       setErreur("Impossible d'ajouter cette adresse.");
       return;
     }
+    setNom("");
     setEmail("");
     router.refresh();
   }
@@ -40,15 +42,15 @@ export function Destinataires({ initiaux }: { initiaux: Destinataire[] }) {
 
   return (
     <div>
-      <h2>Destinataires du récapitulatif hebdomadaire</h2>
-      <p>Chaque lundi, un résumé des alertes outillage est envoyé aux adresses ci-dessous.</p>
+      <h2>Bibliothèque des destinataires d'alertes</h2>
+      <p>Chaque lundi, un résumé des alertes outillage est envoyé aux personnes ci-dessous.</p>
       {actifs.length === 0 ? (
-        <p>Aucune adresse enregistrée pour l'instant.</p>
+        <p>Aucun destinataire enregistré pour l'instant.</p>
       ) : (
         <ul>
           {actifs.map((d) => (
             <li key={d.id}>
-              {d.email}{" "}
+              {d.nom ? `${d.nom} — ${d.email}` : d.email}{" "}
               <button onClick={() => retirer(d.id)} style={{ marginLeft: "0.5rem" }}>
                 Retirer
               </button>
@@ -56,7 +58,14 @@ export function Destinataires({ initiaux }: { initiaux: Destinataire[] }) {
           ))}
         </ul>
       )}
-      <form onSubmit={ajouter} style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+      <form onSubmit={ajouter} style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
+        <input
+          type="text"
+          value={nom}
+          onChange={(e) => setNom(e.target.value)}
+          placeholder="Nom (optionnel, ex. Responsable qualité)"
+          style={{ padding: "0.4rem" }}
+        />
         <input
           type="email"
           value={email}

@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAuth, requireNiveau } from "@/lib/auth";
 
 const CreateDestinataireSchema = z.object({
+  nom: z.string().optional(),
   email: z.string().email(),
 });
 
@@ -32,12 +33,15 @@ export async function POST(req: NextRequest) {
 
   const existant = await prisma.destinataireAlerte.findUnique({ where: { email: parsed.data.email } });
   if (existant) {
-    const destinataire = existant.actif
-      ? existant
-      : await prisma.destinataireAlerte.update({ where: { id: existant.id }, data: { actif: true } });
+    const destinataire = await prisma.destinataireAlerte.update({
+      where: { id: existant.id },
+      data: { actif: true, nom: parsed.data.nom ?? existant.nom },
+    });
     return NextResponse.json(destinataire);
   }
 
-  const destinataire = await prisma.destinataireAlerte.create({ data: { email: parsed.data.email } });
+  const destinataire = await prisma.destinataireAlerte.create({
+    data: { nom: parsed.data.nom, email: parsed.data.email },
+  });
   return NextResponse.json(destinataire, { status: 201 });
 }

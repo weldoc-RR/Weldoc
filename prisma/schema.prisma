@@ -688,6 +688,7 @@ model Affectation {
 // forcément des comptes Weldoc (ex. la boîte mail d'un responsable qualité).
 model DestinataireAlerte {
   id        String   @id @default(cuid())
+  nom       String?
   email     String   @unique
   actif     Boolean  @default(true)
   createdAt DateTime @default(now())

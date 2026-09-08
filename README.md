@@ -206,7 +206,17 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   affaire avec la chaîne de réparation affichée en clair (M800 → M800 R1 →
   M800 R2...), un badge par type de contrôle (résultat le plus récent) et
   les FNC ouvertes ; permet aussi de déclarer une remise en conformité
-  directement depuis la page (utilise l'API déjà existante).
+  directement depuis la page (utilise l'API déjà existante). Le WPS peut
+  être choisi dans la bibliothèque (voir ci-dessous) ou saisi en texte
+  libre si la fiche n'y est pas encore.
+- `src/lib/procedures.ts` — bibliothèque des WPS/DMOS et des QMOS
+  (`GET`/`POST`/`PATCH /api/wps` et `/api/qmos`, page `/procedures`) :
+  une nouvelle révision (Rev 0, Rev 1...) n'écrase jamais la précédente,
+  c'est un nouvel enregistrement ; le statut "en vigueur / ancienne
+  version / retirée" est recalculé à la lecture (jamais stocké), comme le
+  statut des qualifications ou de l'outillage ailleurs dans l'application.
+  Un WPS peut être relié à la QMOS qui le justifie. `Joint.wpsId`/`qmosId`
+  pointent vers la bibliothèque quand la fiche y existe.
 - `prisma.config.ts` — configuration Prisma (schéma, migrations) : utilise
   `DATABASE_URL` en connexion PostgreSQL classique, utilisée par la CLI
   (`prisma migrate`, etc.).
@@ -222,6 +232,12 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
 
 ## Ce qui n'est PAS encore fait (volontairement)
 
+- La "QS" (vérification que la qualification soudage du soudeur couvre bien
+  le WPS affecté à un joint — procédé, matériaux, épaisseur, position) :
+  le cahier des charges l'évoque dans le scénario MVP ("vérification
+  QS/WPS/QMOS"), mais ce rapprochement n'est pas encore automatisé ; la
+  qualification (`Qualification`, type SOUDAGE) et le WPS (`Wps`) existent
+  déjà séparément, il reste à les croiser.
 - La correspondance fine entre l'activité d'un joint (procédé, matériaux,
   diamètre) et le domaine de validité d'une qualification, pour la
   proposition automatique de reconduction (voir la limite assumée

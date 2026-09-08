@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getUtilisateurConnecteServeur } from "@/lib/auth";
+import { annoterStatutProcedures } from "@/lib/procedures";
 import { AjouterJoint } from "./ajouter-joint";
 import { DeclarerReparation } from "./declarer-reparation";
 import { BadgeControle } from "./badge-controle";
@@ -19,12 +20,13 @@ export default async function JointsPage() {
     redirect("/login");
   }
 
-  const [joints, affaires, soudeurs, matieres] = await Promise.all([
+  const [joints, affaires, soudeurs, matieres, wpsList] = await Promise.all([
     prisma.joint.findMany({
       include: {
         affaire: { select: { numero: true, client: true } },
         soudeur: { select: { nom: true, prenom: true } },
         matiere: { select: { designation: true, nuance: true } },
+        wps: { select: { reference: true, version: true } },
         controlesDim: { select: { dateControle: true, resultat: true } },
         controlesVisuels: { select: { dateControle: true, resultat: true } },
         controlesRessuage: { select: { dateControle: true, resultat: true } },
@@ -42,7 +44,14 @@ export default async function JointsPage() {
       orderBy: { nom: "asc" },
     }),
     prisma.matiere.findMany({ select: { id: true, affaireId: true, designation: true, nuance: true } }),
+    prisma.wps.findMany({ select: { id: true, reference: true, version: true, dateEmission: true, retiree: true } }),
   ]);
+  // Seules les révisions en vigueur (les plus récentes, non retirées) sont
+  // proposées pour un nouveau joint — les anciennes restent visibles mais
+  // ne doivent plus être choisies pour du travail neuf.
+  const wpsEnVigueur = annoterStatutProcedures(wpsList, (w) => w.dateEmission).filter(
+    (w) => w.statutAffiche === "EN_VIGUEUR"
+  );
 
   // Regroupement par affaire puis par numéro de joint (les réparations
   // partagent le même numéro, avec un indiceReparation croissant), pour
@@ -66,7 +75,7 @@ export default async function JointsPage() {
       </p>
 
       <h2>Créer un joint</h2>
-      <AjouterJoint affaires={affaires} soudeurs={soudeurs} matieres={matieres} />
+      <AjouterJoint affaires={affaires} soudeurs={soudeurs} matieres={matieres} wpsEnVigueur={wpsEnVigueur} />
 
       <h2 style={{ marginTop: "2rem" }}>Joints enregistrés</h2>
       {joints.length === 0 ? (
@@ -99,6 +108,7 @@ export default async function JointsPage() {
                     {j.typeAction && ` (${j.typeAction.toLowerCase()})`}
                     {j.soudeur && ` — ${j.soudeur.prenom} ${j.soudeur.nom}`}
                     {j.matiere && ` — ${j.matiere.designation} (${j.matiere.nuance})`}
+                    {j.wps && ` — WPS ${j.wps.reference} (${j.wps.version})`}
                     <span style={{ marginLeft: "0.6rem", display: "inline-flex", gap: "0.25rem" }}>
                       <BadgeControle sigle="DIM" dernierResultat={dernierResultat(j.controlesDim)} />
                       <BadgeControle sigle="VT" dernierResultat={dernierResultat(j.controlesVisuels)} />

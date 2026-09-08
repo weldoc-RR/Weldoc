@@ -6,15 +6,18 @@ import { useRouter } from "next/navigation";
 type Affaire = { id: string; numero: string; client: string };
 type Personnel = { id: string; nom: string; prenom: string };
 type Matiere = { id: string; affaireId: string; designation: string; nuance: string };
+type Wps = { id: string; reference: string; version: string };
 
 export function AjouterJoint({
   affaires,
   soudeurs,
   matieres,
+  wpsEnVigueur,
 }: {
   affaires: Affaire[];
   soudeurs: Personnel[];
   matieres: Matiere[];
+  wpsEnVigueur: Wps[];
 }) {
   const router = useRouter();
   const [affaireId, setAffaireId] = useState(affaires[0]?.id ?? "");
@@ -23,6 +26,7 @@ export function AjouterJoint({
   const [dn, setDn] = useState("");
   const [matiereId, setMatiereId] = useState("");
   const [soudeurId, setSoudeurId] = useState("");
+  const [wpsId, setWpsId] = useState("");
   const [wpsReference, setWpsReference] = useState("");
   const [erreur, setErreur] = useState<string | null>(null);
   const [enCours, setEnCours] = useState(false);
@@ -44,7 +48,8 @@ export function AjouterJoint({
         dn: dn || undefined,
         matiereId: matiereId || undefined,
         soudeurId: soudeurId || undefined,
-        wpsReference: wpsReference || undefined,
+        wpsId: wpsId || undefined,
+        wpsReference: wpsId ? undefined : wpsReference || undefined,
       }),
     });
 
@@ -58,6 +63,7 @@ export function AjouterJoint({
     setDn("");
     setMatiereId("");
     setSoudeurId("");
+    setWpsId("");
     setWpsReference("");
     router.refresh();
   }
@@ -123,9 +129,22 @@ export function AjouterJoint({
         </select>
       </label>
       <label>
-        Référence WPS (optionnel)
-        <input type="text" value={wpsReference} onChange={(e) => setWpsReference(e.target.value)} style={{ display: "block", width: "100%", padding: "0.4rem" }} />
+        WPS (bibliothèque, optionnel)
+        <select value={wpsId} onChange={(e) => setWpsId(e.target.value)} style={{ display: "block", width: "100%", padding: "0.4rem" }}>
+          <option value="">— non précisé —</option>
+          {wpsEnVigueur.map((w) => (
+            <option key={w.id} value={w.id}>
+              {w.reference} ({w.version})
+            </option>
+          ))}
+        </select>
       </label>
+      {!wpsId && (
+        <label>
+          ou référence WPS libre, si pas encore dans la bibliothèque (optionnel)
+          <input type="text" value={wpsReference} onChange={(e) => setWpsReference(e.target.value)} style={{ display: "block", width: "100%", padding: "0.4rem" }} />
+        </label>
+      )}
       <button type="submit" disabled={enCours}>
         {enCours ? "Création..." : "Créer le joint"}
       </button>

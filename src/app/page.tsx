@@ -30,8 +30,9 @@ export default async function HomePage() {
       </div>
       <p>
         Squelette de démonstration : liste des affaires, joints et FNC. <Link href="/personnel">Personnel →</Link>{" "}
-        <Link href="/joints">Joints →</Link> <Link href="/alertes">Alertes →</Link>{" "}
-        <Link href="/pieces">Pièces (atelier) →</Link> <Link href="/avancement">Avancement →</Link>
+        <Link href="/joints">Joints →</Link> <Link href="/procedures">WPS/QMOS →</Link>{" "}
+        <Link href="/alertes">Alertes →</Link> <Link href="/pieces">Pièces (atelier) →</Link>{" "}
+        <Link href="/avancement">Avancement →</Link>
       </p>
       <ul>
         {affaires.map((a) => (

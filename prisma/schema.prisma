@@ -338,8 +338,17 @@ model Joint {
   epaisseur       Float?
   matiere         Matiere? @relation(fields: [matiereId], references: [id])
   matiereId       String?
+  // wpsReference/qmosReference restent en texte libre pour les cas non
+  // encore couverts par la bibliothèque (voir Wps/Qmos ci-dessous) ; wpsId/
+  // qmosId sont le lien structuré vers une fiche réutilisable quand elle
+  // existe — les deux peuvent coexister le temps que la bibliothèque se
+  // remplisse.
   wpsReference    String?
+  wps             Wps?     @relation(fields: [wpsId], references: [id])
+  wpsId           String?
   qmosReference   String?
+  qmos            Qmos?    @relation(fields: [qmosId], references: [id])
+  qmosId          String?
   qsReference     String?
   soudeur         Personnel? @relation("Soudeur", fields: [soudeurId], references: [id])
   soudeurId       String?
@@ -792,4 +801,60 @@ model Piece {
 
   @@unique([affaireId, reference])
   @@index([affaireId])
+}
+
+// ============================================================================
+// BIBLIOTHÈQUE WPS/DMOS ET QMOS
+// ============================================================================
+// Une révision de WPS ou de QMOS n'écrase jamais la précédente : c'est un
+// nouvel enregistrement, avec la même `reference` métier (ex. "DMOS-001")
+// et une `version` différente (ex. "Rev 0", "Rev 1"). La version "en
+// vigueur" n'est jamais stockée : elle est calculée à la lecture (la plus
+// récente par dateEmission pour une référence donnée, voir
+// src/lib/procedures.ts), comme le statut des qualifications ou de
+// l'outillage ailleurs dans l'application. `retiree` est la seule chose
+// qu'une personne peut positionner explicitement (ex. norme devenue
+// obsolète), sans jamais modifier le contenu d'une version existante.
+model Qmos {
+  id             String    @id @default(cuid())
+  reference      String
+  version        String    @default("Rev 0")
+  procede        String
+  normeReference String
+  laboratoire    String?
+  dateEssai      DateTime?
+  certificatUrl  String?
+  retiree        Boolean   @default(false)
+  createdAt      DateTime  @default(now())
+
+  wps            Wps[]
+  joints         Joint[]
+
+  @@unique([reference, version])
+  @@index([reference])
+}
+
+model Wps {
+  id             String    @id @default(cuid())
+  reference      String
+  version        String    @default("Rev 0")
+  procede        String
+  normeReference String
+  materiaux      String?
+  epaisseurMinMm Float?
+  epaisseurMaxMm Float?
+  diametreMinMm  Float?
+  diametreMaxMm  Float?
+  positions      String?
+  qmos           Qmos?     @relation(fields: [qmosId], references: [id])
+  qmosId         String?
+  documentUrl    String?
+  dateEmission   DateTime
+  retiree        Boolean   @default(false)
+  createdAt      DateTime  @default(now())
+
+  joints         Joint[]
+
+  @@unique([reference, version])
+  @@index([reference])
 }

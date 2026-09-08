@@ -17,7 +17,9 @@ const CreateReparationSchema = z.object({
   epaisseur: z.number().optional(),
   matiereId: z.string().optional(),
   wpsReference: z.string().optional(),
+  wpsId: z.string().optional(),
   qmosReference: z.string().optional(),
+  qmosId: z.string().optional(),
   qsReference: z.string().optional(),
   soudeurId: z.string().optional(),
   consommableLot: z.string().optional(),
@@ -55,6 +57,12 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       );
     }
   }
+  if (overrides.wpsId && !(await prisma.wps.findUnique({ where: { id: overrides.wpsId } }))) {
+    return NextResponse.json({ error: "WPS introuvable." }, { status: 422 });
+  }
+  if (overrides.qmosId && !(await prisma.qmos.findUnique({ where: { id: overrides.qmosId } }))) {
+    return NextResponse.json({ error: "QMOS introuvable." }, { status: 422 });
+  }
 
   const reparation = await prisma.joint.create({
     data: {
@@ -71,7 +79,9 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       epaisseur: overrides.epaisseur ?? jointOrigine.epaisseur,
       matiereId: overrides.matiereId ?? jointOrigine.matiereId,
       wpsReference: overrides.wpsReference ?? jointOrigine.wpsReference,
+      wpsId: overrides.wpsId ?? jointOrigine.wpsId,
       qmosReference: overrides.qmosReference ?? jointOrigine.qmosReference,
+      qmosId: overrides.qmosId ?? jointOrigine.qmosId,
       qsReference: overrides.qsReference ?? jointOrigine.qsReference,
       soudeurId: overrides.soudeurId ?? jointOrigine.soudeurId,
       consommableLot: overrides.consommableLot ?? jointOrigine.consommableLot,

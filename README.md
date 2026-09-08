@@ -42,7 +42,17 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
     authentification requise)
   - `POST /api/controles-dimensionnels` — réaliser un contrôle (le
     contrôleur est automatiquement la personne connectée), avec ouverture
-    automatique de FNC si hors tolérance
+    automatique de FNC si hors tolérance ; si un outil est renseigné et
+    n'est plus valide (échéance dépassée ou hors service), le contrôle
+    est quand même enregistré mais la réponse porte une alerte
+  - `POST /api/matieres` — réceptionner une matière (fournisseur, CCPU,
+    certificat, coulée/lot...), niveau 2 minimum ; réutilisée ensuite sur
+    chaque joint (`Joint.matiereId`) sans être ressaisie
+  - `POST /api/outils` — enregistrer un outil de métrologie/outillage,
+    avec un QR code généré automatiquement (niveau 2 minimum)
+  - `GET /api/outils/qr/[valeur]` — identification d'un outil à partir
+    d'un scan QR, avec vérification de validité immédiate (échéance,
+    hors service)
   - `PATCH /api/fnc` — faire avancer le workflow d'une FNC ; faire passer
     une FNC en VALIDATION ou CLOTUREE est réservé au niveau 3 et
     enregistré dans l'audit trail (traçabilité de la décision de validation)
@@ -149,6 +159,13 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   (le cahier des charges évoque "peut proposer une affectation adaptée") :
   pour l'instant Weldoc détecte et signale, mais ne suggère pas encore
   d'alternative.
+- La bibliothèque des produits normalisés ("bibliothèque dimensionnelle" du
+  cahier des charges : tubes/tôles/raccords/brides avec leurs tolérances) :
+  distincte des matières effectivement réceptionnées (`Matiere`), pas
+  encore modélisée.
+- L'import du CCPU et la reconnaissance de caractères sur étiquette
+  (consommables comme matières) : pour l'instant les URLs de documents se
+  renseignent à la main.
 - L'essentiel des ~50 modules du cahier des charges (TQC, rapports de fin
   de fabrication, dossier réglementaire, REX, etc.).
 - Une vraie interface tablette soignée (ici, des pages HTML minimales).

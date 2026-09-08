@@ -296,11 +296,13 @@ model Matiere {
   affaireId      String
   fournisseur    String
   designation    String
+  reference      String?
   normeProduit   String
   nuance         String
   diametre       Float?
   epaisseur      Float?
   finition       String?
+  etat           String?
   numeroCoulee   String
   numeroLot      String?
   ccpuDocumentUrl String?

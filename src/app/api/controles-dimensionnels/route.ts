@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { determinerCriteres, evaluerConformite, type Mesure } from "@/lib/tolerances";
 import { requireAuth } from "@/lib/auth";
+import { calculerStatutOutil } from "@/lib/statutOutil";
 
 const MesureSchema = z.object({
   position: z.string(),
@@ -49,6 +50,22 @@ export async function POST(req: NextRequest) {
 
   const resultat = evaluerConformite(mesures as Mesure[], criteres);
 
+  // Vérification de l'outil de mesure (rattachement automatique au PV,
+  // comme demandé au cahier des charges) : on signale s'il n'est plus
+  // valide, sans bloquer la saisie du contrôle.
+  let alerteOutil: string | null = null;
+  if (outilId) {
+    const outil = await prisma.outil.findUnique({ where: { id: outilId } });
+    if (!outil) {
+      alerteOutil = "Outil introuvable.";
+    } else {
+      const statutOutil = calculerStatutOutil(outil.dateEcheance, { horsService: outil.statut === "HORS_SERVICE" });
+      if (statutOutil !== "VALIDE") {
+        alerteOutil = `Outil "${outil.reference}" ${statutOutil === "HORS_SERVICE" ? "hors service" : "avec vérification expirée"} : mesures à considérer avec prudence.`;
+      }
+    }
+  }
+
   const controle = await prisma.controleDimensionnel.create({
     data: {
       jointId,
@@ -78,5 +95,5 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  return NextResponse.json({ controle, criteres, fncCreee: fnc }, { status: 201 });
+  return NextResponse.json({ controle, criteres, fncCreee: fnc, alerteOutil }, { status: 201 });
 }

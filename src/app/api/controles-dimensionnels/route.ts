@@ -41,6 +41,26 @@ export async function POST(req: NextRequest) {
   const controleurId = auth.utilisateur.personnelId;
   const { jointId, outilId, normeProduit, diametreNominalMm, epaisseurNominaleMm, mesures } = parsed.data;
 
+  // Vérification de l'outil de mesure (rattachement automatique au PV,
+  // comme demandé au cahier des charges) : un outil expiré ou hors service
+  // bloque le contrôle, une mesure prise avec un outil non vérifié n'étant
+  // pas exploitable.
+  if (outilId) {
+    const outil = await prisma.outil.findUnique({ where: { id: outilId } });
+    if (!outil) {
+      return NextResponse.json({ error: "Outil introuvable." }, { status: 422 });
+    }
+    const statutOutil = calculerStatutOutil(outil.dateEcheance, { horsService: outil.statut === "HORS_SERVICE" });
+    if (statutOutil !== "VALIDE") {
+      return NextResponse.json(
+        {
+          error: `Outil "${outil.reference}" ${statutOutil === "HORS_SERVICE" ? "hors service" : "avec vérification expirée"} : contrôle refusé.`,
+        },
+        { status: 422 }
+      );
+    }
+  }
+
   let criteres;
   try {
     criteres = determinerCriteres({ normeProduit, diametreNominalMm, epaisseurNominaleMm });
@@ -49,22 +69,6 @@ export async function POST(req: NextRequest) {
   }
 
   const resultat = evaluerConformite(mesures as Mesure[], criteres);
-
-  // Vérification de l'outil de mesure (rattachement automatique au PV,
-  // comme demandé au cahier des charges) : on signale s'il n'est plus
-  // valide, sans bloquer la saisie du contrôle.
-  let alerteOutil: string | null = null;
-  if (outilId) {
-    const outil = await prisma.outil.findUnique({ where: { id: outilId } });
-    if (!outil) {
-      alerteOutil = "Outil introuvable.";
-    } else {
-      const statutOutil = calculerStatutOutil(outil.dateEcheance, { horsService: outil.statut === "HORS_SERVICE" });
-      if (statutOutil !== "VALIDE") {
-        alerteOutil = `Outil "${outil.reference}" ${statutOutil === "HORS_SERVICE" ? "hors service" : "avec vérification expirée"} : mesures à considérer avec prudence.`;
-      }
-    }
-  }
 
   const controle = await prisma.controleDimensionnel.create({
     data: {
@@ -95,5 +99,5 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  return NextResponse.json({ controle, criteres, fncCreee: fnc, alerteOutil }, { status: 201 });
+  return NextResponse.json({ controle, criteres, fncCreee: fnc }, { status: 201 });
 }

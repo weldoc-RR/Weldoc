@@ -44,7 +44,8 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
     contrôleur est automatiquement la personne connectée), avec ouverture
     automatique de FNC si hors tolérance ; si un outil est renseigné et
     n'est plus valide (échéance dépassée ou hors service), le contrôle
-    est quand même enregistré mais la réponse porte une alerte
+    est refusé (422) — une mesure prise avec un outil non vérifié n'est
+    pas exploitable
   - `POST /api/matieres` — réceptionner une matière (fournisseur, CCPU,
     certificat, coulée/lot...), niveau 2 minimum ; réutilisée ensuite sur
     chaque joint (`Joint.matiereId`) sans être ressaisie

@@ -35,9 +35,26 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   - `GET /api/auth/me` — utilisateur actuellement connecté
   - `POST /api/affaires` — créer une affaire (authentification requise) ;
     peut préciser le responsable, le chargé d'affaires, le coordinateur
-    soudage
+    soudage. Crée aussi automatiquement les 5 séquences par défaut du
+    dossier de fabrication (prise en charge → préparation → soudage et
+    contrôles → remise en conformité/finalisation → vérification finale)
   - `PATCH /api/affaires` — modifier ces rôles après coup (niveau 2
     minimum) ; ils alimentent l'organigramme (voir plus bas)
+  - `POST /api/sequences`, `POST /api/phases` — ajouter une séquence
+    au-delà des 5 par défaut, ou une phase à une séquence (niveau 2
+    minimum)
+  - `PATCH /api/phases` — faire avancer une phase. Passer en EN_COURS ou
+    TERMINEE est refusé si une séquence précédente de la même affaire
+    n'est pas terminée (sauf dérogation accordée par une demande de
+    modification de séquencement acceptée, voir plus bas) ; passer en
+    NON_APPLICABLE exige une justification
+  - `POST /api/demandes-sequencement` — demande de modification du
+    séquencement par le terrain (phases concernées, motif, urgence,
+    photo/document)
+  - `POST /api/demandes-sequencement/[id]/decision` — accepte/refuse/
+    demande une modification, réservé au niveau 3, tracé dans l'audit
+    trail ; une demande ACCEPTEE lève le blocage d'ordre précisément pour
+    les phases qu'elle liste
   - `POST /api/joints` — créer un joint (numérotation automatique,
     authentification requise)
   - `POST /api/controles-dimensionnels` — réaliser un contrôle (le
@@ -121,6 +138,9 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
     partir des rôles de l'affaire et des affectations actuellement
     actives ; rien n'est stocké séparément, donc toujours à jour par
     construction
+- `src/lib/sequencement.ts` — crée les 5 séquences par défaut, et vérifie
+  qu'une phase peut démarrer (séquences précédentes terminées, ou
+  dérogation acceptée par le niveau 3).
 - `src/lib/planning.ts` — la vérification avant affectation. **Limite
   assumée** : la correspondance fonction → type de qualification requis
   (ex. "soudeur" → qualification SOUDAGE) est une liste en dur, pas une

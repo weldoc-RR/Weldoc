@@ -243,6 +243,7 @@ model Affaire {
   fncs              FNC[]
   sequences         Sequence[]
   affectations      Affectation[]
+  demandesSequencement DemandeModificationSequencement[]
 }
 
 model Referentiel {
@@ -692,4 +693,40 @@ model DestinataireAlerte {
   email     String   @unique
   actif     Boolean  @default(true)
   createdAt DateTime @default(now())
+}
+
+// ============================================================================
+// SÉQUENCEMENT DU DOSSIER DE FABRICATION
+// ============================================================================
+enum StatutDemandeSequencement {
+  EN_ATTENTE
+  ACCEPTEE
+  REFUSEE
+  MODIFICATION_DEMANDEE
+}
+
+// Demande de modification du séquencement envoyée par le terrain (ex. faire
+// une phase avant une autre non encore terminée). Transmise au niveau 3, qui
+// accepte/refuse/demande une modification/impose des conditions — jamais
+// décidée automatiquement. Une demande ACCEPTEE autorise, pour les phases
+// qu'elle liste, à passer outre le blocage "séquence précédente non
+// terminée" (voir POST /api/phases et PATCH /api/phases).
+model DemandeModificationSequencement {
+  id                  String                    @id @default(cuid())
+  affaire             Affaire                   @relation(fields: [affaireId], references: [id])
+  affaireId           String
+  phasesConcerneesIds String[]
+  motif               String
+  urgent              Boolean                   @default(false)
+  photoUrl            String?
+  documentUrl         String?
+  demandeParId        String
+  dateDemande         DateTime                  @default(now())
+  statut              StatutDemandeSequencement @default(EN_ATTENTE)
+  decisionParId       String?
+  dateDecision        DateTime?
+  commentaireDecision String?
+  conditions          String?
+
+  @@index([affaireId])
 }

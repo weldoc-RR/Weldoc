@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAuth, requireNiveau } from "@/lib/auth";
+import { creerSequencesParDefaut } from "@/lib/sequencement";
 
 const CreateAffaireSchema = z.object({
   numero: z.string().min(1),
@@ -47,6 +48,10 @@ export async function POST(req: NextRequest) {
       dateFin: parsed.data.dateFin ? new Date(parsed.data.dateFin) : undefined,
     },
   });
+
+  // Le dossier de fabrication démarre avec les 5 séquences par défaut du
+  // cahier des charges (prise en charge → ... → vérification finale).
+  await creerSequencesParDefaut(affaire.id);
 
   return NextResponse.json(affaire, { status: 201 });
 }

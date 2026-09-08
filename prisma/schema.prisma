@@ -110,6 +110,17 @@ enum StatutValidite {
   SUSPENDU
 }
 
+// Le "type de qualification" (BW-A1, FW-I2, SW-A...) et les champs qui en
+// précisent le domaine (groupe de matériaux, position, plages
+// d'épaisseur/diamètre) sont structurés plutôt que noyés dans
+// `domaineValidite` en texte libre, pour permettre plus tard un
+// rapprochement automatique avec le domaine de validité d'un WPS (voir la
+// limite "QS" documentée dans le README). La désignation exacte dépend du
+// référentiel utilisé par l'entreprise ou le client (ISO 9606-1 ou
+// équivalent) : Weldoc ne présuppose ni n'impose de nomenclature, ces
+// valeurs sont saisies par la personne qui enregistre la qualification —
+// voir l'avertissement sur les normes protégées dans
+// src/lib/tolerances.ts, aucune valeur n'est pré-remplie par l'application.
 model Qualification {
   id             String              @id @default(cuid())
   personnel      Personnel           @relation(fields: [personnelId], references: [id])
@@ -117,8 +128,17 @@ model Qualification {
   type           TypeQualification
   reference      String
   norme          String
+  referentiel    Referentiel?        @relation(fields: [referentielId], references: [id])
+  referentielId  String?
   procede        String?
   materiaux      String?
+  codeQualification String?
+  groupeMateriaux   String?
+  positionSoudage   String?
+  epaisseurMinMm    Float?
+  epaisseurMaxMm    Float?
+  diametreMinMm     Float?
+  diametreMaxMm     Float?
   domaineValidite String?
   dateObtention  DateTime
   dateExpiration DateTime?
@@ -263,6 +283,7 @@ model Referentiel {
   domaine     String
   version     String?
   affaires    AffaireReferentiel[]
+  qualifications Qualification[]
 }
 
 model AffaireReferentiel {

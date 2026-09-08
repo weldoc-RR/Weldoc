@@ -3,6 +3,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getUtilisateurConnecteServeur } from "@/lib/auth";
 import { calculerStatut } from "@/lib/statutValidite";
+import { AjouterQualification } from "./ajouter-qualification";
 
 export const dynamic = "force-dynamic";
 
@@ -20,13 +21,18 @@ export default async function PersonnelPage() {
     redirect("/login");
   }
 
-  const personnel = await prisma.personnel.findMany({
-    orderBy: { nom: "asc" },
-    include: {
-      fonctions: true,
-      qualifications: { include: { evenements: { orderBy: { date: "desc" }, take: 1 } } },
-    },
-  });
+  const [personnel, referentiels] = await Promise.all([
+    prisma.personnel.findMany({
+      orderBy: { nom: "asc" },
+      include: {
+        fonctions: true,
+        qualifications: {
+          include: { evenements: { orderBy: { date: "desc" }, take: 1 }, referentiel: { select: { code: true } } },
+        },
+      },
+    }),
+    prisma.referentiel.findMany({ select: { id: true, code: true, domaine: true }, orderBy: { code: "asc" } }),
+  ]);
 
   return (
     <main style={{ fontFamily: "sans-serif", padding: "2rem" }}>
@@ -34,6 +40,14 @@ export default async function PersonnelPage() {
         <Link href="/">← Affaires</Link>
       </p>
       <h1>Weldoc — Personnel</h1>
+
+      {personnel.length > 0 && (
+        <AjouterQualification
+          personnel={personnel.map((p) => ({ id: p.id, nom: p.nom, prenom: p.prenom }))}
+          referentiels={referentiels}
+        />
+      )}
+
       <ul style={{ listStyle: "none", padding: 0 }}>
         {personnel.map((p) => (
           <li key={p.id} style={{ marginBottom: "1.5rem", borderBottom: "1px solid #ddd", paddingBottom: "1rem" }}>
@@ -51,8 +65,17 @@ export default async function PersonnelPage() {
                       : calculerStatut(q.dateExpiration, { suspendu: q.statut === "SUSPENDU" });
                   return (
                     <li key={q.id}>
-                      {q.type} {q.reference} ({q.norme}) — {LIBELLE_STATUT[statutCalcule]}
+                      {q.type} {q.reference} ({q.norme}
+                      {q.referentiel && ` — ${q.referentiel.code}`}) — {LIBELLE_STATUT[statutCalcule]}
                       {q.dateExpiration && ` (échéance ${q.dateExpiration.toLocaleDateString("fr-FR")})`}
+                      {q.codeQualification && ` — ${q.codeQualification}`}
+                      {q.groupeMateriaux && ` — groupe matériau ${q.groupeMateriaux}`}
+                      {(q.epaisseurMinMm || q.epaisseurMaxMm) && (
+                        <> — épaisseur {q.epaisseurMinMm ?? "?"} à {q.epaisseurMaxMm ?? "?"} mm</>
+                      )}
+                      {(q.diametreMinMm || q.diametreMaxMm) && (
+                        <> — diamètre {q.diametreMinMm ?? "?"} à {q.diametreMaxMm ?? "?"} mm</>
+                      )}
                     </li>
                   );
                 })}

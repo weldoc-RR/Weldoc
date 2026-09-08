@@ -189,6 +189,19 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   validité de la qualification (le modèle Joint n'a pas encore de champ
   "procédé" structuré) — chaque proposition reste donc à vérifier par la
   personne qui valide.
+- Modèle `Qualification` — le type de qualification soudage (ex. "BW-A1",
+  "FW-I2"...) et son domaine (groupe de matériaux, position, plages
+  d'épaisseur/diamètre) sont maintenant des champs structurés
+  (`codeQualification`, `groupeMateriaux`, `positionSoudage`,
+  `epaisseurMinMm`/`Max`, `diametreMinMm`/`Max`), avec un lien optionnel
+  vers un `Referentiel` — plutôt que noyés dans le texte libre
+  `domaineValidite`. La nomenclature (BW/FW/SW...) n'est imposée par
+  aucune table Weldoc : elle dépend du référentiel de l'entreprise ou du
+  client, et se saisit librement (page `/personnel`, "Enregistrer une
+  qualification soudage") — voir l'avertissement sur les normes
+  protégées dans `src/lib/tolerances.ts`. Ça prépare le rapprochement
+  automatique avec le domaine de validité d'un WPS, encore à construire
+  (voir plus bas).
 - `src/lib/auth.ts` — briques d'authentification : mots de passe (hachés,
   jamais stockés en clair), sessions côté serveur (révocables
   immédiatement, par ex. si un compte est suspendu), vérification du
@@ -242,6 +255,11 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   diamètre) et le domaine de validité d'une qualification, pour la
   proposition automatique de reconduction (voir la limite assumée
   ci-dessus) : il faudra structurer ces champs sur Joint.
+- La gestion des `Referentiel` (créer/lister un code de norme comme "EN
+  ISO 9606-1") n'a pas encore de page ni de route API dédiées : le modèle
+  existe et peut être lié à une affaire ou une qualification, mais pour
+  l'instant seule une personne ayant accès à la base peut y ajouter une
+  ligne.
 - Les autorisations de signature et les documents justificatifs attachés
   au personnel (mentionnés au cahier des charges, pas encore modélisés).
 - Les droits contextuels fins évoqués au cahier des charges ("selon le

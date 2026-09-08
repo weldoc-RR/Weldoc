@@ -9,8 +9,19 @@ const CreateQualificationSchema = z.object({
   type: z.enum(["SOUDAGE", "CND"]),
   reference: z.string().min(1),
   norme: z.string().min(1),
+  referentielId: z.string().optional(),
   procede: z.string().optional(),
   materiaux: z.string().optional(),
+  // Type d'assemblage qualifié (ex. "BW-A1", "FW-I2"...) et domaine associé :
+  // saisis librement, la nomenclature dépendant du référentiel utilisé —
+  // voir le commentaire sur le modèle Qualification dans schema.prisma.
+  codeQualification: z.string().optional(),
+  groupeMateriaux: z.string().optional(),
+  positionSoudage: z.string().optional(),
+  epaisseurMinMm: z.number().optional(),
+  epaisseurMaxMm: z.number().optional(),
+  diametreMinMm: z.number().optional(),
+  diametreMaxMm: z.number().optional(),
   domaineValidite: z.string().optional(),
   dateObtention: z.string().datetime(),
   dateExpiration: z.string().datetime().optional(),
@@ -61,6 +72,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
   const { dateObtention, dateExpiration, ...reste } = parsed.data;
+
+  if (reste.referentielId && !(await prisma.referentiel.findUnique({ where: { id: reste.referentielId } }))) {
+    return NextResponse.json({ error: "Référentiel introuvable." }, { status: 422 });
+  }
 
   // Écritures séquentielles (pas de création imbriquée) : voir la remarque
   // sur les transactions dans src/lib/prisma.ts.

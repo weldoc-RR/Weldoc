@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ControleGeneriqueForm } from "./controle-generique-form";
 import { ControleRessuageForm } from "./controle-ressuage-form";
+import { ControleCndConsommablesForm } from "./controle-cnd-consommables-form";
 import { ControleDimensionnelForm } from "./controle-dimensionnel-form";
 
 type ControleVisuel = { id: string; procedureRef: string; dateControle: string };
@@ -10,6 +11,15 @@ type Consommable = { id: string; type: string; fabricant: string; reference: str
 type Outil = { id: string; reference: string; type: string };
 
 type TypeFormulaireOuvert = "DIM" | "VT" | "PT" | "MT" | "RT" | "UT" | null;
+
+// Chaque méthode ne propose que les types de consommables qui la
+// concernent (voir TypeConsommableCND) — "AUTRE" reste toujours proposé.
+const TYPES_PAR_METHODE: Record<"PT" | "MT" | "RT" | "UT", string[]> = {
+  PT: ["PENETRANT", "REVELATEUR", "NETTOYANT", "AUTRE"],
+  MT: ["POUDRE_MAGNETIQUE", "PRODUIT_CONTRASTE", "DEMAGNETISANT", "NETTOYANT", "AUTRE"],
+  RT: ["FILM_RADIOGRAPHIQUE", "PRODUIT_DEVELOPPEMENT", "AUTRE"],
+  UT: ["COUPLANT", "AUTRE"],
+};
 
 // Barre de boutons "+ VT", "+ Dimensionnel"... sous un joint, qui ouvre le
 // formulaire de saisie correspondant. Un seul formulaire ouvert à la fois
@@ -45,19 +55,37 @@ export function ControlesJoint({
         <ControleRessuageForm
           jointId={jointId}
           controlesVisuels={controlesVisuels}
-          consommables={consommables}
+          consommables={consommables.filter((c) => TYPES_PAR_METHODE.PT.includes(c.type))}
           onCree={fermer}
           onAnnuler={fermer}
         />
       )}
       {ouvert === "MT" && (
-        <ControleGeneriqueForm endpoint="/api/controles-magnetoscopie" jointId={jointId} onCree={fermer} onAnnuler={fermer} />
+        <ControleCndConsommablesForm
+          endpoint="/api/controles-magnetoscopie"
+          jointId={jointId}
+          consommables={consommables.filter((c) => TYPES_PAR_METHODE.MT.includes(c.type))}
+          onCree={fermer}
+          onAnnuler={fermer}
+        />
       )}
       {ouvert === "RT" && (
-        <ControleGeneriqueForm endpoint="/api/controles-radiographie" jointId={jointId} onCree={fermer} onAnnuler={fermer} />
+        <ControleCndConsommablesForm
+          endpoint="/api/controles-radiographie"
+          jointId={jointId}
+          consommables={consommables.filter((c) => TYPES_PAR_METHODE.RT.includes(c.type))}
+          onCree={fermer}
+          onAnnuler={fermer}
+        />
       )}
       {ouvert === "UT" && (
-        <ControleGeneriqueForm endpoint="/api/controles-ultrasons" jointId={jointId} onCree={fermer} onAnnuler={fermer} />
+        <ControleCndConsommablesForm
+          endpoint="/api/controles-ultrasons"
+          jointId={jointId}
+          consommables={consommables.filter((c) => TYPES_PAR_METHODE.UT.includes(c.type))}
+          onCree={fermer}
+          onAnnuler={fermer}
+        />
       )}
     </div>
   );

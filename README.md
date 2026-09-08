@@ -145,12 +145,21 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
     utilisés (pénétrant, révélateur, nettoyant)
   - `POST /api/consommables-cnd` — bibliothèque des consommables CND
     (fabricant, référence, lot, péremption), enregistrés une fois puis
-    réutilisés sur chaque PV
+    réutilisés sur chaque PV. Couvre les quatre méthodes qui en utilisent
+    (`TypeConsommableCND`) : ressuage (pénétrant, révélateur, nettoyant),
+    magnétoscopie (poudre magnétique, produit de contraste, démagnétisant),
+    radiographie (film, produit de développement), ultrasons (couplant),
+    plus un type "autre" pour ce qui ne rentre dans aucune case. Page
+    `/consommables` : liste + petit formulaire d'ajout (le seul endroit de
+    l'application où un consommable se crée — ensuite il est seulement
+    choisi, jamais ressaisi).
   - `POST /api/controles-magnetoscopie`, `POST /api/controles-radiographie`,
     `POST /api/controles-ultrasons` — MT/RT/UT, même principe que le
     contrôle visuel (résultat déduit des indications, FNC automatique si
-    non conforme). Pas de bibliothèque de consommables pour ces trois-là
-    dans cette première version (voir plus bas).
+    non conforme), et comme le ressuage peuvent référencer les
+    consommables utilisés (`controle-cnd-consommables-form.tsx`, page
+    `/joints` : chaque méthode ne propose que les types de consommables
+    qui la concernent).
   - `POST /api/indisponibilites` — déclarer une période d'indisponibilité
     (congé, maladie, formation, autre), utilisée pour détecter les
     conflits de planning (niveau 2 minimum)
@@ -374,9 +383,12 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   contrôle (voir ci-dessus). Il reste la fiche technique de soudage
   (`FicheTechniqueSoudage`, qui a bien un champ `signatureId` dans le
   modèle) : pas encore d'API ni d'écran de saisie du tout pour elle.
-- La bibliothèque de consommables pour MT/RT/UT (elle n'existe que pour
-  le ressuage) : leur traçabilité porte surtout sur l'équipement, la
-  source ou le film, pas encore couverte.
+- La traçabilité de l'équipement/la source pour MT/RT/UT (banc
+  magnétoscopie, source ou appareil radiographique/ultrasons, numéro de
+  série, étalonnage) : la bibliothèque de consommables couvre maintenant
+  les quatre méthodes (voir ci-dessus), mais le lien vers l'équipement
+  utilisé lui-même n'est pas encore modélisé — à rapprocher du module
+  métrologie/outillage existant.
 - La proposition automatique d'affectation adaptée en cas d'alerte
   (le cahier des charges évoque "peut proposer une affectation adaptée") :
   pour l'instant Weldoc détecte et signale, mais ne suggère pas encore

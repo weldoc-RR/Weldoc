@@ -11,6 +11,9 @@ const CreateControleSchema = z
     procedureRef: z.string().min(1),
     procedureVersion: z.string().optional(),
     indications: z.array(IndicationSchema),
+    // Références vers la bibliothèque (POST /api/consommables-cnd), pas les
+    // produits ressaisis ici (ex. poudre magnétique, révélateur, démagnétisant).
+    consommableIds: z.array(z.string()).optional(),
     signatureId: z.string().optional(),
   })
   .merge(ConditionsExamenSchema);
@@ -23,6 +26,7 @@ export async function GET(req: NextRequest) {
   const jointId = req.nextUrl.searchParams.get("jointId");
   const controles = await prisma.controleMagnetoscopie.findMany({
     where: { jointId: jointId ?? undefined },
+    include: { consommables: { include: { consommable: true } } },
     orderBy: { dateControle: "desc" },
   });
   return NextResponse.json(controles);
@@ -40,7 +44,7 @@ export async function POST(req: NextRequest) {
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
-  const { jointId, procedureRef, procedureVersion, indications, signatureId } = parsed.data;
+  const { jointId, procedureRef, procedureVersion, indications, consommableIds, signatureId } = parsed.data;
 
   const joint = await prisma.joint.findUnique({ where: { id: jointId } });
   if (!joint) {
@@ -61,6 +65,15 @@ export async function POST(req: NextRequest) {
       ...extraireConditionsExamen(parsed.data),
     },
   });
+
+  // Liens vers les consommables utilisés, en écritures séquentielles (pas
+  // de création imbriquée : voir la remarque sur les transactions dans
+  // src/lib/prisma.ts).
+  for (const consommableId of consommableIds ?? []) {
+    await prisma.controleMagnetoscopieConsommable.create({
+      data: { controleMagnetoscopieId: controle.id, consommableId },
+    });
+  }
 
   let fnc = null;
   if (resultat === "NON_CONFORME") {

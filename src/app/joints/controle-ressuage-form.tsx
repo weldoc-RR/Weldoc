@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ControleGeneriqueForm } from "./controle-generique-form";
+import { EditeurConsommables } from "./editeur-consommables";
 
 type ControleVisuel = { id: string; procedureRef: string; dateControle: string };
 type Consommable = { id: string; type: string; fabricant: string; reference: string; lot: string };
@@ -24,10 +25,6 @@ export function ControleRessuageForm({
 }) {
   const [controleVisuelPrealableId, setControleVisuelPrealableId] = useState("");
   const [consommableIds, setConsommableIds] = useState<string[]>([]);
-
-  function basculerConsommable(id: string) {
-    setConsommableIds((actuels) => (actuels.includes(id) ? actuels.filter((c) => c !== id) : [...actuels, id]));
-  }
 
   return (
     <ControleGeneriqueForm
@@ -59,25 +56,7 @@ export function ControleRessuageForm({
               Aucun contrôle visuel enregistré sur ce joint : il en faut un avant de pouvoir faire un ressuage.
             </p>
           )}
-          {consommables.length > 0 && (
-            <div style={{ fontSize: "0.85rem", marginTop: "0.3rem" }}>
-              Consommables utilisés (optionnel) :
-              <ul style={{ listStyle: "none", padding: 0, maxHeight: 100, overflowY: "auto" }}>
-                {consommables.map((c) => (
-                  <li key={c.id}>
-                    <label>
-                      <input
-                        type="checkbox"
-                        checked={consommableIds.includes(c.id)}
-                        onChange={() => basculerConsommable(c.id)}
-                      />{" "}
-                      {c.type} — {c.fabricant} {c.reference} (lot {c.lot})
-                    </label>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+          <EditeurConsommables consommables={consommables} selectionnes={consommableIds} onChange={setConsommableIds} />
         </>
       }
     />

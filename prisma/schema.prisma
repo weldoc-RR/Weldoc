@@ -540,9 +540,21 @@ model ControleVisuel {
 }
 
 enum TypeConsommableCND {
+  // Ressuage (PT)
   PENETRANT
   REVELATEUR
   NETTOYANT
+  // Magnétoscopie (MT)
+  POUDRE_MAGNETIQUE
+  PRODUIT_CONTRASTE
+  DEMAGNETISANT
+  // Radiographie (RT)
+  FILM_RADIOGRAPHIQUE
+  PRODUIT_DEVELOPPEMENT
+  // Ultrasons (UT)
+  COUPLANT
+  // Autre produit non listé ci-dessus
+  AUTRE
 }
 
 // Bibliothèque des consommables CND : un produit/lot est enregistré une
@@ -557,7 +569,10 @@ model ConsommableCND {
   peremption    DateTime?
   certificatUrl String?
 
-  utilisations  ControleRessuageConsommable[]
+  utilisationsRessuage      ControleRessuageConsommable[]
+  utilisationsMagnetoscopie ControleMagnetoscopieConsommable[]
+  utilisationsRadiographie  ControleRadiographieConsommable[]
+  utilisationsUltrasons     ControleUltrasonsConsommable[]
 
   @@unique([type, fabricant, reference, lot])
 }
@@ -606,10 +621,9 @@ model ControleRessuageConsommable {
 }
 
 // MT/RT/UT : même structure que le contrôle visuel (indications en JSON,
-// résultat déduit des indications, FNC automatique si non conforme). Pas
-// de bibliothèque de consommables pour ces trois-là dans cette première
-// version — contrairement au ressuage, leur traçabilité porte surtout sur
-// l'équipement/la source/le film, hors du périmètre actuel.
+// résultat déduit des indications, FNC automatique si non conforme), et
+// comme le ressuage, un lien optionnel vers les consommables utilisés
+// (bibliothèque commune ConsommableCND, jamais ressaisis).
 model ControleMagnetoscopie {
   id             String            @id @default(cuid())
   joint          Joint             @relation(fields: [jointId], references: [id])
@@ -633,9 +647,20 @@ model ControleMagnetoscopie {
   resultat       ResultatControle
   signatureId    String?
 
+  consommables   ControleMagnetoscopieConsommable[]
   fncsGenerees   FNC[]
 
   @@index([jointId])
+}
+
+model ControleMagnetoscopieConsommable {
+  id                      String                @id @default(cuid())
+  controleMagnetoscopie   ControleMagnetoscopie @relation(fields: [controleMagnetoscopieId], references: [id])
+  controleMagnetoscopieId String
+  consommable             ConsommableCND        @relation(fields: [consommableId], references: [id])
+  consommableId           String
+
+  @@unique([controleMagnetoscopieId, consommableId])
 }
 
 model ControleRadiographie {
@@ -661,9 +686,20 @@ model ControleRadiographie {
   resultat       ResultatControle
   signatureId    String?
 
+  consommables   ControleRadiographieConsommable[]
   fncsGenerees   FNC[]
 
   @@index([jointId])
+}
+
+model ControleRadiographieConsommable {
+  id                     String               @id @default(cuid())
+  controleRadiographie   ControleRadiographie @relation(fields: [controleRadiographieId], references: [id])
+  controleRadiographieId String
+  consommable            ConsommableCND       @relation(fields: [consommableId], references: [id])
+  consommableId          String
+
+  @@unique([controleRadiographieId, consommableId])
 }
 
 model ControleUltrasons {
@@ -689,9 +725,20 @@ model ControleUltrasons {
   resultat       ResultatControle
   signatureId    String?
 
+  consommables   ControleUltrasonsConsommable[]
   fncsGenerees   FNC[]
 
   @@index([jointId])
+}
+
+model ControleUltrasonsConsommable {
+  id                  String            @id @default(cuid())
+  controleUltrasons   ControleUltrasons @relation(fields: [controleUltrasonsId], references: [id])
+  controleUltrasonsId String
+  consommable         ConsommableCND    @relation(fields: [consommableId], references: [id])
+  consommableId       String
+
+  @@unique([controleUltrasonsId, consommableId])
 }
 
 enum StatutFNC {

@@ -202,6 +202,11 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   bibliothèque des destinataires du récapitulatif hebdomadaire par email.
 - `src/app/pieces/page.tsx` — prise en charge de pièces (atelier) et suivi
   de leur statut.
+- `src/app/joints/page.tsx` — création de joints, consultation groupée par
+  affaire avec la chaîne de réparation affichée en clair (M800 → M800 R1 →
+  M800 R2...), un badge par type de contrôle (résultat le plus récent) et
+  les FNC ouvertes ; permet aussi de déclarer une remise en conformité
+  directement depuis la page (utilise l'API déjà existante).
 - `prisma.config.ts` — configuration Prisma (schéma, migrations) : utilise
   `DATABASE_URL` en connexion PostgreSQL classique, utilisée par la CLI
   (`prisma migrate`, etc.).
@@ -271,10 +276,6 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
 - L'upload réel de photos : `Piece.photosUrls` (comme `photosUrls`
   ailleurs dans l'application) attend des URLs déjà hébergées quelque
   part, il n'y a pas encore de téléversement de fichier intégré à Weldoc.
-- Une page listant les joints d'une affaire (avec leurs réparations
-  affichées "M800 R1", "M800 R2"...) : les joints ne sont pour l'instant
-  consultables que par l'API, comme le reste avant cette session pour les
-  matières/outillage.
 - L'avancement (`/avancement`) reste au niveau des phases du séquencement,
   pas encore joint par joint (ex. "38 joints soudés sur 120 prévus") : ça
   suppose de connaître à l'avance le nombre de joints prévus sur l'affaire,

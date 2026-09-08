@@ -278,8 +278,20 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
 - `src/app/login/page.tsx` — page de connexion.
 - `src/app/page.tsx` — page d'accueil listant les affaires (accès
   réservé aux personnes connectées).
-- `src/app/personnel/page.tsx` — liste du personnel, ses fonctions et le
-  statut de ses qualifications.
+- `src/app/personnel/page.tsx` — tableau de bord par personne : fonctions,
+  qualifications soudage/CND, habilitations, formations et acuité
+  visuelle, chacune avec son statut recalculé à la lecture (valide /
+  bientôt à échéance / expiré / suspendu). Les habilitations et l'acuité
+  visuelle n'affichent que l'enregistrement le plus récent (l'ancien reste
+  consultable dans un "Historique" repliable) ; les formations, elles,
+  s'affichent en historique complet (une formation qui expire, comme un
+  CACES, reste une échéance à surveiller même une fois recyclée). Les
+  boutons "+ Enregistrer une habilitation / une formation / un test
+  d'acuité visuelle" (`ajouter-habilitation.tsx`, `ajouter-formation.tsx`,
+  `ajouter-acuite.tsx`) donnent enfin un écran de saisie à des API qui
+  n'en avaient pas encore (`POST /api/habilitations`,
+  `POST /api/formations`, `POST /api/acuites-visuelles`, tous existants
+  depuis un module précédent).
 - `src/app/alertes/page.tsx` — outils bientôt à échéance ou expirés, et
   bibliothèque des destinataires du récapitulatif hebdomadaire par email.
 - `src/app/pieces/page.tsx` — prise en charge de pièces (atelier) et suivi

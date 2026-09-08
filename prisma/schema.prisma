@@ -37,6 +37,9 @@ model Personnel {
   controlesRealises ControleDimensionnel[] @relation("Controleur")
   controlesVisuelsRealises ControleVisuel[] @relation("ControleurVisuel")
   controlesRessuageRealises ControleRessuage[] @relation("ControleurRessuage")
+  controlesMagnetoscopieRealises ControleMagnetoscopie[] @relation("ControleurMagnetoscopie")
+  controlesRadiographieRealises  ControleRadiographie[]  @relation("ControleurRadiographie")
+  controlesUltrasonsRealises     ControleUltrasons[]     @relation("ControleurUltrasons")
   signatures      Signature[]
   compte          Compte?
 
@@ -334,6 +337,9 @@ model Joint {
   controlesDim    ControleDimensionnel[]
   controlesVisuels ControleVisuel[]
   controlesRessuage ControleRessuage[]
+  controlesMagnetoscopie ControleMagnetoscopie[]
+  controlesRadiographie  ControleRadiographie[]
+  controlesUltrasons     ControleUltrasons[]
   fncs            FNC[]
 
   @@unique([affaireId, numero, indiceReparation])
@@ -493,6 +499,65 @@ model ControleRessuageConsommable {
   @@unique([controleRessuageId, consommableId])
 }
 
+// MT/RT/UT : même structure que le contrôle visuel (indications en JSON,
+// résultat déduit des indications, FNC automatique si non conforme). Pas
+// de bibliothèque de consommables pour ces trois-là dans cette première
+// version — contrairement au ressuage, leur traçabilité porte surtout sur
+// l'équipement/la source/le film, hors du périmètre actuel.
+model ControleMagnetoscopie {
+  id             String            @id @default(cuid())
+  joint          Joint             @relation(fields: [jointId], references: [id])
+  jointId        String
+  controleur     Personnel         @relation("ControleurMagnetoscopie", fields: [controleurId], references: [id])
+  controleurId   String
+  procedureRef   String
+  procedureVersion String?
+  dateControle   DateTime          @default(now())
+  indications    Json
+  resultat       ResultatControle
+  signatureId    String?
+
+  fncsGenerees   FNC[]
+
+  @@index([jointId])
+}
+
+model ControleRadiographie {
+  id             String            @id @default(cuid())
+  joint          Joint             @relation(fields: [jointId], references: [id])
+  jointId        String
+  controleur     Personnel         @relation("ControleurRadiographie", fields: [controleurId], references: [id])
+  controleurId   String
+  procedureRef   String
+  procedureVersion String?
+  dateControle   DateTime          @default(now())
+  indications    Json
+  resultat       ResultatControle
+  signatureId    String?
+
+  fncsGenerees   FNC[]
+
+  @@index([jointId])
+}
+
+model ControleUltrasons {
+  id             String            @id @default(cuid())
+  joint          Joint             @relation(fields: [jointId], references: [id])
+  jointId        String
+  controleur     Personnel         @relation("ControleurUltrasons", fields: [controleurId], references: [id])
+  controleurId   String
+  procedureRef   String
+  procedureVersion String?
+  dateControle   DateTime          @default(now())
+  indications    Json
+  resultat       ResultatControle
+  signatureId    String?
+
+  fncsGenerees   FNC[]
+
+  @@index([jointId])
+}
+
 enum StatutFNC {
   DETECTION
   ANALYSE
@@ -525,6 +590,12 @@ model FNC {
   controleVisuelOrigineId String?
   controleRessuageOrigine   ControleRessuage? @relation(fields: [controleRessuageOrigineId], references: [id])
   controleRessuageOrigineId String?
+  controleMagnetoscopieOrigine   ControleMagnetoscopie? @relation(fields: [controleMagnetoscopieOrigineId], references: [id])
+  controleMagnetoscopieOrigineId String?
+  controleRadiographieOrigine    ControleRadiographie?  @relation(fields: [controleRadiographieOrigineId], references: [id])
+  controleRadiographieOrigineId  String?
+  controleUltrasonsOrigine       ControleUltrasons?     @relation(fields: [controleUltrasonsOrigineId], references: [id])
+  controleUltrasonsOrigineId     String?
   description       String
   impact            ImpactFNC
   statut            StatutFNC @default(DETECTION)

@@ -68,8 +68,11 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   - `POST /api/consommables-cnd` — bibliothèque des consommables CND
     (fabricant, référence, lot, péremption), enregistrés une fois puis
     réutilisés sur chaque PV
-  - Les mêmes méthodes seront ajoutées pour MT/RT/UT selon le même modèle,
-    au fil des prochains modules
+  - `POST /api/controles-magnetoscopie`, `POST /api/controles-radiographie`,
+    `POST /api/controles-ultrasons` — MT/RT/UT, même principe que le
+    contrôle visuel (résultat déduit des indications, FNC automatique si
+    non conforme). Pas de bibliothèque de consommables pour ces trois-là
+    dans cette première version (voir plus bas).
 - `src/lib/qualifications.ts` — quand un soudeur réalise un joint, Weldoc
   vérifie si l'une de ses qualifications soudage arrive à échéance et, le
   cas échéant, propose automatiquement une reconduction (avec le joint
@@ -116,9 +119,9 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
 - L'identification QR + PIN pour la signature de documents (distincte de la
   connexion à l'application) : le champ `pinHash` existe sur Personnel mais
   n'est pas encore utilisé.
-- Les autres méthodes CND (magnétoscopie MT, radiographie RT, ultrasons
-  UT) : seuls le contrôle visuel (VT) et le ressuage (PT) existent pour
-  l'instant, construits pour que les suivants suivent le même modèle.
+- La bibliothèque de consommables pour MT/RT/UT (elle n'existe que pour
+  le ressuage) : leur traçabilité porte surtout sur l'équipement, la
+  source ou le film, pas encore couverte.
 - L'essentiel des ~50 modules du cahier des charges (TQC, planning,
   rapports de fin de fabrication, dossier réglementaire, REX, etc.).
 - Une vraie interface tablette soignée (ici, des pages HTML minimales).

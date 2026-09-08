@@ -2,25 +2,33 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { SignerQrPin } from "@/components/signer-qr-pin";
 
-// Validation de fin de fabrication : signature QR/matricule + PIN (voir
-// src/components/signer-qr-pin.tsx), puis POST /api/affaires/[id]/rapport-fin-fabrication
-// pour l'enregistrer comme validation de CE rapport précis (réservé au
-// niveau 3, contrôlé côté serveur). Weldoc ne décide jamais seul : cette
-// étape reste une action humaine explicite.
+// Validation de fin de fabrication : identification QR/matricule + PIN,
+// envoyées directement à POST /api/affaires/[id]/rapport-fin-fabrication
+// (et non via le composant générique SignerQrPin + POST /api/signatures) :
+// cette route crée elle-même la signature, mais seulement APRÈS avoir
+// vérifié qu'aucun point réglementaire bloquant ne subsiste — pour qu'une
+// signature de validation ne puisse jamais exister sans validation
+// réellement aboutie (voir src/lib/signature.ts). Weldoc ne décide jamais
+// seul : cette étape reste une action humaine explicite.
 export function ValiderRapport({ affaireId }: { affaireId: string }) {
   const router = useRouter();
+  const [identifiant, setIdentifiant] = useState("");
+  const [pin, setPin] = useState("");
   const [erreur, setErreur] = useState<string | null>(null);
+  const [enCours, setEnCours] = useState(false);
   const [valide, setValide] = useState(false);
 
-  async function onSigne(signatureId: string) {
+  async function signer(e: React.FormEvent) {
+    e.preventDefault();
     setErreur(null);
+    setEnCours(true);
     const res = await fetch(`/api/affaires/${affaireId}/rapport-fin-fabrication`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ signatureId }),
+      body: JSON.stringify({ identifiant, pin }),
     });
+    setEnCours(false);
     if (!res.ok) {
       const corps = await res.json().catch(() => null);
       setErreur(corps?.error ?? "Impossible d'enregistrer la validation.");
@@ -35,14 +43,27 @@ export function ValiderRapport({ affaireId }: { affaireId: string }) {
   }
 
   return (
-    <div>
-      <SignerQrPin
-        documentType="RAPPORT_FIN_FABRICATION"
-        documentId={affaireId}
-        versionDocument={new Date().toISOString().slice(0, 10)}
-        onSigne={onSigne}
+    <form onSubmit={signer} style={{ display: "inline-flex", gap: "0.3rem", alignItems: "center", flexWrap: "wrap" }}>
+      <input
+        required
+        type="text"
+        placeholder="Matricule ou QR"
+        value={identifiant}
+        onChange={(e) => setIdentifiant(e.target.value)}
+        style={{ width: 130, fontSize: "0.85rem", padding: "0.2rem" }}
       />
-      {erreur && <p style={{ color: "crimson", fontSize: "0.85rem" }}>{erreur}</p>}
-    </div>
+      <input
+        required
+        type="password"
+        placeholder="Code PIN"
+        value={pin}
+        onChange={(e) => setPin(e.target.value)}
+        style={{ width: 90, fontSize: "0.85rem", padding: "0.2rem" }}
+      />
+      <button type="submit" disabled={enCours}>
+        {enCours ? "..." : "Signer et valider"}
+      </button>
+      {erreur && <span style={{ color: "crimson", fontSize: "0.8rem" }}>{erreur}</span>}
+    </form>
   );
 }

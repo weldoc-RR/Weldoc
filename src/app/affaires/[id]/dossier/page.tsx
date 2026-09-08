@@ -25,7 +25,10 @@ export default async function DossierPage({ params }: { params: { id: string } }
       <style>{`@media print { .no-print { display: none; } }`}</style>
       <p className="no-print">
         <Link href="/">← Affaires</Link> · <Link href={`/avancement/${dossier.affaire.id}`}>Avancement détaillé →</Link> ·{" "}
-        <Link href={`/affaires/${dossier.affaire.id}/photos`}>Book photo ({dossier.photosCount}) →</Link>
+        <Link href={`/affaires/${dossier.affaire.id}/photos`}>Book photo ({dossier.photosCount}) →</Link> ·{" "}
+        <Link href={`/affaires/${dossier.affaire.id}/reglementaire`}>
+          Dossier réglementaire ({dossier.pointsReglementairesCount}) →
+        </Link>
       </p>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start" }}>
         <h1>Rapport de fin de fabrication</h1>
@@ -193,6 +196,12 @@ export default async function DossierPage({ params }: { params: { id: string } }
         <p>
           Validé par {dossier.validation.personnel.prenom} {dossier.validation.personnel.nom} le{" "}
           {dossier.validation.dateSignature.toLocaleDateString("fr-FR")}.
+        </p>
+      ) : dossier.pointsReglementairesBloquants.length > 0 ? (
+        <p style={{ fontSize: "0.85rem", color: "#d03b3b" }}>
+          Validation impossible : {dossier.pointsReglementairesBloquants.length} point(s) réglementaire(s)
+          bloquant(s) restent à lever (
+          <Link href={`/affaires/${dossier.affaire.id}/reglementaire`}>voir le dossier réglementaire</Link>).
         </p>
       ) : aNiveauMinimum(utilisateur.niveau, "NIVEAU_3") ? (
         <div className="no-print">

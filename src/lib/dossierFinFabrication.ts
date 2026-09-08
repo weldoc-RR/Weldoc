@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { calculerStatut } from "@/lib/statutValidite";
 import { calculerAvancementAffaire, type AvancementAffaire } from "@/lib/avancement";
+import { pointsBloquants } from "@/lib/dossierReglementaire";
 
 // Compilation du rapport de fin de fabrication (voir cahier des charges,
 // "RAPPORT DE FIN DE FABRICATION") : rassemble ce qui existe déjà dans
@@ -67,6 +68,12 @@ export interface DossierFinFabrication {
   }[];
   elementsManquants: ElementManquant[];
   photosCount: number;
+  pointsReglementairesCount: number;
+  // Points réglementaires actuellement BLOQUANT (voir
+  // src/lib/dossierReglementaire.ts) : tant que cette liste n'est pas
+  // vide, POST /api/affaires/[id]/rapport-fin-fabrication refuse la
+  // validation — utilisé ici pour ne même pas proposer de signer.
+  pointsReglementairesBloquants: { id: string; intitule: string }[];
   validation: { personnel: { nom: string; prenom: string }; dateSignature: Date } | null;
 }
 
@@ -81,7 +88,7 @@ export async function compilerDossierFinFabrication(affaireId: string): Promise<
     (id): id is string => Boolean(id)
   );
 
-  const [personnesRoles, joints, fncs, validation, photosCount] = await Promise.all([
+  const [personnesRoles, joints, fncs, validation, photosCount, pointsReglementairesCount, bloquants] = await Promise.all([
     prisma.personnel.findMany({ where: { id: { in: idsRoles } }, select: { id: true, nom: true, prenom: true } }),
     prisma.joint.findMany({
       where: { affaireId },
@@ -125,6 +132,8 @@ export async function compilerDossierFinFabrication(affaireId: string): Promise<
       include: { personnel: { select: { nom: true, prenom: true } } },
     }),
     prisma.photo.count({ where: { affaireId } }),
+    prisma.pointReglementaire.count({ where: { affaireId } }),
+    pointsBloquants(affaireId),
   ]);
 
   const avancement = await calculerAvancementAffaire(affaireId);
@@ -231,6 +240,12 @@ export async function compilerDossierFinFabrication(affaireId: string): Promise<
       texte: `FNC ${f.reference} non clôturée (statut ${f.statut}).`,
     });
   }
+  for (const point of bloquants) {
+    elementsManquants.push({
+      gravite: "BLOQUANT",
+      texte: `Point réglementaire bloquant : ${point.intitule}.`,
+    });
+  }
   for (const p of personnelIntervenant) {
     if (p.qualificationsExpirees > 0) {
       elementsManquants.push({
@@ -281,6 +296,8 @@ export async function compilerDossierFinFabrication(affaireId: string): Promise<
     })),
     elementsManquants,
     photosCount,
+    pointsReglementairesCount,
+    pointsReglementairesBloquants: bloquants,
     validation: validation ? { personnel: validation.personnel, dateSignature: validation.dateSignature } : null,
   };
 }

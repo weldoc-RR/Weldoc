@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAuth, requireNiveau } from "@/lib/auth";
 import { verifierSequencementAutorise } from "@/lib/sequencement";
+import { pointsBloquants } from "@/lib/dossierReglementaire";
 
 const CreatePhaseSchema = z.object({
   sequenceId: z.string().min(1),
@@ -48,9 +49,12 @@ const UpdatePhaseSchema = z.object({
 // PATCH /api/phases — fait avancer une phase. Passer en EN_COURS ou
 // TERMINEE est refusé si une séquence précédente de la même affaire n'est
 // pas terminée, sauf dérogation accordée par une demande de modification de
-// séquencement acceptée (voir src/lib/sequencement.ts). Passer en
-// NON_APPLICABLE exige une justification, comme demandé au cahier des
-// charges ("N/A avec justification").
+// séquencement acceptée (voir src/lib/sequencement.ts), ou si un point du
+// dossier réglementaire (voir src/lib/dossierReglementaire.ts) reste
+// BLOQUANT pour cette phase ou pour l'affaire entière — seule la levée de
+// ce point (jamais une dérogation de séquencement) débloque la phase.
+// Passer en NON_APPLICABLE exige une justification, comme demandé au
+// cahier des charges ("N/A avec justification").
 export async function PATCH(req: NextRequest) {
   const auth = await requireAuth(req);
   if ("erreur" in auth) return auth.erreur;
@@ -73,6 +77,22 @@ export async function PATCH(req: NextRequest) {
     const { autorise, motif } = await verifierSequencementAutorise(id);
     if (!autorise) {
       return NextResponse.json({ error: motif }, { status: 422 });
+    }
+
+    const phaseAvecAffaire = await prisma.phase.findUnique({
+      where: { id },
+      include: { sequence: { select: { affaireId: true } } },
+    });
+    if (phaseAvecAffaire) {
+      const bloquants = await pointsBloquants(phaseAvecAffaire.sequence.affaireId, { phaseId: id });
+      if (bloquants.length > 0) {
+        return NextResponse.json(
+          {
+            error: `Point(s) réglementaire(s) bloquant(s) : ${bloquants.map((p) => p.intitule).join(", ")}.`,
+          },
+          { status: 422 }
+        );
+      }
     }
   }
 

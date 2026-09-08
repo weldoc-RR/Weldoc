@@ -215,12 +215,55 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
     personne habilitée"). Pas de nouvelle table : la validation, c'est la
     signature QR + PIN elle-même (`Signature`, `documentType`
     `"RAPPORT_FIN_FABRICATION"`) — mêmes principes que partout ailleurs
-    dans l'application (personne, date, signature tracées).
+    dans l'application (personne, date, signature tracées). Contrairement
+    aux autres signatures (créées via `POST /api/signatures` puis
+    simplement référencées), celle-ci est créée par la route elle-même
+    (`src/lib/signature.ts`, `creerSignature`), et seulement après avoir
+    vérifié l'absence de point réglementaire bloquant (voir dossier
+    réglementaire ci-dessous) : comme c'est la seule preuve persistée de
+    la validation, elle ne doit jamais pouvoir exister sans qu'une
+    validation ait réellement abouti.
   - `src/app/affaires/[id]/dossier/page.tsx` — la page elle-même, pensée
     pour l'impression navigateur (bouton "Imprimer / exporter en PDF" —
     pas de génération de PDF côté serveur pour l'instant, ce qui
     ajouterait une dépendance à choisir avec vous). Lien depuis la page
-    d'accueil, à côté de chaque affaire.
+    d'accueil, à côté de chaque affaire. N'offre de signer que si aucun
+    point réglementaire bloquant ne subsiste (sinon un message renvoie
+    vers le dossier réglementaire pour les lever).
+- **Dossier réglementaire** (voir le cahier des charges, "DOSSIER
+  RÉGLEMENTAIRE" / "Blocage réglementaire") — distinct du rapport de fin
+  de fabrication : ici, chaque exigence réglementaire (ex. "Attestation de
+  conformité OHA", "Déclaration de conformité exploitant"...) est suivie
+  individuellement, avec un historique de statut tracé (`PointReglementaire`
+  + `PointReglementaireEvenement`, même principe que les qualifications :
+  un changement de statut est un nouvel événement, jamais une modification
+  du précédent). Intitulé et référentiel restent en texte libre. Un point
+  peut concerner l'affaire entière, ou un joint/une phase précis.
+  - 5 statuts prévus au cahier des charges (non bloquant / bloquant / sous
+    réserve / attente décision / déblocage autorisé). **Choix
+    d'interprétation à confirmer avec vous** (`src/lib/dossierReglementaire.ts`,
+    fonction `pointBloque`) : seul le statut littéralement "bloquant"
+    bloque quelque chose dans l'application ; "sous réserve" et "attente
+    décision" sont des étapes de suivi affichées mais non bloquantes pour
+    l'instant. Si votre pratique réelle veut que "attente décision" bloque
+    aussi, c'est un changement d'une ligne à faire.
+  - `GET`/`POST /api/points-reglementaires`, `POST
+    /api/points-reglementaires/[id]/evenements` — création et changements
+    de statut. Passer en "déblocage autorisé" est réservé au niveau 3 et
+    exige une signature (`documentType` `"POINT_REGLEMENTAIRE"`) : Weldoc
+    ne lève jamais seul un point bloquant.
+  - Un point bloquant empêche concrètement deux choses : l'avancement
+    d'une phase du chantier qu'il concerne (ou de toutes les phases s'il
+    concerne l'affaire entière — voir `PATCH /api/phases`), et la
+    validation du rapport de fin de fabrication (voir ci-dessus). C'est
+    la seule vérification de l'application qui bloque réellement une
+    action plutôt que de simplement la signaler — les FNC "bloquantes"
+    et qualifications suspendues restent, elles, de simples signalements
+    (`elementsManquants`) sans blocage technique.
+  - `src/app/affaires/[id]/reglementaire/page.tsx` — liste des points
+    d'une affaire (statut actuel en couleur, historique repliable) et
+    formulaire d'ajout. Lien depuis la page d'accueil et le rapport de
+    fin de fabrication (qui affiche aussi le nombre de points).
 - Modèle `Photo` — "book photo" du cahier des charges : photos horodatées
   rattachées à une affaire et, optionnellement, à une phase/un joint/une
   FNC précis. `url` reste du texte libre pour l'instant (comme
@@ -497,16 +540,7 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   photo pour localiser/identifier les soudures) restent à construire au-delà
   du book photo — l'annotation au stylet et l'intégration d'un scan 3D sont
   des chantiers UI/technique nettement plus lourds que ce qui a été fait
-  jusqu'ici. Le rapport de fin de fabrication a une première version (voir
-  ci-dessus),
-  mais le "dossier réglementaire" à proprement parler — le suivi, point
-  par point, des exigences réglementaires avec ses 5 statuts (non
-  bloquant / bloquant / sous réserve / attente décision / déblocage
-  autorisé, voir le cahier des charges) — reste à construire : ce que la
-  page `/affaires/[id]/dossier` signale aujourd'hui ("éléments manquants")
-  est une première approximation par heuristiques (contrôle visuel
-  manquant, FNC non clôturée, qualification expirée/suspendue), pas ce
-  suivi réglementaire complet.
+  jusqu'ici.
 - Une vraie interface tablette soignée (ici, des pages HTML minimales).
 - Les vraies valeurs de tolérances normatives (voir avertissement ci-dessus).
 - Les tests automatisés et le déploiement.

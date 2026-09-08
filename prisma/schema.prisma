@@ -45,6 +45,7 @@ model Personnel {
   affectations    Affectation[]
   compte          Compte?
   photosAjoutees  Photo[]              @relation("AuteurPhoto")
+  evenementsPointsReglementaires PointReglementaireEvenement[]
 
   @@index([societe])
 }
@@ -302,6 +303,7 @@ model Affaire {
   demandesSequencement DemandeModificationSequencement[]
   pieces            Piece[]
   photos            Photo[]
+  pointsReglementaires PointReglementaire[]
 }
 
 model Referentiel {
@@ -349,6 +351,7 @@ model Phase {
   statut       StatutPhase @default(A_FAIRE)
   justificationNA String?
   photos       Photo[]
+  pointsReglementaires PointReglementaire[]
 }
 
 model Matiere {
@@ -424,6 +427,7 @@ model Joint {
   fncsResolues    FNC[]    @relation("ActionCorrectiveFNC")
   affectations    Affectation[]
   photos          Photo[]
+  pointsReglementaires PointReglementaire[]
 
   @@unique([affaireId, numero, indiceReparation])
   @@index([affaireId])
@@ -843,6 +847,67 @@ model Photo {
 
   @@index([affaireId])
   @@index([jointId])
+}
+
+// Dossier réglementaire (voir le cahier des charges, "DOSSIER
+// RÉGLEMENTAIRE" / "Blocage réglementaire") : distinct du rapport de fin
+// de fabrication (compilation globale, voir dossierFinFabrication.ts) —
+// ici, chaque exigence réglementaire (ex. "Attestation de conformité OHA",
+// "Note d'optimisation de la radioprotection"...) est suivie une par une,
+// avec un statut qui peut évoluer. L'intitulé et le référentiel restent en
+// texte libre : leur liste dépend entièrement du projet/référentiel client
+// (RCC-M, CODAP...), jamais imposée par Weldoc. Rattaché à l'affaire et,
+// optionnellement, à un joint ou une phase précis (sinon il concerne
+// l'affaire dans son ensemble).
+model PointReglementaire {
+  id          String    @id @default(cuid())
+  affaire     Affaire   @relation(fields: [affaireId], references: [id])
+  affaireId   String
+  joint       Joint?    @relation(fields: [jointId], references: [id])
+  jointId     String?
+  phase       Phase?    @relation(fields: [phaseId], references: [id])
+  phaseId     String?
+  intitule    String
+  // Règle/référentiel dont dépend ce point (traçabilité exigée au cahier
+  // des charges, "PRINCIPE DE CONCEPTION") — texte libre, jamais une norme
+  // recopiée.
+  referentiel String?
+  createdAt   DateTime  @default(now())
+
+  evenements  PointReglementaireEvenement[]
+
+  @@index([affaireId])
+}
+
+// Les 5 statuts prévus au cahier des charges. Le statut "actuel" d'un
+// point n'est jamais stocké directement sur PointReglementaire : c'est
+// toujours le dernier événement de son historique (même principe que les
+// qualifications, QualificationEvenement) — un changement de statut est un
+// nouvel enregistrement, jamais une modification du précédent.
+enum StatutPointReglementaire {
+  NON_BLOQUANT
+  BLOQUANT
+  SOUS_RESERVE
+  ATTENTE_DECISION
+  DEBLOCAGE_AUTORISE
+}
+
+model PointReglementaireEvenement {
+  id                   String                   @id @default(cuid())
+  pointReglementaire   PointReglementaire       @relation(fields: [pointReglementaireId], references: [id])
+  pointReglementaireId String
+  statut               StatutPointReglementaire
+  commentaire          String?
+  auteur               Personnel                @relation(fields: [auteurId], references: [id])
+  auteurId             String
+  // Signature du déblocage (voir POST /api/signatures, documentType
+  // "POINT_REGLEMENTAIRE") : réservée aux passages en DEBLOCAGE_AUTORISE,
+  // qui exigent aussi le niveau 3 côté serveur — l'IA ne décide jamais
+  // seule qu'un point bloquant peut être levé.
+  signatureId          String?
+  date                 DateTime                 @default(now())
+
+  @@index([pointReglementaireId])
 }
 
 // Actions possibles de remise en conformité, comme listées au cahier des

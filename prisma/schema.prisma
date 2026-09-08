@@ -681,3 +681,14 @@ model Affectation {
   @@index([personnelId])
   @@index([affaireId])
 }
+
+// Adresses email destinataires du récapitulatif d'alertes (envoyé chaque
+// lundi — voir src/lib/alertesEmail.ts). Volontairement une simple liste
+// d'adresses plutôt que rattachée à une fiche Personnel : ce ne sont pas
+// forcément des comptes Weldoc (ex. la boîte mail d'un responsable qualité).
+model DestinataireAlerte {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  actif     Boolean  @default(true)
+  createdAt DateTime @default(now())
+}

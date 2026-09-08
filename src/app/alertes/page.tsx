@@ -3,6 +3,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getUtilisateurConnecteServeur } from "@/lib/auth";
 import { calculerStatutOutil } from "@/lib/statutOutil";
+import { Destinataires } from "./destinataires";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +13,10 @@ export default async function AlertesPage() {
     redirect("/login");
   }
 
-  const outils = await prisma.outil.findMany({ where: { statut: { not: "HORS_SERVICE" } } });
+  const [outils, destinataires] = await Promise.all([
+    prisma.outil.findMany({ where: { statut: { not: "HORS_SERVICE" } } }),
+    prisma.destinataireAlerte.findMany({ orderBy: { email: "asc" } }),
+  ]);
 
   const alertes = outils
     .map((o) => ({ outil: o, statut: calculerStatutOutil(o.dateEcheance) }))
@@ -39,6 +43,7 @@ export default async function AlertesPage() {
           ))}
         </ul>
       )}
+      <Destinataires initiaux={destinataires} />
     </main>
   );
 }

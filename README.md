@@ -64,6 +64,14 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   - `GET /api/alertes` — outils bientôt à échéance (60 jours, même seuil
     que pour les qualifications) ou déjà expirés ; voir aussi la page
     `/alertes`
+  - `POST /api/destinataires-alertes`, `DELETE /api/destinataires-alertes/[id]`
+    — gérer les adresses email qui reçoivent le récapitulatif hebdomadaire
+    (niveau 2 minimum) ; interface dans la page `/alertes`
+  - `GET`/`POST /api/alertes/recapitulatif` — construit et envoie le
+    récapitulatif hebdomadaire (chaque lundi 7h UTC via `vercel.json`, ou
+    déclenchable à la main par une personne de niveau 3). **Sans effet
+    tant que `RESEND_API_KEY` et `ALERTES_EMAIL_FROM` ne sont pas
+    configurées** (voir "Ce qui n'est pas encore fait")
   - `PATCH /api/fnc` — faire avancer le workflow d'une FNC ; faire passer
     une FNC en VALIDATION ou CLOTUREE est réservé au niveau 3 et
     enregistré dans l'audit trail (traçabilité de la décision de validation)
@@ -180,11 +188,22 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
 - L'import du CCPU et la reconnaissance de caractères sur étiquette
   (consommables comme matières) : pour l'instant les URLs de documents se
   renseignent à la main.
-- L'envoi des alertes par email : pour l'instant elles ne sont visibles
-  que dans l'application (`/alertes`). L'envoi réel demande un service
-  d'envoi d'emails (ex. Resend, Postmark) à configurer avec vos
-  identifiants, et de savoir qui doit recevoir quoi (Personnel n'a pas
-  encore de champ email).
+- L'envoi réel des alertes par email : tout le mécanisme est prêt
+  (contenu du récapitulatif, gestion des destinataires, programmation
+  chaque lundi via `vercel.json`), il ne manque que la configuration du
+  service d'envoi. Pour l'activer :
+  1. Créer un compte sur [resend.com](https://resend.com) (offre gratuite
+     suffisante pour ce volume) et y vérifier un domaine d'expédition.
+  2. Renseigner `RESEND_API_KEY` (la clé API Resend) et
+     `ALERTES_EMAIL_FROM` (l'adresse d'expédition, ex.
+     `alertes@votredomaine.fr`) dans les variables d'environnement du
+     projet (fichier `.env` en local, ou dans les paramètres de
+     l'hébergeur en production).
+  3. Ajouter les adresses destinataires depuis la page `/alertes`.
+  La programmation "chaque lundi" (`vercel.json`) ne prend effet que si
+  le projet est déployé sur Vercel ; sur un autre hébergeur, il faudra un
+  déclencheur équivalent qui appelle `GET /api/alertes/recapitulatif`
+  chaque semaine.
 - Les autres types d'alertes évoqués au cahier des charges (qualifications
   à échéance, habilitations expirées, FNC ouvertes, validations niveau 3
   en attente...) : pour l'instant `/api/alertes` ne couvre que

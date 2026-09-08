@@ -163,6 +163,17 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   dérogation acceptée par le niveau 3).
 - `src/lib/remiseEnConformite.ts` — fait avancer une FNC de ACTION_CORRECTIVE
   à CONTROLE après un contrôle conforme sur le joint qui la résout.
+- `src/lib/avancement.ts` — calcule (à la lecture, rien n'est stocké) le
+  pourcentage d'avancement d'une affaire à partir des phases de son
+  séquencement (terminées / applicables, les phases "non applicable"
+  n'entrant pas dans le calcul), plus quelques indicateurs (joints,
+  contrôles dimensionnels conformes, FNC ouvertes).
+  - `GET /api/affaires/[id]/avancement` — le même calcul, exposé en API.
+  - `src/app/avancement/page.tsx` — liste des affaires avec leur
+    pourcentage global (barre de progression).
+  - `src/app/avancement/[id]/page.tsx` — détail par séquence, sous forme
+    de barres empilées (terminé/en cours/à faire/non applicable) avec les
+    effectifs en clair à côté de chaque barre.
 - `src/lib/planning.ts` — la vérification avant affectation. **Limite
   assumée** : la correspondance fonction → type de qualification requis
   (ex. "soudeur" → qualification SOUDAGE) est une liste en dur, pas une
@@ -264,6 +275,10 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   affichées "M800 R1", "M800 R2"...) : les joints ne sont pour l'instant
   consultables que par l'API, comme le reste avant cette session pour les
   matières/outillage.
+- L'avancement (`/avancement`) reste au niveau des phases du séquencement,
+  pas encore joint par joint (ex. "38 joints soudés sur 120 prévus") : ça
+  suppose de connaître à l'avance le nombre de joints prévus sur l'affaire,
+  ce qui n'est pas encore saisi dans Weldoc.
 - L'essentiel des ~50 modules du cahier des charges (TQC, rapports de fin
   de fabrication, dossier réglementaire, REX, etc.).
 - Une vraie interface tablette soignée (ici, des pages HTML minimales).

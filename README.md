@@ -37,7 +37,10 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
     peut préciser le responsable, le chargé d'affaires, le coordinateur
     soudage. Crée aussi automatiquement les 5 séquences par défaut du
     dossier de fabrication (prise en charge → préparation → soudage et
-    contrôles → remise en conformité/finalisation → vérification finale)
+    contrôles → remise en conformité/finalisation → vérification finale).
+    `typeRealisation` vaut `CHANTIER` (défaut) ou `ATELIER` — dans ce
+    second cas, `chantier`/`site` (qui n'ont pas forcément de sens pour une
+    fabrication en atelier) restent facultatifs
   - `PATCH /api/affaires` — modifier ces rôles après coup (niveau 2
     minimum) ; ils alimentent l'organigramme (voir plus bas)
   - `POST /api/sequences`, `POST /api/phases` — ajouter une séquence
@@ -226,6 +229,13 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   en attente...) : pour l'instant `/api/alertes` ne couvre que
   l'outillage ; l'information existe déjà ailleurs (`statutCalcule` sur
   chaque fiche) mais n'est pas encore centralisée ici.
+- L'adaptation complète à la fabrication en atelier : le cahier des
+  charges est écrit en vocabulaire "chantier" (organigramme chantier,
+  prise en charge du chantier...). Pour l'instant, `Affaire.typeRealisation`
+  (`CHANTIER`/`ATELIER`) existe et `chantier`/`site` sont facultatifs, mais
+  aucun module n'adapte encore son comportement selon ce type (ex. une
+  "prise en charge et restitution" façon atelier, différente de celle
+  d'un chantier, reste à définir).
 - L'essentiel des ~50 modules du cahier des charges (TQC, rapports de fin
   de fabrication, dossier réglementaire, REX, etc.).
 - Une vraie interface tablette soignée (ici, des pages HTML minimales).

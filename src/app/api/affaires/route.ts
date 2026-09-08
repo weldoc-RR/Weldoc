@@ -8,8 +8,12 @@ const CreateAffaireSchema = z.object({
   numero: z.string().min(1),
   client: z.string().min(1),
   projet: z.string().min(1),
-  chantier: z.string().min(1),
-  site: z.string().min(1),
+  // CHANTIER (travaux sur site) ou ATELIER (fabrication en atelier) : dans
+  // ce dernier cas, chantier/site n'ont souvent pas de sens et restent
+  // optionnels.
+  typeRealisation: z.enum(["CHANTIER", "ATELIER"]).optional(),
+  chantier: z.string().optional(),
+  site: z.string().optional(),
   responsableId: z.string().optional(),
   chargeAffairesId: z.string().optional(),
   coordinateurSoudageId: z.string().optional(),

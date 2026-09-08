@@ -222,13 +222,23 @@ model ChartAcceptation {
   @@unique([personnelId, chartVersionId])
 }
 
+// Le cahier des charges est écrit en vocabulaire "chantier", mais Weldoc doit
+// aussi pouvoir suivre une fabrication en atelier (où "chantier"/"site" au
+// sens travaux n'ont pas forcément de sens) : typeRealisation permet aux
+// futurs modules de s'adapter, et chantier/site redeviennent optionnels.
+enum TypeRealisation {
+  CHANTIER
+  ATELIER
+}
+
 model Affaire {
   id                String   @id @default(cuid())
   numero            String   @unique
   client            String
   projet            String
-  chantier          String
-  site              String
+  typeRealisation   TypeRealisation @default(CHANTIER)
+  chantier          String?
+  site              String?
   responsableId     String?
   chargeAffairesId  String?
   coordinateurSoudageId String?

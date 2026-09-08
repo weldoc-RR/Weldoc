@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getUtilisateurConnecteServeur } from "@/lib/auth";
 import { LogoutButton } from "./logout-button";
@@ -27,7 +28,9 @@ export default async function HomePage() {
           <LogoutButton />
         </div>
       </div>
-      <p>Squelette de démonstration : liste des affaires, joints et FNC.</p>
+      <p>
+        Squelette de démonstration : liste des affaires, joints et FNC. <Link href="/personnel">Personnel →</Link>
+      </p>
       <ul>
         {affaires.map((a) => (
           <li key={a.id}>

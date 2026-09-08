@@ -29,6 +29,9 @@ model Personnel {
 
   fonctions       PersonnelFonction[]
   qualifications  Qualification[]
+  habilitations   Habilitation[]
+  formations      Formation[]
+  acuitesVisuelles AcuiteVisuelle[]
   chartesAcceptees ChartAcceptation[]
   jointsSoudes    Joint[]              @relation("Soudeur")
   controlesRealises ControleDimensionnel[] @relation("Controleur")
@@ -92,7 +95,7 @@ enum TypeQualification {
   CND
 }
 
-enum StatutQualification {
+enum StatutValidite {
   VALIDE
   BIENTOT_ECHEANCE
   EXPIRE
@@ -112,7 +115,7 @@ model Qualification {
   domaineValidite String?
   dateObtention  DateTime
   dateExpiration DateTime?
-  statut         StatutQualification @default(VALIDE)
+  statut         StatutValidite @default(VALIDE)
   certificatUrl  String?
 
   evenements     QualificationEvenement[]
@@ -137,6 +140,60 @@ model QualificationEvenement {
   preuveJointIds  String[]
   valideParId     String?
   commentaire     String?
+}
+
+// Habilitations (électrique, accès site, engins...) : conceptuellement
+// proches des qualifications soudage/CND mais plus génériques. Un
+// renouvellement n'écrase jamais l'ancien enregistrement : c'est une
+// nouvelle ligne, l'historique reste visible via la liste complète.
+model Habilitation {
+  id             String         @id @default(cuid())
+  personnel      Personnel      @relation(fields: [personnelId], references: [id])
+  personnelId    String
+  intitule       String
+  reference      String?
+  dateObtention  DateTime
+  dateExpiration DateTime?
+  statut         StatutValidite @default(VALIDE)
+  certificatUrl  String?
+  createdAt      DateTime       @default(now())
+
+  @@index([personnelId])
+}
+
+// Formations suivies. Comme pour les habilitations, un recyclage se
+// traduit par un nouvel enregistrement plutôt qu'une modification du
+// précédent.
+model Formation {
+  id              String         @id @default(cuid())
+  personnel       Personnel      @relation(fields: [personnelId], references: [id])
+  personnelId     String
+  intitule        String
+  organisme       String?
+  dateRealisation DateTime
+  dateExpiration  DateTime?
+  statut          StatutValidite @default(VALIDE)
+  certificatUrl   String?
+  createdAt       DateTime       @default(now())
+
+  @@index([personnelId])
+}
+
+// Test d'acuité visuelle (near/far, perception des couleurs selon le cas) :
+// exigence réglementaire récurrente pour soudeurs et contrôleurs.
+model AcuiteVisuelle {
+  id             String         @id @default(cuid())
+  personnel      Personnel      @relation(fields: [personnelId], references: [id])
+  personnelId    String
+  dateTest       DateTime
+  dateExpiration DateTime?
+  apte           Boolean
+  organisme      String?
+  certificatUrl  String?
+  statut         StatutValidite @default(VALIDE)
+  createdAt      DateTime       @default(now())
+
+  @@index([personnelId])
 }
 
 model ChartVersion {

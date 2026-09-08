@@ -42,6 +42,31 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   - `PATCH /api/fnc` — faire avancer le workflow d'une FNC ; faire passer
     une FNC en VALIDATION ou CLOTUREE est réservé au niveau 3 et
     enregistré dans l'audit trail (traçabilité de la décision de validation)
+  - `POST /api/personnel/[id]/fonctions` — ajouter une fonction (soudeur,
+    contrôleur, chargé de travaux...) à une personne (niveau 2 minimum)
+  - `GET /api/personnel/[id]` — fiche complète : fonctions, qualifications,
+    habilitations, formations, acuités visuelles, avec leur statut
+    (valide / bientôt à échéance / expiré / en renouvellement / suspendu)
+    recalculé à partir des dates à chaque lecture
+  - `POST /api/qualifications` — enregistrer une QS (niveau 2 minimum)
+  - `POST /api/qualifications/[id]/evenements` — faire avancer l'historique
+    d'une qualification (`RECONDUCTION_PROPOSEE`, `RECONDUCTION_VALIDEE`,
+    `SUSPENSION`). Weldoc peut *proposer* une reconduction automatiquement
+    (voir plus bas), mais ne la valide jamais seul : la validation et la
+    suspension sont réservées au niveau 3.
+  - `POST /api/habilitations`, `POST /api/formations`,
+    `POST /api/acuites-visuelles` — même logique (niveau 2 minimum) ; un
+    renouvellement crée un nouvel enregistrement, l'ancien n'est jamais
+    modifié ni supprimé
+- `src/lib/qualifications.ts` — quand un soudeur réalise un joint, Weldoc
+  vérifie si l'une de ses qualifications soudage arrive à échéance et, le
+  cas échéant, propose automatiquement une reconduction (avec le joint
+  comme preuve) — sans jamais la valider lui-même. **Limite assumée** :
+  seule l'échéance est vérifiée pour l'instant, pas encore la
+  correspondance fine procédé/matériaux du joint avec le domaine de
+  validité de la qualification (le modèle Joint n'a pas encore de champ
+  "procédé" structuré) — chaque proposition reste donc à vérifier par la
+  personne qui valide.
 - `src/lib/auth.ts` — briques d'authentification : mots de passe (hachés,
   jamais stockés en clair), sessions côté serveur (révocables
   immédiatement, par ex. si un compte est suspendu), vérification du
@@ -49,6 +74,8 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
 - `src/app/login/page.tsx` — page de connexion.
 - `src/app/page.tsx` — page d'accueil listant les affaires (accès
   réservé aux personnes connectées).
+- `src/app/personnel/page.tsx` — liste du personnel, ses fonctions et le
+  statut de ses qualifications.
 - `prisma.config.ts` — configuration Prisma (schéma, migrations) : utilise
   `DATABASE_URL` en connexion PostgreSQL classique, utilisée par la CLI
   (`prisma migrate`, etc.).
@@ -61,9 +88,12 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
 
 ## Ce qui n'est PAS encore fait (volontairement)
 
-- Le module personnel/qualifications complet (fonctions, qualifications,
-  habilitations, formations, acuités visuelles...) : l'authentification ne
-  crée qu'une fiche personne minimale (identité + niveau).
+- La correspondance fine entre l'activité d'un joint (procédé, matériaux,
+  diamètre) et le domaine de validité d'une qualification, pour la
+  proposition automatique de reconduction (voir la limite assumée
+  ci-dessus) : il faudra structurer ces champs sur Joint.
+- Les autorisations de signature et les documents justificatifs attachés
+  au personnel (mentionnés au cahier des charges, pas encore modélisés).
 - Les droits contextuels fins évoqués au cahier des charges ("selon le
   contexte de l'affaire") : pour l'instant, les droits ne dépendent que du
   niveau (1/2/3) de la personne, pas encore de son rôle ni de l'affaire

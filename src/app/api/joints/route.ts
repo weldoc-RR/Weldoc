@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
+import { detecterPreuvesReconduction } from "@/lib/qualifications";
 
 const CreateJointSchema = z.object({
   affaireId: z.string().min(1),
@@ -63,6 +64,10 @@ export async function POST(req: NextRequest) {
   const joint = await prisma.joint.create({
     data: { ...parsed.data, numero, indiceReparation: 0 },
   });
+
+  if (joint.soudeurId) {
+    await detecterPreuvesReconduction(joint.soudeurId, joint.id);
+  }
 
   return NextResponse.json(joint, { status: 201 });
 }

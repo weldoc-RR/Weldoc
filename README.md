@@ -32,6 +32,15 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
     ouverture automatique de FNC si hors tolérance
   - `PATCH /api/fnc` — faire avancer le workflow d'une FNC
 - `src/app/page.tsx` — page d'accueil minimale listant les affaires.
+- `prisma.config.ts` — configuration Prisma (schéma, migrations) : utilise
+  `DATABASE_URL` en connexion PostgreSQL classique, utilisée par la CLI
+  (`prisma migrate`, etc.).
+- `src/lib/prisma.ts` — connexion de l'application à la base : passe par le
+  pilote HTTPS de Neon (`@prisma/adapter-neon` + `@neondatabase/serverless`)
+  plutôt qu'une connexion PostgreSQL TCP classique. Utile si l'hébergement
+  de l'application n'autorise que du trafic HTTPS sortant (certains
+  environnements cloud restreints). Fonctionne aussi normalement partout
+  ailleurs.
 
 ## Ce qui n'est PAS encore fait (volontairement)
 

@@ -13,10 +13,14 @@ const EvenementSchema = z.discriminatedUnion("type", [
     type: z.literal("RECONDUCTION_VALIDEE"),
     nouvelleDateExpiration: z.string().datetime(),
     commentaire: z.string().optional(),
+    // Signature de la décision (voir POST /api/signatures), optionnelle
+    // tant que le module de signature n'est pas généralisé partout.
+    signatureId: z.string().optional(),
   }),
   z.object({
     type: z.literal("SUSPENSION"),
     commentaire: z.string().min(1, "Le motif de suspension est obligatoire."),
+    signatureId: z.string().optional(),
   }),
   z.object({
     type: z.literal("CONFIRMATION_VALIDITE"),
@@ -25,6 +29,7 @@ const EvenementSchema = z.discriminatedUnion("type", [
     // aux critères), en plus ou à la place d'un essai — optionnel, comme
     // RECONDUCTION_PROPOSEE.
     preuveJointIds: z.array(z.string()).optional(),
+    signatureId: z.string().optional(),
   }),
 ]);
 
@@ -58,6 +63,13 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     return NextResponse.json({ error: "Qualification introuvable." }, { status: 404 });
   }
 
+  if ("signatureId" in parsed.data && parsed.data.signatureId) {
+    const signature = await prisma.signature.findUnique({ where: { id: parsed.data.signatureId } });
+    if (!signature) {
+      return NextResponse.json({ error: "Signature introuvable." }, { status: 422 });
+    }
+  }
+
   // Remarque technique : pas de transaction DB ici (le pilote HTTPS utilisé
   // pour joindre Neon depuis certains environnements ne les supporte pas).
   // On écrit d'abord l'événement (le fait historique), puis on met à jour
@@ -68,6 +80,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
         qualificationId: qualification.id,
         type: "RECONDUCTION_VALIDEE",
         commentaire: parsed.data.commentaire,
+        signatureId: parsed.data.signatureId,
         valideParId: utilisateur.personnelId,
       },
     });
@@ -87,6 +100,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
         qualificationId: qualification.id,
         type: "SUSPENSION",
         commentaire: parsed.data.commentaire,
+        signatureId: parsed.data.signatureId,
         valideParId: utilisateur.personnelId,
       },
     });
@@ -125,6 +139,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
         type: "CONFIRMATION_VALIDITE",
         commentaire: parsed.data.commentaire,
         preuveJointIds: parsed.data.preuveJointIds ?? [],
+        signatureId: parsed.data.signatureId,
         valideParId: utilisateur.personnelId,
       },
     });

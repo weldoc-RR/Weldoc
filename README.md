@@ -239,6 +239,29 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   `Qualification.organismeExamen` trace, en texte libre, qui a
   examiné/délivré la qualification (pas forcément l'entreprise
   elle-même).
+- `src/lib/signature.ts` — identification QR + PIN pour signer un document,
+  comme demandé au cahier des charges ("Identification et signature") :
+  identification (matricule ou QR) → authentification (code PIN, haché
+  comme un mot de passe, jamais en clair) → vérification que la charte
+  d'utilisation en vigueur a été acceptée → signature horodatée
+  (`POST /api/signatures`). Le QR seul n'est jamais une signature (il est
+  prêtable/copiable) : le PIN est systématiquement requis. Une session
+  ouverte sur l'appareil reste nécessaire pour appeler la route, mais la
+  personne qui signe peut être différente de celle connectée — pensé pour
+  une tablette partagée où chacun s'identifie pour ses propres actes,
+  sans se reconnecter.
+  - `POST /api/personnel/[id]/pin` — définir/changer son code PIN
+    (soi-même, ou niveau 3 pour un premier réglage/oubli) ; bouton
+    "Définir le code PIN" sur `/personnel`.
+  - `GET`/`POST /api/chartes`, `POST /api/chartes/[id]/acceptation` —
+    bibliothèque des versions de la charte (page `/charte`) : une
+    nouvelle version ne remplace jamais la précédente, et il faut la
+    réaccepter avant de pouvoir de nouveau signer.
+  - Branché sur la validation d'une reconduction et la confirmation de
+    validité de qualification (`/personnel`) : signer devient une étape
+    obligatoire avant de pouvoir valider, avec `signatureId` conservé sur
+    l'événement (`QualificationEvenement.signatureId`, référence libre
+    comme `signatureId` ailleurs dans l'application).
 - `src/lib/auth.ts` — briques d'authentification : mots de passe (hachés,
   jamais stockés en clair), sessions côté serveur (révocables
   immédiatement, par ex. si un compte est suspendu), vérification du
@@ -319,9 +342,17 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   contexte de l'affaire") : pour l'instant, les droits ne dépendent que du
   niveau (1/2/3) de la personne, pas encore de son rôle ni de l'affaire
   concernée.
-- L'identification QR + PIN pour la signature de documents (distincte de la
-  connexion à l'application) : le champ `pinHash` existe sur Personnel mais
-  n'est pas encore utilisé.
+- Les autorisations de signature (qui a le droit de signer quel type de
+  document) restent implicites : le parcours QR/matricule + PIN + charte
+  (voir ci-dessus) identifie et authentifie la personne, mais Weldoc ne
+  vérifie pas encore qu'elle a le droit de signer ce document précis
+  au-delà du niveau requis pour l'action elle-même.
+- La signature QR + PIN n'est branchée que sur la validation d'une
+  reconduction et sur la confirmation de validité de qualification (voir
+  ci-dessus) : les six types de contrôle et la fiche technique de soudage
+  ont bien un champ `signatureId` dans le modèle, mais pas encore de
+  formulaire de saisie du tout (contrôles API seulement) — le brancher
+  s'y fera avec l'interface de saisie de chaque contrôle, à construire.
 - La bibliothèque de consommables pour MT/RT/UT (elle n'existe que pour
   le ressuage) : leur traçabilité porte surtout sur l'équipement, la
   source ou le film, pas encore couverte.

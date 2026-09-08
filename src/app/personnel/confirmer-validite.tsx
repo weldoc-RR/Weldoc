@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { SignerQrPin } from "./signer-qr-pin";
 
 type Joint = { id: string; numero: string; indiceReparation: number };
 
@@ -10,6 +11,7 @@ export function ConfirmerValidite({ qualificationId, personnelId }: { qualificat
   const [ouvert, setOuvert] = useState(false);
   const [joints, setJoints] = useState<Joint[] | null>(null);
   const [jointIdsChoisis, setJointIdsChoisis] = useState<string[]>([]);
+  const [signatureId, setSignatureId] = useState<string | null>(null);
   const [enCours, setEnCours] = useState(false);
 
   async function ouvrir() {
@@ -29,12 +31,17 @@ export function ConfirmerValidite({ qualificationId, personnelId }: { qualificat
     const res = await fetch(`/api/qualifications/${qualificationId}/evenements`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ type: "CONFIRMATION_VALIDITE", preuveJointIds: jointIdsChoisis }),
+      body: JSON.stringify({
+        type: "CONFIRMATION_VALIDITE",
+        preuveJointIds: jointIdsChoisis,
+        signatureId: signatureId ?? undefined,
+      }),
     });
     setEnCours(false);
     if (res.ok) {
       setOuvert(false);
       setJointIdsChoisis([]);
+      setSignatureId(null);
       router.refresh();
     }
   }
@@ -74,7 +81,18 @@ export function ConfirmerValidite({ qualificationId, personnelId }: { qualificat
           ))}
         </ul>
       )}
-      <button onClick={confirmer} disabled={enCours}>
+      <div style={{ margin: "0.4rem 0" }}>
+        <p style={{ fontSize: "0.8rem", margin: "0 0 0.2rem 0" }}>
+          Signature de la personne qui confirme (matricule/QR + PIN) :
+        </p>
+        <SignerQrPin
+          documentType="QualificationEvenement"
+          documentId={qualificationId}
+          versionDocument="CONFIRMATION_VALIDITE"
+          onSigne={setSignatureId}
+        />
+      </div>
+      <button onClick={confirmer} disabled={enCours || !signatureId}>
         {enCours ? "..." : "Valider"}
       </button>
       <button type="button" onClick={() => setOuvert(false)} style={{ marginLeft: "0.5rem" }}>

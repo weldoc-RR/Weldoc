@@ -7,6 +7,8 @@ import { calculerProchaineConfirmation } from "@/lib/confirmationQualification";
 import { AjouterQualification } from "./ajouter-qualification";
 import { ConfirmerValidite } from "./confirmer-validite";
 import { ValiderReconduction } from "./valider-reconduction";
+import { DefinirPin } from "./definir-pin";
+import { aNiveauMinimum } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -43,6 +45,9 @@ export default async function PersonnelPage() {
         <Link href="/">← Affaires</Link>
       </p>
       <h1>Weldoc — Personnel</h1>
+      <p>
+        <Link href="/charte">Charte d&apos;utilisation et d&apos;intégrité →</Link>
+      </p>
 
       {personnel.length > 0 && (
         <AjouterQualification
@@ -58,6 +63,15 @@ export default async function PersonnelPage() {
               {p.prenom} {p.nom}
             </strong>{" "}
             — {p.matricule} — {p.societe} — {p.niveau}
+            {(p.id === utilisateur.personnelId || aNiveauMinimum(utilisateur.niveau, "NIVEAU_3")) && (
+              <>
+                {" — "}
+                <span style={{ fontSize: "0.8rem", color: "#898781" }}>
+                  {p.pinHash ? "PIN défini" : "PIN non défini"}
+                </span>
+                <DefinirPin personnelId={p.id} />
+              </>
+            )}
             {p.fonctions.length > 0 && <div>Fonctions : {p.fonctions.map((f) => f.fonction).join(", ")}</div>}
             {p.qualifications.length > 0 && (
               <ul>

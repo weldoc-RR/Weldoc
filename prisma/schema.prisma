@@ -181,6 +181,10 @@ model QualificationEvenement {
   date            DateTime                    @default(now())
   preuveJointIds  String[]
   valideParId     String?
+  // Référence libre vers Signature.id (voir plus bas), comme signatureId
+  // ailleurs dans l'application — pas de clé étrangère directe, Signature
+  // reste générique par (documentType, documentId).
+  signatureId     String?
   commentaire     String?
 }
 
@@ -238,6 +242,12 @@ model AcuiteVisuelle {
   @@index([personnelId])
 }
 
+// Charte d'utilisation et d'intégrité (voir cahier des charges,
+// "Identification et signature") : doit être acceptée avant toute
+// signature de document, et réacceptée à chaque nouvelle version. Une
+// nouvelle version est une nouvelle ligne, jamais une modification de la
+// précédente ; la version "en vigueur" est simplement la plus récente par
+// `publieLe` (calculée à la lecture, comme ailleurs dans l'application).
 model ChartVersion {
   id            String   @id @default(cuid())
   version       String   @unique
@@ -690,6 +700,16 @@ enum TypeActionRemiseEnConformite {
   CONTROLE_COMPLEMENTAIRE
 }
 
+// Une signature n'est produite qu'au bout du parcours demandé au cahier des
+// charges : identification (QR ou matricule) → authentification (PIN,
+// haché comme un mot de passe — voir Personnel.pinHash) → vérification que
+// la charte en vigueur a été acceptée → création de cet enregistrement
+// (horodatage automatique). Voir POST /api/signatures. `documentType`/
+// `documentId` restent génériques (pas de clé étrangère) car une signature
+// peut porter sur n'importe quel type de document (contrôle, fiche de
+// soudage, événement de qualification...) ; chaque table qui peut être
+// signée porte son propre `signatureId` en texte libre, jamais une relation
+// directe vers ce modèle.
 model Signature {
   id             String    @id @default(cuid())
   personnel      Personnel @relation(fields: [personnelId], references: [id])

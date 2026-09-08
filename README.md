@@ -323,7 +323,11 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   niveau d'accès requis pour une action.
 - `src/app/login/page.tsx` — page de connexion.
 - `src/app/page.tsx` — page d'accueil listant les affaires (accès
-  réservé aux personnes connectées).
+  réservé aux personnes connectées). Chaque affaire affiche maintenant
+  directement son état d'avancement (barre + pourcentage, même calcul que
+  `/avancement` — voir `src/lib/avancement.ts`, rien n'est recalculé en
+  double) et ses FNC ouvertes en rouge, sans avoir besoin d'ouvrir une
+  page séparée pour voir où en est une affaire.
 - `src/app/personnel/page.tsx` — tableau de bord par personne : fonctions,
   qualifications soudage/CND, habilitations, formations et acuité
   visuelle, chacune avec son statut recalculé à la lecture (valide /

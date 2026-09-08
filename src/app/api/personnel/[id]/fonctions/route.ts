@@ -25,11 +25,17 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     return NextResponse.json({ error: "Personnel introuvable." }, { status: 404 });
   }
 
-  const fonction = await prisma.personnelFonction.upsert({
+  // upsert() utilise une transaction en interne, non supportée par le
+  // pilote HTTP (voir la remarque dans src/lib/prisma.ts) : on fait donc
+  // l'équivalent à la main, en deux requêtes séquentielles.
+  const existante = await prisma.personnelFonction.findUnique({
     where: { personnelId_fonction: { personnelId: params.id, fonction: parsed.data.fonction } },
-    create: { personnelId: params.id, fonction: parsed.data.fonction },
-    update: {},
   });
+  const fonction =
+    existante ??
+    (await prisma.personnelFonction.create({
+      data: { personnelId: params.id, fonction: parsed.data.fonction },
+    }));
 
-  return NextResponse.json(fonction, { status: 201 });
+  return NextResponse.json(fonction, { status: existante ? 200 : 201 });
 }

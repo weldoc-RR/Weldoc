@@ -35,6 +35,8 @@ model Personnel {
   chartesAcceptees ChartAcceptation[]
   jointsSoudes    Joint[]              @relation("Soudeur")
   controlesRealises ControleDimensionnel[] @relation("Controleur")
+  controlesVisuelsRealises ControleVisuel[] @relation("ControleurVisuel")
+  controlesRessuageRealises ControleRessuage[] @relation("ControleurRessuage")
   signatures      Signature[]
   compte          Compte?
 
@@ -330,6 +332,8 @@ model Joint {
 
   ficheSoudage    FicheTechniqueSoudage?
   controlesDim    ControleDimensionnel[]
+  controlesVisuels ControleVisuel[]
+  controlesRessuage ControleRessuage[]
   fncs            FNC[]
 
   @@unique([affaireId, numero, indiceReparation])
@@ -398,6 +402,97 @@ model ControleDimensionnel {
   fncsGenerees   FNC[]
 }
 
+// ============================================================================
+// CONTRÔLE VISUEL ET CND (VT, PT/ressuage — MT/RT/UT à construire de la même
+// façon, module par module)
+// ============================================================================
+// Résultat générique conforme/non conforme/à vérifier, distinct de
+// ResultatConformite (propre aux tolérances dimensionnelles) car les termes
+// n'ont pas le même sens pour une indication visuelle ou CND.
+enum ResultatControle {
+  CONFORME
+  NON_CONFORME
+  A_VERIFIER
+}
+
+model ControleVisuel {
+  id             String            @id @default(cuid())
+  joint          Joint             @relation(fields: [jointId], references: [id])
+  jointId        String
+  controleur     Personnel         @relation("ControleurVisuel", fields: [controleurId], references: [id])
+  controleurId   String
+  procedureRef   String
+  procedureVersion String?
+  dateControle   DateTime          @default(now())
+  // Indications : localisation, nature, dimensions, critère applicable,
+  // conforme (bool), commentaire, photoUrl — une indication conforme reste
+  // documentée, elle ne signifie pas automatiquement une non-conformité.
+  indications    Json
+  resultat       ResultatControle
+  signatureId    String?
+
+  controlesRessuagePrealable ControleRessuage[]
+  fncsGenerees   FNC[]
+
+  @@index([jointId])
+}
+
+enum TypeConsommableCND {
+  PENETRANT
+  REVELATEUR
+  NETTOYANT
+}
+
+// Bibliothèque des consommables CND : un produit/lot est enregistré une
+// seule fois puis réutilisé sur chaque PV qui l'a employé, plutôt que
+// ressaisi à chaque contrôle.
+model ConsommableCND {
+  id            String             @id @default(cuid())
+  type          TypeConsommableCND
+  fabricant     String
+  reference     String
+  lot           String
+  peremption    DateTime?
+  certificatUrl String?
+
+  utilisations  ControleRessuageConsommable[]
+
+  @@unique([type, fabricant, reference, lot])
+}
+
+model ControleRessuage {
+  id             String            @id @default(cuid())
+  joint          Joint             @relation(fields: [jointId], references: [id])
+  jointId        String
+  controleur     Personnel         @relation("ControleurRessuage", fields: [controleurId], references: [id])
+  controleurId   String
+  // Le contrôle visuel préalable est obligatoire : on ne fait pas de
+  // ressuage sur un joint dont l'état de surface n'a pas été vérifié.
+  controleVisuelPrealable   ControleVisuel @relation(fields: [controleVisuelPrealableId], references: [id])
+  controleVisuelPrealableId String
+  procedureRef   String
+  procedureVersion String?
+  dateControle   DateTime          @default(now())
+  indications    Json
+  resultat       ResultatControle
+  signatureId    String?
+
+  consommables   ControleRessuageConsommable[]
+  fncsGenerees   FNC[]
+
+  @@index([jointId])
+}
+
+model ControleRessuageConsommable {
+  id                 String           @id @default(cuid())
+  controleRessuage   ControleRessuage @relation(fields: [controleRessuageId], references: [id])
+  controleRessuageId String
+  consommable        ConsommableCND   @relation(fields: [consommableId], references: [id])
+  consommableId      String
+
+  @@unique([controleRessuageId, consommableId])
+}
+
 enum StatutFNC {
   DETECTION
   ANALYSE
@@ -422,6 +517,14 @@ model FNC {
   jointId           String?
   controleOrigine   ControleDimensionnel? @relation(fields: [controleOrigineId], references: [id])
   controleOrigineId String?
+  // Une FNC ne peut avoir qu'une seule origine parmi les contrôles
+  // ci-dessous. Un champ par type de contrôle plutôt qu'une relation
+  // polymorphe unique, pour rester cohérent avec controleOrigine ci-dessus ;
+  // à revoir si le nombre de méthodes CND grandit encore.
+  controleVisuelOrigine   ControleVisuel? @relation(fields: [controleVisuelOrigineId], references: [id])
+  controleVisuelOrigineId String?
+  controleRessuageOrigine   ControleRessuage? @relation(fields: [controleRessuageOrigineId], references: [id])
+  controleRessuageOrigineId String?
   description       String
   impact            ImpactFNC
   statut            StatutFNC @default(DETECTION)

@@ -58,6 +58,18 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
     `POST /api/acuites-visuelles` — même logique (niveau 2 minimum) ; un
     renouvellement crée un nouvel enregistrement, l'ancien n'est jamais
     modifié ni supprimé
+  - `POST /api/controles-visuels` — contrôle visuel (VT) d'un joint : le
+    résultat est déduit des indications saisies (jamais imposé
+    directement), FNC automatique si non conforme
+  - `POST /api/controles-ressuage` — contrôle par ressuage (PT) : exige un
+    contrôle visuel préalable sur le même joint (refusé sinon), mêmes
+    principes que le contrôle visuel, et peut référencer les consommables
+    utilisés (pénétrant, révélateur, nettoyant)
+  - `POST /api/consommables-cnd` — bibliothèque des consommables CND
+    (fabricant, référence, lot, péremption), enregistrés une fois puis
+    réutilisés sur chaque PV
+  - Les mêmes méthodes seront ajoutées pour MT/RT/UT selon le même modèle,
+    au fil des prochains modules
 - `src/lib/qualifications.ts` — quand un soudeur réalise un joint, Weldoc
   vérifie si l'une de ses qualifications soudage arrive à échéance et, le
   cas échéant, propose automatiquement une reconduction (avec le joint
@@ -84,7 +96,10 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   plutôt qu'une connexion PostgreSQL TCP classique. Utile si l'hébergement
   de l'application n'autorise que du trafic HTTPS sortant (certains
   environnements cloud restreints). Fonctionne aussi normalement partout
-  ailleurs.
+  ailleurs. **Limite technique à connaître** : ce pilote ne supporte pas
+  les transactions (ni `$transaction`, ni les écritures imbriquées, ni
+  `upsert()`) — voir le commentaire dans ce fichier avant d'écrire du code
+  qui enchaîne plusieurs écritures liées.
 
 ## Ce qui n'est PAS encore fait (volontairement)
 
@@ -101,7 +116,10 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
 - L'identification QR + PIN pour la signature de documents (distincte de la
   connexion à l'application) : le champ `pinHash` existe sur Personnel mais
   n'est pas encore utilisé.
-- L'essentiel des ~50 modules du cahier des charges (CND, TQC, planning,
+- Les autres méthodes CND (magnétoscopie MT, radiographie RT, ultrasons
+  UT) : seuls le contrôle visuel (VT) et le ressuage (PT) existent pour
+  l'instant, construits pour que les suivants suivent le même modèle.
+- L'essentiel des ~50 modules du cahier des charges (TQC, planning,
   rapports de fin de fabrication, dossier réglementaire, REX, etc.).
 - Une vraie interface tablette soignée (ici, des pages HTML minimales).
 - Les vraies valeurs de tolérances normatives (voir avertissement ci-dessus).

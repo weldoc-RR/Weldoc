@@ -18,11 +18,13 @@ if (httpsProxy) {
 // utilisée par la CLI Prisma / les migrations).
 //
 // Limite importante : ce pilote HTTP ne supporte PAS prisma.$transaction
-// (ni la forme "callback", ni la forme tableau) — chaque requête HTTP est
+// (ni la forme "callback", ni la forme tableau), ni tout ce qui utilise une
+// transaction en interne — écritures imbriquées (create avec un "create"
+// sur une relation) et .upsert() inclus. Chaque requête HTTP est
 // indépendante. Quand plusieurs écritures doivent rester cohérentes, les
 // faire séquentiellement (écrire d'abord le fait historique/l'événement,
-// puis mettre à jour l'état courant) plutôt que de s'appuyer sur une
-// transaction DB.
+// puis mettre à jour l'état courant), et remplacer upsert() par un
+// find + create manuel.
 const adapter = new PrismaNeonHttp(process.env.DATABASE_URL!, {});
 
 export const prisma = globalForPrisma.prisma ?? new PrismaClient({ adapter });

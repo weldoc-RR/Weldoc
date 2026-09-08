@@ -189,6 +189,29 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   - `src/app/avancement/[id]/page.tsx` — détail par séquence, sous forme
     de barres empilées (terminé/en cours/à faire/non applicable) avec les
     effectifs en clair à côté de chaque barre.
+- `src/lib/dossierFinFabrication.ts` — première version du rapport de fin
+  de fabrication (voir le cahier des charges, qui précise qu'"un exemple
+  réel sera fourni ultérieurement pour finaliser la structure" : cette
+  version compile donc ce qui existe déjà — rien n'est ressaisi — plutôt
+  que de figer une mise en page définitive). Rassemble, pour une affaire :
+  organigramme, avancement, personnel intervenant (soudeurs et
+  contrôleurs, avec leurs qualifications expirées/suspendues), WPS/QMOS et
+  consommables CND utilisés, joints (avec chaîne de réparation et dernier
+  résultat par méthode de contrôle), FNC, et une liste d'éléments
+  manquants signalés (contrôle visuel absent, FNC non clôturée,
+  qualification expirée ou suspendue) — un signalement indicatif, jamais
+  un blocage décidé par Weldoc.
+  - `GET`/`POST /api/affaires/[id]/rapport-fin-fabrication` — validation
+    du rapport (niveau 3, voir le cahier des charges : "signé par une
+    personne habilitée"). Pas de nouvelle table : la validation, c'est la
+    signature QR + PIN elle-même (`Signature`, `documentType`
+    `"RAPPORT_FIN_FABRICATION"`) — mêmes principes que partout ailleurs
+    dans l'application (personne, date, signature tracées).
+  - `src/app/affaires/[id]/dossier/page.tsx` — la page elle-même, pensée
+    pour l'impression navigateur (bouton "Imprimer / exporter en PDF" —
+    pas de génération de PDF côté serveur pour l'instant, ce qui
+    ajouterait une dépendance à choisir avec vous). Lien depuis la page
+    d'accueil, à côté de chaque affaire.
 - `src/lib/planning.ts` — la vérification avant affectation. **Limite
   assumée** : la correspondance fonction → type de qualification requis
   (ex. "soudeur" → qualification SOUDAGE) est une liste en dur, pas une
@@ -445,8 +468,16 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   pas encore joint par joint (ex. "38 joints soudés sur 120 prévus") : ça
   suppose de connaître à l'avance le nombre de joints prévus sur l'affaire,
   ce qui n'est pas encore saisi dans Weldoc.
-- L'essentiel des ~50 modules du cahier des charges (TQC, rapports de fin
-  de fabrication, dossier réglementaire, REX, etc.).
+- L'essentiel des ~50 modules du cahier des charges (TQC, REX, etc.). Le
+  rapport de fin de fabrication a une première version (voir ci-dessus),
+  mais le "dossier réglementaire" à proprement parler — le suivi, point
+  par point, des exigences réglementaires avec ses 5 statuts (non
+  bloquant / bloquant / sous réserve / attente décision / déblocage
+  autorisé, voir le cahier des charges) — reste à construire : ce que la
+  page `/affaires/[id]/dossier` signale aujourd'hui ("éléments manquants")
+  est une première approximation par heuristiques (contrôle visuel
+  manquant, FNC non clôturée, qualification expirée/suspendue), pas ce
+  suivi réglementaire complet.
 - Une vraie interface tablette soignée (ici, des pages HTML minimales).
 - Les vraies valeurs de tolérances normatives (voir avertissement ci-dessus).
 - Les tests automatisés et le déploiement.

@@ -39,7 +39,7 @@ export default async function HomePage() {
         {affaires.map((a) => (
           <li key={a.id}>
             <strong>{a.numero}</strong> — {a.client} / {a.projet} ({a.typeRealisation.toLowerCase()}) —{" "}
-            {a.joints.length} joint(s), {a.fncs.length} FNC
+            {a.joints.length} joint(s), {a.fncs.length} FNC — <Link href={`/affaires/${a.id}/dossier`}>Rapport de fin de fabrication →</Link>
           </li>
         ))}
       </ul>

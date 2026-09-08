@@ -142,6 +142,16 @@ model Qualification {
   domaineValidite String?
   dateObtention  DateTime
   dateExpiration DateTime?
+  // Certains référentiels exigent, en plus de l'échéance finale, des
+  // confirmations périodiques (ex. tous les 6 mois) pour que la
+  // qualification reste valable jusqu'à cette échéance — distinct d'une
+  // reconduction/prolongation complète. La périodicité dépend du
+  // référentiel/de l'entreprise, jamais imposée par Weldoc ; null = pas de
+  // confirmation périodique exigée. La prochaine échéance de confirmation
+  // se calcule à la lecture à partir du dernier événement
+  // CONFIRMATION_VALIDITE (voir src/lib/confirmationQualification.ts),
+  // jamais stockée.
+  frequenceConfirmationMois Int?
   statut         StatutValidite @default(VALIDE)
   certificatUrl  String?
 
@@ -152,6 +162,7 @@ model Qualification {
 
 enum TypeEvenementQualification {
   OBTENTION
+  CONFIRMATION_VALIDITE
   RECONDUCTION_PROPOSEE
   RECONDUCTION_VALIDEE
   SUSPENSION

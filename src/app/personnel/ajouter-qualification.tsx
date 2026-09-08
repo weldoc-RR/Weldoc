@@ -25,6 +25,7 @@ export function AjouterQualification({ personnel, referentiels }: { personnel: P
   const [diametreMaxMm, setDiametreMaxMm] = useState("");
   const [dateObtention, setDateObtention] = useState("");
   const [dateExpiration, setDateExpiration] = useState("");
+  const [frequenceConfirmationMois, setFrequenceConfirmationMois] = useState("");
   const [erreur, setErreur] = useState<string | null>(null);
   const [enCours, setEnCours] = useState(false);
 
@@ -60,6 +61,7 @@ export function AjouterQualification({ personnel, referentiels }: { personnel: P
         diametreMaxMm: diametreMaxMm ? Number(diametreMaxMm) : undefined,
         dateObtention: new Date(dateObtention).toISOString(),
         dateExpiration: dateExpiration ? new Date(dateExpiration).toISOString() : undefined,
+        frequenceConfirmationMois: frequenceConfirmationMois ? Number(frequenceConfirmationMois) : undefined,
       }),
     });
 
@@ -80,6 +82,7 @@ export function AjouterQualification({ personnel, referentiels }: { personnel: P
     setDiametreMaxMm("");
     setDateObtention("");
     setDateExpiration("");
+    setFrequenceConfirmationMois("");
     setOuvert(false);
     router.refresh();
   }
@@ -171,6 +174,18 @@ export function AjouterQualification({ personnel, referentiels }: { personnel: P
       <label>
         Date d&apos;expiration (optionnel)
         <input type="date" value={dateExpiration} onChange={(e) => setDateExpiration(e.target.value)} style={{ display: "block", width: "100%", padding: "0.4rem" }} />
+      </label>
+      <label>
+        Confirmation de validité exigée tous les combien de mois (optionnel, ex. 6 — laisser vide si le référentiel
+        n&apos;en exige pas)
+        <input
+          type="number"
+          min="1"
+          step="1"
+          value={frequenceConfirmationMois}
+          onChange={(e) => setFrequenceConfirmationMois(e.target.value)}
+          style={{ display: "block", width: "100%", padding: "0.4rem" }}
+        />
       </label>
       <div>
         <button type="submit" disabled={enCours}>

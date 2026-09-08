@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAuth, requireNiveau } from "@/lib/auth";
 import { calculerStatut } from "@/lib/statutValidite";
+import { calculerProchaineConfirmation } from "@/lib/confirmationQualification";
 
 const CreateQualificationSchema = z.object({
   personnelId: z.string().min(1),
@@ -23,6 +24,10 @@ const CreateQualificationSchema = z.object({
   diametreMinMm: z.number().optional(),
   diametreMaxMm: z.number().optional(),
   domaineValidite: z.string().optional(),
+  // Périodicité des confirmations de validité exigées entre l'obtention et
+  // l'échéance finale (ex. 6 pour "tous les 6 mois"), propre au
+  // référentiel/à l'entreprise — voir src/lib/confirmationQualification.ts.
+  frequenceConfirmationMois: z.number().int().positive().optional(),
   dateObtention: z.string().datetime(),
   dateExpiration: z.string().datetime().optional(),
   certificatUrl: z.string().optional(),
@@ -44,18 +49,22 @@ export async function GET(req: NextRequest) {
       personnelId: personnelId ?? undefined,
       type: type === "SOUDAGE" || type === "CND" ? type : undefined,
     },
-    include: { evenements: { orderBy: { date: "desc" }, take: 1 } },
+    include: { evenements: { orderBy: { date: "desc" } } },
     orderBy: { dateObtention: "desc" },
   });
 
   return NextResponse.json(
-    qualifications.map((q) => ({
-      ...q,
-      statutCalcule:
-        q.evenements[0]?.type === "RECONDUCTION_PROPOSEE"
-          ? "EN_RENOUVELLEMENT"
-          : calculerStatut(q.dateExpiration, { suspendu: q.statut === "SUSPENDU" }),
-    }))
+    qualifications.map((q) => {
+      const datesConfirmations = q.evenements.filter((e) => e.type === "CONFIRMATION_VALIDITE").map((e) => e.date);
+      return {
+        ...q,
+        statutCalcule:
+          q.evenements[0]?.type === "RECONDUCTION_PROPOSEE"
+            ? "EN_RENOUVELLEMENT"
+            : calculerStatut(q.dateExpiration, { suspendu: q.statut === "SUSPENDU" }),
+        confirmation: calculerProchaineConfirmation(q.frequenceConfirmationMois, q.dateObtention, datesConfirmations),
+      };
+    })
   );
 }
 

@@ -89,8 +89,14 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
     d'un scan QR, avec vérification de validité immédiate (échéance,
     hors service)
   - `GET /api/alertes` — outils bientôt à échéance (60 jours, même seuil
-    que pour les qualifications) ou déjà expirés ; voir aussi la page
-    `/alertes`
+    que pour les qualifications) ou déjà expirés, et qualifications dont la
+    confirmation de validité périodique (voir plus bas) est bientôt due (30
+    jours) ou en retard ; voir aussi la page `/alertes`
+  - `POST /api/qualifications/[id]/evenements` avec
+    `{"type":"CONFIRMATION_VALIDITE"}` — enregistre une confirmation de
+    validité (niveau 2 minimum), sans jamais toucher à l'échéance finale ni
+    au statut de la qualification ; bouton "Confirmer la validité" sur la
+    page `/personnel`
   - `POST /api/destinataires-alertes`, `DELETE /api/destinataires-alertes/[id]`
     — bibliothèque des destinataires du récapitulatif hebdomadaire (nom +
     email, niveau 2 minimum) ; réenregistrer une adresse déjà présente met
@@ -202,6 +208,17 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   protégées dans `src/lib/tolerances.ts`. Ça prépare le rapprochement
   automatique avec le domaine de validité d'un WPS, encore à construire
   (voir plus bas).
+- `src/lib/confirmationQualification.ts` — certains référentiels exigent,
+  en plus de l'échéance finale d'une qualification, des confirmations
+  périodiques (ex. tous les 6 mois) pour qu'elle reste valable — distinct
+  d'une reconduction/prolongation complète. `Qualification.frequenceConfirmationMois`
+  porte cette périodicité (propre à chaque qualification, jamais imposée
+  par Weldoc, laissée vide si non exigée) ; la prochaine échéance de
+  confirmation se recalcule à la lecture à partir du dernier événement
+  `CONFIRMATION_VALIDITE` (ou de la date d'obtention s'il n'y en a pas
+  encore eu), comme les autres statuts calculés de l'application. Alerte
+  "bientôt due" (30 jours) ou "en retard" sur la page `/alertes` et dans
+  le récapitulatif hebdomadaire par email.
 - `src/lib/auth.ts` — briques d'authentification : mots de passe (hachés,
   jamais stockés en clair), sessions côté serveur (révocables
   immédiatement, par ex. si un compte est suspendu), vérification du
@@ -296,9 +313,11 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   chaque semaine.
 - Les autres types d'alertes évoqués au cahier des charges (qualifications
   à échéance, habilitations expirées, FNC ouvertes, validations niveau 3
-  en attente...) : pour l'instant `/api/alertes` ne couvre que
-  l'outillage ; l'information existe déjà ailleurs (`statutCalcule` sur
-  chaque fiche) mais n'est pas encore centralisée ici.
+  en attente...) : `/api/alertes` couvre l'outillage et les confirmations
+  de validité de qualification périodiques, mais pas encore les
+  échéances finales de qualification/habilitation ni les FNC ouvertes ;
+  l'information existe déjà ailleurs (`statutCalcule` sur chaque fiche)
+  mais n'est pas encore centralisée ici.
 - L'adaptation complète à la fabrication en atelier : le cahier des
   charges est écrit en vocabulaire "chantier" (organigramme chantier,
   prise en charge du chantier...). `Affaire.typeRealisation`

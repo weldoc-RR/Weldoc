@@ -3,7 +3,9 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getUtilisateurConnecteServeur } from "@/lib/auth";
 import { calculerStatut } from "@/lib/statutValidite";
+import { calculerProchaineConfirmation } from "@/lib/confirmationQualification";
 import { AjouterQualification } from "./ajouter-qualification";
+import { ConfirmerValidite } from "./confirmer-validite";
 
 export const dynamic = "force-dynamic";
 
@@ -27,7 +29,7 @@ export default async function PersonnelPage() {
       include: {
         fonctions: true,
         qualifications: {
-          include: { evenements: { orderBy: { date: "desc" }, take: 1 }, referentiel: { select: { code: true } } },
+          include: { evenements: { orderBy: { date: "desc" } }, referentiel: { select: { code: true } } },
         },
       },
     }),
@@ -63,6 +65,14 @@ export default async function PersonnelPage() {
                     q.evenements[0]?.type === "RECONDUCTION_PROPOSEE"
                       ? "EN_RENOUVELLEMENT"
                       : calculerStatut(q.dateExpiration, { suspendu: q.statut === "SUSPENDU" });
+                  const datesConfirmations = q.evenements
+                    .filter((e) => e.type === "CONFIRMATION_VALIDITE")
+                    .map((e) => e.date);
+                  const confirmation = calculerProchaineConfirmation(
+                    q.frequenceConfirmationMois,
+                    q.dateObtention,
+                    datesConfirmations
+                  );
                   return (
                     <li key={q.id}>
                       {q.type} {q.reference} ({q.norme}
@@ -75,6 +85,16 @@ export default async function PersonnelPage() {
                       )}
                       {(q.diametreMinMm || q.diametreMaxMm) && (
                         <> — diamètre {q.diametreMinMm ?? "?"} à {q.diametreMaxMm ?? "?"} mm</>
+                      )}
+                      {confirmation.prochaineDateDue && q.statut !== "SUSPENDU" && (
+                        <>
+                          {" — "}
+                          <span style={{ color: confirmation.enRetard ? "crimson" : confirmation.bientotDue ? "darkorange" : "inherit" }}>
+                            confirmation {confirmation.enRetard ? "en retard depuis" : "due avant"} le{" "}
+                            {confirmation.prochaineDateDue.toLocaleDateString("fr-FR")}
+                          </span>
+                          <ConfirmerValidite qualificationId={q.id} />
+                        </>
                       )}
                     </li>
                   );

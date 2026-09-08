@@ -18,6 +18,10 @@ const EvenementSchema = z.discriminatedUnion("type", [
     type: z.literal("SUSPENSION"),
     commentaire: z.string().min(1, "Le motif de suspension est obligatoire."),
   }),
+  z.object({
+    type: z.literal("CONFIRMATION_VALIDITE"),
+    commentaire: z.string().optional(),
+  }),
 ]);
 
 // POST /api/qualifications/[id]/evenements — fait avancer l'historique d'une
@@ -36,7 +40,12 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   }
 
   const requiertNiveau3 = parsed.data.type === "RECONDUCTION_VALIDEE" || parsed.data.type === "SUSPENSION";
-  const auth = requiertNiveau3 ? await requireNiveau(req, "NIVEAU_3") : await requireAuth(req);
+  const requiertNiveau2 = parsed.data.type === "CONFIRMATION_VALIDITE";
+  const auth = requiertNiveau3
+    ? await requireNiveau(req, "NIVEAU_3")
+    : requiertNiveau2
+      ? await requireNiveau(req, "NIVEAU_2")
+      : await requireAuth(req);
   if ("erreur" in auth) return auth.erreur;
   const { utilisateur } = auth;
 
@@ -82,6 +91,22 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       data: { statut: "SUSPENDU" },
     });
     return NextResponse.json({ evenement, qualification: miseAJour }, { status: 201 });
+  }
+
+  if (parsed.data.type === "CONFIRMATION_VALIDITE") {
+    // Ne modifie ni l'échéance ni le statut de la qualification : c'est un
+    // simple jalon périodique, distinct d'une reconduction/prolongation.
+    // La prochaine échéance de confirmation est recalculée à la lecture à
+    // partir de cet événement (voir src/lib/confirmationQualification.ts).
+    const evenement = await prisma.qualificationEvenement.create({
+      data: {
+        qualificationId: qualification.id,
+        type: "CONFIRMATION_VALIDITE",
+        commentaire: parsed.data.commentaire,
+        valideParId: utilisateur.personnelId,
+      },
+    });
+    return NextResponse.json({ evenement }, { status: 201 });
   }
 
   // RECONDUCTION_PROPOSEE : une simple proposition, non bloquante, qui

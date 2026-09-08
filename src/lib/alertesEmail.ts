@@ -1,9 +1,12 @@
 import { prisma } from "@/lib/prisma";
 import { calculerStatutOutil } from "@/lib/statutOutil";
+import { calculerProchaineConfirmation } from "@/lib/confirmationQualification";
 
 export type RecapitulatifAlertes = {
   outilsBientotEcheance: { reference: string; type: string; dateEcheance: Date }[];
   outilsExpires: { reference: string; type: string; dateEcheance: Date }[];
+  confirmationsQualificationDues: { personnel: string; reference: string; prochaineDateDue: Date }[];
+  confirmationsQualificationEnRetard: { personnel: string; reference: string; prochaineDateDue: Date }[];
 };
 
 export async function construireRecapitulatif(): Promise<RecapitulatifAlertes> {
@@ -22,16 +25,45 @@ export async function construireRecapitulatif(): Promise<RecapitulatifAlertes> {
     }
   }
 
-  return { outilsBientotEcheance, outilsExpires };
+  const qualifications = await prisma.qualification.findMany({
+    where: { statut: { not: "SUSPENDU" }, frequenceConfirmationMois: { not: null } },
+    include: { personnel: { select: { nom: true, prenom: true } }, evenements: true },
+  });
+
+  const confirmationsQualificationDues: RecapitulatifAlertes["confirmationsQualificationDues"] = [];
+  const confirmationsQualificationEnRetard: RecapitulatifAlertes["confirmationsQualificationEnRetard"] = [];
+
+  for (const q of qualifications) {
+    const datesConfirmations = q.evenements.filter((e) => e.type === "CONFIRMATION_VALIDITE").map((e) => e.date);
+    const confirmation = calculerProchaineConfirmation(q.frequenceConfirmationMois, q.dateObtention, datesConfirmations);
+    if (!confirmation.prochaineDateDue) continue;
+    const ligne = {
+      personnel: `${q.personnel.prenom} ${q.personnel.nom}`,
+      reference: q.reference,
+      prochaineDateDue: confirmation.prochaineDateDue,
+    };
+    if (confirmation.enRetard) confirmationsQualificationEnRetard.push(ligne);
+    else if (confirmation.bientotDue) confirmationsQualificationDues.push(ligne);
+  }
+
+  return { outilsBientotEcheance, outilsExpires, confirmationsQualificationDues, confirmationsQualificationEnRetard };
 }
 
 function ligneOutil(o: { reference: string; type: string; dateEcheance: Date }): string {
   return `${o.reference} (${o.type}) — échéance ${o.dateEcheance.toLocaleDateString("fr-FR")}`;
 }
 
+function ligneConfirmation(c: { personnel: string; reference: string; prochaineDateDue: Date }): string {
+  return `${c.reference} (${c.personnel}) — confirmation due le ${c.prochaineDateDue.toLocaleDateString("fr-FR")}`;
+}
+
 export function contenuEmailRecapitulatif(recap: RecapitulatifAlertes): { sujet: string; texte: string; html: string } {
-  const total = recap.outilsExpires.length + recap.outilsBientotEcheance.length;
-  const sujet = `Weldoc — Récapitulatif hebdomadaire des alertes outillage (${total})`;
+  const total =
+    recap.outilsExpires.length +
+    recap.outilsBientotEcheance.length +
+    recap.confirmationsQualificationEnRetard.length +
+    recap.confirmationsQualificationDues.length;
+  const sujet = `Weldoc — Récapitulatif hebdomadaire des alertes (${total})`;
 
   const sections: string[] = [];
   if (recap.outilsExpires.length > 0) {
@@ -46,15 +78,27 @@ export function contenuEmailRecapitulatif(recap: RecapitulatifAlertes): { sujet:
         recap.outilsBientotEcheance.map((o) => `- ${ligneOutil(o)}`).join("\n")
     );
   }
+  if (recap.confirmationsQualificationEnRetard.length > 0) {
+    sections.push(
+      `Confirmations de validité de qualification en retard (${recap.confirmationsQualificationEnRetard.length}) :\n` +
+        recap.confirmationsQualificationEnRetard.map((c) => `- ${ligneConfirmation(c)}`).join("\n")
+    );
+  }
+  if (recap.confirmationsQualificationDues.length > 0) {
+    sections.push(
+      `Confirmations de validité de qualification bientôt dues (${recap.confirmationsQualificationDues.length}) :\n` +
+        recap.confirmationsQualificationDues.map((c) => `- ${ligneConfirmation(c)}`).join("\n")
+    );
+  }
 
   const texte =
     total === 0
-      ? "Aucune alerte outillage cette semaine."
+      ? "Aucune alerte cette semaine."
       : sections.join("\n\n") + "\n\nDétail complet dans Weldoc, page Alertes.";
 
   const html =
     total === 0
-      ? "<p>Aucune alerte outillage cette semaine.</p>"
+      ? "<p>Aucune alerte cette semaine.</p>"
       : sections
           .map(
             (s) =>

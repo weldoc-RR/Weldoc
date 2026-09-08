@@ -3,6 +3,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getUtilisateurConnecteServeur } from "@/lib/auth";
 import { calculerStatutOutil } from "@/lib/statutOutil";
+import { calculerProchaineConfirmation } from "@/lib/confirmationQualification";
 import { Destinataires } from "./destinataires";
 
 export const dynamic = "force-dynamic";
@@ -13,8 +14,12 @@ export default async function AlertesPage() {
     redirect("/login");
   }
 
-  const [outils, destinataires] = await Promise.all([
+  const [outils, qualifications, destinataires] = await Promise.all([
     prisma.outil.findMany({ where: { statut: { not: "HORS_SERVICE" } } }),
+    prisma.qualification.findMany({
+      where: { statut: { not: "SUSPENDU" }, frequenceConfirmationMois: { not: null } },
+      include: { personnel: { select: { nom: true, prenom: true } }, evenements: true },
+    }),
     prisma.destinataireAlerte.findMany({ orderBy: { email: "asc" } }),
   ]);
 
@@ -22,6 +27,17 @@ export default async function AlertesPage() {
     .map((o) => ({ outil: o, statut: calculerStatutOutil(o.dateEcheance) }))
     .filter((a) => a.statut === "EXPIRE" || a.statut === "BIENTOT_ECHEANCE")
     .sort((a, b) => (a.outil.dateEcheance?.getTime() ?? 0) - (b.outil.dateEcheance?.getTime() ?? 0));
+
+  const alertesConfirmation = qualifications
+    .map((q) => {
+      const datesConfirmations = q.evenements.filter((e) => e.type === "CONFIRMATION_VALIDITE").map((e) => e.date);
+      return {
+        qualification: q,
+        confirmation: calculerProchaineConfirmation(q.frequenceConfirmationMois, q.dateObtention, datesConfirmations),
+      };
+    })
+    .filter((a) => a.confirmation.enRetard || a.confirmation.bientotDue)
+    .sort((a, b) => (a.confirmation.prochaineDateDue?.getTime() ?? 0) - (b.confirmation.prochaineDateDue?.getTime() ?? 0));
 
   return (
     <main style={{ fontFamily: "sans-serif", padding: "2rem" }}>
@@ -43,6 +59,22 @@ export default async function AlertesPage() {
           ))}
         </ul>
       )}
+
+      <h2>Confirmations de validité de qualification</h2>
+      {alertesConfirmation.length === 0 ? (
+        <p>Aucune alerte pour l&apos;instant.</p>
+      ) : (
+        <ul>
+          {alertesConfirmation.map(({ qualification: q, confirmation }) => (
+            <li key={q.id} style={{ color: confirmation.enRetard ? "crimson" : "darkorange" }}>
+              <strong>{q.reference}</strong> ({q.personnel.prenom} {q.personnel.nom}) —{" "}
+              {confirmation.enRetard ? "confirmation en retard depuis" : "confirmation à faire avant"} le{" "}
+              {confirmation.prochaineDateDue?.toLocaleDateString("fr-FR")}
+            </li>
+          ))}
+        </ul>
+      )}
+
       <Destinataires initiaux={destinataires} />
     </main>
   );

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
 import { calculerStatutOutil } from "@/lib/statutOutil";
+import { calculerProchaineConfirmation } from "@/lib/confirmationQualification";
 
 export type AlerteOutil = {
   type: "OUTIL_BIENTOT_ECHEANCE" | "OUTIL_EXPIRE";
@@ -9,6 +10,15 @@ export type AlerteOutil = {
   reference: string;
   outilType: string;
   dateEcheance: string;
+  message: string;
+};
+
+export type AlerteConfirmationQualification = {
+  type: "CONFIRMATION_QUALIFICATION_BIENTOT_DUE" | "CONFIRMATION_QUALIFICATION_EN_RETARD";
+  qualificationId: string;
+  personnel: string;
+  reference: string;
+  prochaineDateDue: string;
   message: string;
 };
 
@@ -43,5 +53,31 @@ export async function GET(req: NextRequest) {
 
   alertes.sort((a, b) => a.dateEcheance.localeCompare(b.dateEcheance));
 
-  return NextResponse.json({ alertes });
+  const qualifications = await prisma.qualification.findMany({
+    where: { statut: { not: "SUSPENDU" }, frequenceConfirmationMois: { not: null } },
+    include: { personnel: { select: { nom: true, prenom: true } }, evenements: true },
+  });
+
+  const alertesConfirmation: AlerteConfirmationQualification[] = [];
+  for (const q of qualifications) {
+    const datesConfirmations = q.evenements.filter((e) => e.type === "CONFIRMATION_VALIDITE").map((e) => e.date);
+    const confirmation = calculerProchaineConfirmation(q.frequenceConfirmationMois, q.dateObtention, datesConfirmations);
+    if (!confirmation.prochaineDateDue || (!confirmation.enRetard && !confirmation.bientotDue)) continue;
+
+    const nom = `${q.personnel.prenom} ${q.personnel.nom}`;
+    const dateTexte = confirmation.prochaineDateDue.toLocaleDateString("fr-FR");
+    alertesConfirmation.push({
+      type: confirmation.enRetard ? "CONFIRMATION_QUALIFICATION_EN_RETARD" : "CONFIRMATION_QUALIFICATION_BIENTOT_DUE",
+      qualificationId: q.id,
+      personnel: nom,
+      reference: q.reference,
+      prochaineDateDue: confirmation.prochaineDateDue.toISOString(),
+      message: confirmation.enRetard
+        ? `Confirmation de validité de "${q.reference}" (${nom}) en retard depuis le ${dateTexte}.`
+        : `Confirmation de validité de "${q.reference}" (${nom}) à faire avant le ${dateTexte}.`,
+    });
+  }
+  alertesConfirmation.sort((a, b) => a.prochaineDateDue.localeCompare(b.prochaineDateDue));
+
+  return NextResponse.json({ alertes, alertesConfirmationQualification: alertesConfirmation });
 }

@@ -7,6 +7,7 @@ export type RecapitulatifAlertes = {
   outilsExpires: { reference: string; type: string; dateEcheance: Date }[];
   confirmationsQualificationDues: { personnel: string; reference: string; prochaineDateDue: Date }[];
   confirmationsQualificationEnRetard: { personnel: string; reference: string; prochaineDateDue: Date }[];
+  reconductionsProposees: { personnel: string; reference: string; dateProposition: Date }[];
 };
 
 export async function construireRecapitulatif(): Promise<RecapitulatifAlertes> {
@@ -46,7 +47,28 @@ export async function construireRecapitulatif(): Promise<RecapitulatifAlertes> {
     else if (confirmation.bientotDue) confirmationsQualificationDues.push(ligne);
   }
 
-  return { outilsBientotEcheance, outilsExpires, confirmationsQualificationDues, confirmationsQualificationEnRetard };
+  const qualificationsToutes = await prisma.qualification.findMany({
+    where: { statut: { not: "SUSPENDU" } },
+    include: { personnel: { select: { nom: true, prenom: true } }, evenements: { orderBy: { date: "desc" }, take: 1 } },
+  });
+  const reconductionsProposees: RecapitulatifAlertes["reconductionsProposees"] = [];
+  for (const q of qualificationsToutes) {
+    const dernier = q.evenements[0];
+    if (dernier?.type !== "RECONDUCTION_PROPOSEE") continue;
+    reconductionsProposees.push({
+      personnel: `${q.personnel.prenom} ${q.personnel.nom}`,
+      reference: q.reference,
+      dateProposition: dernier.date,
+    });
+  }
+
+  return {
+    outilsBientotEcheance,
+    outilsExpires,
+    confirmationsQualificationDues,
+    confirmationsQualificationEnRetard,
+    reconductionsProposees,
+  };
 }
 
 function ligneOutil(o: { reference: string; type: string; dateEcheance: Date }): string {
@@ -57,12 +79,17 @@ function ligneConfirmation(c: { personnel: string; reference: string; prochaineD
   return `${c.reference} (${c.personnel}) — confirmation due le ${c.prochaineDateDue.toLocaleDateString("fr-FR")}`;
 }
 
+function ligneReconduction(r: { personnel: string; reference: string; dateProposition: Date }): string {
+  return `${r.reference} (${r.personnel}) — proposée le ${r.dateProposition.toLocaleDateString("fr-FR")}, en attente de validation`;
+}
+
 export function contenuEmailRecapitulatif(recap: RecapitulatifAlertes): { sujet: string; texte: string; html: string } {
   const total =
     recap.outilsExpires.length +
     recap.outilsBientotEcheance.length +
     recap.confirmationsQualificationEnRetard.length +
-    recap.confirmationsQualificationDues.length;
+    recap.confirmationsQualificationDues.length +
+    recap.reconductionsProposees.length;
   const sujet = `Weldoc — Récapitulatif hebdomadaire des alertes (${total})`;
 
   const sections: string[] = [];
@@ -88,6 +115,12 @@ export function contenuEmailRecapitulatif(recap: RecapitulatifAlertes): { sujet:
     sections.push(
       `Confirmations de validité de qualification bientôt dues (${recap.confirmationsQualificationDues.length}) :\n` +
         recap.confirmationsQualificationDues.map((c) => `- ${ligneConfirmation(c)}`).join("\n")
+    );
+  }
+  if (recap.reconductionsProposees.length > 0) {
+    sections.push(
+      `Reconductions de qualification proposées, en attente de validation (${recap.reconductionsProposees.length}) :\n` +
+        recap.reconductionsProposees.map((r) => `- ${ligneReconduction(r)}`).join("\n")
     );
   }
 

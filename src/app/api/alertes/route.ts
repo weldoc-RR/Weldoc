@@ -22,6 +22,15 @@ export type AlerteConfirmationQualification = {
   message: string;
 };
 
+export type AlerteReconductionProposee = {
+  type: "RECONDUCTION_PROPOSEE";
+  qualificationId: string;
+  personnel: string;
+  reference: string;
+  dateProposition: string;
+  message: string;
+};
+
 // GET /api/alertes — outils de métrologie dont la vérification arrive à
 // échéance ou est déjà dépassée (le cahier des charges liste "outils
 // métrologiques expirés" parmi les alertes à signaler). Calculé en direct
@@ -79,5 +88,35 @@ export async function GET(req: NextRequest) {
   }
   alertesConfirmation.sort((a, b) => a.prochaineDateDue.localeCompare(b.prochaineDateDue));
 
-  return NextResponse.json({ alertes, alertesConfirmationQualification: alertesConfirmation });
+  // Reconductions proposées automatiquement (voir
+  // src/lib/qualifications.ts), en attente d'une décision niveau 3 —
+  // signalées ici pour ne pas rester invisibles tant que personne n'ouvre
+  // la fiche de la personne concernée.
+  const qualificationsAvecEvenements = await prisma.qualification.findMany({
+    where: { statut: { not: "SUSPENDU" } },
+    include: { personnel: { select: { nom: true, prenom: true } }, evenements: { orderBy: { date: "desc" }, take: 1 } },
+  });
+
+  const alertesReconduction: AlerteReconductionProposee[] = [];
+  for (const q of qualificationsAvecEvenements) {
+    const dernier = q.evenements[0];
+    if (dernier?.type !== "RECONDUCTION_PROPOSEE") continue;
+
+    const nom = `${q.personnel.prenom} ${q.personnel.nom}`;
+    alertesReconduction.push({
+      type: "RECONDUCTION_PROPOSEE",
+      qualificationId: q.id,
+      personnel: nom,
+      reference: q.reference,
+      dateProposition: dernier.date.toISOString(),
+      message: `Reconduction de "${q.reference}" (${nom}) proposée le ${dernier.date.toLocaleDateString("fr-FR")}, en attente de validation.`,
+    });
+  }
+  alertesReconduction.sort((a, b) => a.dateProposition.localeCompare(b.dateProposition));
+
+  return NextResponse.json({
+    alertes,
+    alertesConfirmationQualification: alertesConfirmation,
+    alertesReconductionProposee: alertesReconduction,
+  });
 }

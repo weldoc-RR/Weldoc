@@ -189,12 +189,24 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
 - `src/lib/qualifications.ts` — quand un soudeur réalise un joint, Weldoc
   vérifie si l'une de ses qualifications soudage arrive à échéance et, le
   cas échéant, propose automatiquement une reconduction (avec le joint
-  comme preuve) — sans jamais la valider lui-même. **Limite assumée** :
-  seule l'échéance est vérifiée pour l'instant, pas encore la
-  correspondance fine procédé/matériaux du joint avec le domaine de
-  validité de la qualification (le modèle Joint n'a pas encore de champ
-  "procédé" structuré) — chaque proposition reste donc à vérifier par la
-  personne qui valide.
+  comme preuve) — sans jamais la valider lui-même. Si le joint a un WPS
+  structuré, la proposition n'est faite que si son domaine (procédé,
+  groupe de matériaux, épaisseur, diamètre) couvre réellement la
+  qualification (voir `src/lib/verificationQS.ts`) : un joint dont le
+  WPS ne correspond manifestement pas n'est plus proposé comme preuve.
+  Sans WPS structuré sur le joint, la correspondance ne peut pas être
+  vérifiée automatiquement — la proposition est quand même faite, mais
+  clairement signalée comme non vérifiée dans le commentaire, à charge
+  pour la personne qui valide de juger. La validation elle-même
+  (bouton "Valider la reconduction" sur `/personnel`, réservé au niveau
+  3) demande la nouvelle échéance et rappelle qu'une reconduction par
+  l'activité ne dispense pas, selon la plupart des référentiels, de
+  repasser périodiquement la qualification initiale (Weldoc ne connaît
+  pas cette périodicité, propre à chaque référentiel/entreprise — ex.
+  tous les 3 ans — c'est à la personne qui valide de l'appliquer). Une
+  reconduction proposée et non encore validée apparaît en alerte
+  (`/alertes`, récapitulatif hebdomadaire) tant qu'elle attend une
+  décision.
 - Modèle `Qualification` — le type de qualification soudage (ex. "BW-A1",
   "FW-I2"...) et son domaine (groupe de matériaux, position, plages
   d'épaisseur/diamètre) sont maintenant des champs structurés
@@ -296,10 +308,6 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   alerte non bloquante sur `/joints` (badge orange) et disponible via
   `GET /api/qualifications/verification-qs`, jamais une décision
   automatique — la vérification finale reste humaine.
-- La correspondance fine entre l'activité d'un joint (procédé, matériaux,
-  diamètre) et le domaine de validité d'une qualification, pour la
-  proposition automatique de reconduction (voir la limite assumée
-  ci-dessus) : il faudra structurer ces champs sur Joint.
 - La gestion des `Referentiel` (créer/lister un code de norme comme "EN
   ISO 9606-1") n'a pas encore de page ni de route API dédiées : le modèle
   existe et peut être lié à une affaire ou une qualification, mais pour

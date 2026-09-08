@@ -14,11 +14,15 @@ export default async function AlertesPage() {
     redirect("/login");
   }
 
-  const [outils, qualifications, destinataires] = await Promise.all([
+  const [outils, qualifications, qualificationsToutes, destinataires] = await Promise.all([
     prisma.outil.findMany({ where: { statut: { not: "HORS_SERVICE" } } }),
     prisma.qualification.findMany({
       where: { statut: { not: "SUSPENDU" }, frequenceConfirmationMois: { not: null } },
       include: { personnel: { select: { nom: true, prenom: true } }, evenements: true },
+    }),
+    prisma.qualification.findMany({
+      where: { statut: { not: "SUSPENDU" } },
+      include: { personnel: { select: { nom: true, prenom: true } }, evenements: { orderBy: { date: "desc" }, take: 1 } },
     }),
     prisma.destinataireAlerte.findMany({ orderBy: { email: "asc" } }),
   ]);
@@ -38,6 +42,10 @@ export default async function AlertesPage() {
     })
     .filter((a) => a.confirmation.enRetard || a.confirmation.bientotDue)
     .sort((a, b) => (a.confirmation.prochaineDateDue?.getTime() ?? 0) - (b.confirmation.prochaineDateDue?.getTime() ?? 0));
+
+  const alertesReconduction = qualificationsToutes
+    .filter((q) => q.evenements[0]?.type === "RECONDUCTION_PROPOSEE")
+    .sort((a, b) => (a.evenements[0]?.date.getTime() ?? 0) - (b.evenements[0]?.date.getTime() ?? 0));
 
   return (
     <main style={{ fontFamily: "sans-serif", padding: "2rem" }}>
@@ -70,6 +78,21 @@ export default async function AlertesPage() {
               <strong>{q.reference}</strong> ({q.personnel.prenom} {q.personnel.nom}) —{" "}
               {confirmation.enRetard ? "confirmation en retard depuis" : "confirmation à faire avant"} le{" "}
               {confirmation.prochaineDateDue?.toLocaleDateString("fr-FR")}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <h2>Reconductions de qualification proposées</h2>
+      {alertesReconduction.length === 0 ? (
+        <p>Aucune alerte pour l&apos;instant.</p>
+      ) : (
+        <ul>
+          {alertesReconduction.map((q) => (
+            <li key={q.id} style={{ color: "darkorange" }}>
+              <strong>{q.reference}</strong> ({q.personnel.prenom} {q.personnel.nom}) — proposée le{" "}
+              {q.evenements[0]?.date.toLocaleDateString("fr-FR")}, en attente de validation (
+              <Link href="/personnel">voir la fiche personnel</Link>)
             </li>
           ))}
         </ul>

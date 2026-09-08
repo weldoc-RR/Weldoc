@@ -6,6 +6,7 @@ import { calculerStatut } from "@/lib/statutValidite";
 import { calculerProchaineConfirmation } from "@/lib/confirmationQualification";
 import { AjouterQualification } from "./ajouter-qualification";
 import { ConfirmerValidite } from "./confirmer-validite";
+import { ValiderReconduction } from "./valider-reconduction";
 
 export const dynamic = "force-dynamic";
 
@@ -96,6 +97,12 @@ export default async function PersonnelPage() {
                           </span>
                           <ConfirmerValidite qualificationId={q.id} personnelId={p.id} />
                         </>
+                      )}
+                      {statutCalcule === "EN_RENOUVELLEMENT" && (
+                        <div style={{ fontSize: "0.85rem", color: "#52514e", marginTop: "0.2rem" }}>
+                          {q.evenements[0]?.commentaire}
+                          <ValiderReconduction qualificationId={q.id} />
+                        </div>
                       )}
                     </li>
                   );

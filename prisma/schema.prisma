@@ -304,6 +304,153 @@ model Affaire {
   pieces            Piece[]
   photos            Photo[]
   pointsReglementaires PointReglementaire[]
+  bilanIntervention BilanIntervention?
+  diffusions        DiffusionRFI[]
+  revisionsRapport  RevisionRFI[]
+  perimetresTravaux PerimetreTravaux[]
+  chronologie       EvenementChronologie[]
+  bilanDosimetrique BilanDosimetrique?
+  portiquesRadioprotection PortiqueRadioprotection[]
+}
+
+// ============================================================================
+// RAPPORT DE FIN D'INTERVENTION (RFI) — voir le modèle réel fourni par
+// l'entreprise. Complète le rapport de fin de fabrication générique
+// (dossierFinFabrication.ts) avec la structure précise attendue chez EDF :
+// cartouche (entité, offre de service, accessibilité, diffusion,
+// historique de révisions), travaux réalisés par intervenant, chronologie,
+// bilan radioprotection, bilan global/REX. Les intitulés de section restent
+// ceux du modèle fourni ; les valeurs elles-mêmes ne sont jamais préremplies
+// avec des données réelles d'un chantier (confidentialité).
+// ============================================================================
+
+enum AccessibiliteDocument {
+  LIBRE
+  INTERNE
+  LIMITEE
+  CONFIDENTIELLE
+}
+
+// Contenu narratif propre au RFI, un par affaire. Rempli au fur et à
+// mesure ; la trace des évolutions du document se fait via RevisionRFI
+// (indice/date/nature des évolutions), pas par un historique séparé pour
+// chaque champ ci-dessous — cohérent avec le fonctionnement d'un document
+// Word réel à cartouche de révisions.
+model BilanIntervention {
+  id                     String    @id @default(cuid())
+  affaire                Affaire   @relation(fields: [affaireId], references: [id])
+  affaireId              String    @unique
+
+  entiteEmettrice        String?
+  referenceOffreService  String?
+  accessibilite          AccessibiliteDocument?
+
+  definitionIntervention String?
+  rexPosesDeposes        String?
+  ecartsTravauxPrevusRealises String?
+  conformiteTravaux      String?
+
+  bilanActionsRadioprotection String?
+  analyseEcartsRadioprotectionAmelioration String?
+
+  bonnesPratiques        String?
+  dysfonctionnements     String?
+  mesuresCorrectivesSuivantes String?
+}
+
+enum PorteeDiffusion {
+  INTERNE
+  EXTERNE
+}
+
+// Liste de diffusion du RFI (voir cartouche du modèle réel) : des noms et
+// organismes en texte libre, pas forcément des fiches Personnel (souvent
+// des destinataires externes au CNPE/à l'entreprise).
+model DiffusionRFI {
+  id        String          @id @default(cuid())
+  affaire   Affaire         @relation(fields: [affaireId], references: [id])
+  affaireId String
+  portee    PorteeDiffusion
+  nom       String
+  organisme String?
+
+  @@index([affaireId])
+}
+
+// Historique des révisions du RFI lui-même (indice/date/nature des
+// évolutions/rédacteur(s)/vérificateur(s)/approbateur(s)) — un nouvel
+// enregistrement à chaque évolution du document, jamais une modification
+// du précédent.
+model RevisionRFI {
+  id               String   @id @default(cuid())
+  affaire          Affaire  @relation(fields: [affaireId], references: [id])
+  affaireId        String
+  indice           String
+  date             DateTime @default(now())
+  natureEvolutions String
+  redacteurs       String?
+  verificateurs    String?
+  approbateurs     String?
+  createdAt        DateTime @default(now())
+
+  @@index([affaireId])
+}
+
+// Qui a la charge de quels travaux (ex. "à la charge ULM", "à la charge
+// des prestataires"...) — texte libre, l'intitulé des intervenants et le
+// découpage des responsabilités dépendant entièrement du projet.
+model PerimetreTravaux {
+  id          String  @id @default(cuid())
+  affaire     Affaire @relation(fields: [affaireId], references: [id])
+  affaireId   String
+  intervenant String
+  description String
+  ordre       Int     @default(0)
+
+  @@index([affaireId])
+}
+
+// Chronologie de l'intervention (résumé, voir "6.1 Résumé de
+// l'intervention" du modèle réel) : une ligne par événement notable, dans
+// l'ordre où ils sont survenus.
+model EvenementChronologie {
+  id          String   @id @default(cuid())
+  affaire     Affaire  @relation(fields: [affaireId], references: [id])
+  affaireId   String
+  date        DateTime
+  description String
+
+  @@index([affaireId])
+}
+
+// Bilan dosimétrique global de l'intervention (voir "Bilan radioprotection"
+// du modèle réel) : un par affaire. Le détail par activité renvoie à
+// l'outil de suivi dosimétrique externe de l'entreprise (CERAP ou
+// équivalent), hors périmètre de Weldoc pour l'instant.
+model BilanDosimetrique {
+  id         String  @id @default(cuid())
+  affaire    Affaire @relation(fields: [affaireId], references: [id])
+  affaireId  String  @unique
+  edpiMsv    Float?
+  edpoMsv    Float?
+  realiseMsv Float?
+  deltaMsv   Float?
+  alea       String?
+}
+
+// Relevés des portiques de contrôle radiologique en sortie de zone
+// (catégories C1/C2/C3 du modèle réel — texte libre, pas de nomenclature
+// imposée par Weldoc).
+model PortiqueRadioprotection {
+  id           String  @id @default(cuid())
+  affaire      Affaire @relation(fields: [affaireId], references: [id])
+  affaireId    String
+  categorie    String
+  nombre       Int
+  localisation String?
+  observations String?
+
+  @@index([affaireId])
 }
 
 model Referentiel {

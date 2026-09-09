@@ -198,18 +198,43 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   - `src/app/avancement/[id]/page.tsx` — détail par séquence, sous forme
     de barres empilées (terminé/en cours/à faire/non applicable) avec les
     effectifs en clair à côté de chaque barre.
-- `src/lib/dossierFinFabrication.ts` — première version du rapport de fin
-  de fabrication (voir le cahier des charges, qui précise qu'"un exemple
-  réel sera fourni ultérieurement pour finaliser la structure" : cette
-  version compile donc ce qui existe déjà — rien n'est ressaisi — plutôt
-  que de figer une mise en page définitive). Rassemble, pour une affaire :
-  organigramme, avancement, personnel intervenant (soudeurs et
-  contrôleurs, avec leurs qualifications expirées/suspendues), WPS/QMOS et
-  consommables CND utilisés, joints (avec chaîne de réparation et dernier
-  résultat par méthode de contrôle), FNC, et une liste d'éléments
-  manquants signalés (contrôle visuel absent, FNC non clôturée,
-  qualification expirée ou suspendue) — un signalement indicatif, jamais
-  un blocage décidé par Weldoc.
+- `src/lib/dossierFinFabrication.ts` — rapport de fin d'intervention (RFI),
+  restructuré pour suivre précisément le modèle réel fourni par
+  l'entreprise (un vrai document EDF/ULM) : seule la **structure** du
+  modèle a été reprise (intitulés de sections, colonnes des tableaux) —
+  aucune valeur réelle d'un chantier (noms, CNPE, références précises) n'a
+  été recopiée dans le code, par confidentialité. Rassemble, pour une
+  affaire : le cartouche (entité émettrice, offre de service,
+  accessibilité, historique des révisions, listes de diffusion
+  interne/externe — nouveaux modèles `BilanIntervention`, `RevisionRFI`,
+  `DiffusionRFI`), les travaux réalisés par intervenant
+  (`PerimetreTravaux`), l'organigramme, l'avancement, le personnel
+  intervenant, WPS/QMOS et consommables CND utilisés, les joints, une
+  chronologie de l'intervention (`EvenementChronologie`), les pièces
+  remplacées (réutilise `Matiere`, jamais ressaisi), les FNC avec leur
+  traitement déduit (accepté/remplacé/réparé — voir
+  `traitementFNC` dans `src/lib/remiseEnConformite.ts`, pas un nouveau
+  champ : déduit du type d'action de réparation ou d'une clôture sans
+  réparation), le bilan radioprotection (dosimétrie `BilanDosimetrique`,
+  portiques `PortiqueRadioprotection`), le bilan global/REX (bonnes
+  pratiques, dysfonctionnements, mesures correctives), et une liste
+  d'éléments manquants signalés (contrôle visuel absent, FNC non
+  clôturée, qualification expirée ou suspendue) — un signalement
+  indicatif, jamais un blocage décidé par Weldoc (le seul vrai blocage
+  vient du dossier réglementaire, voir plus bas). Les annexes du modèle
+  réel (organigrammes détaillés, dossier de réalisation de travaux,
+  documents divers) restent hors périmètre pour l'instant — voir le book
+  photo et le dossier réglementaire en attendant.
+  - `GET`/`PATCH /api/affaires/[id]/bilan-intervention` — contenu
+    narratif du RFI (définition, conformité, bilans radioprotection/REX...).
+  - `GET`/`POST /api/diffusions-rfi`, `/api/revisions-rfi`,
+    `/api/perimetres-travaux`, `/api/chronologie`,
+    `/api/portiques-radioprotection` — les listes du cartouche et du corps
+    du rapport, chacune avec son formulaire d'ajout sur la page.
+  - `GET`/`PATCH /api/affaires/[id]/bilan-dosimetrique` — bilan
+    dosimétrique global de l'affaire (EDPI/EDPO/réalisé/delta/aléa, en
+    mSv) ; le détail par activité renvoie à l'outil de suivi dosimétrique
+    externe de l'entreprise, hors périmètre de Weldoc.
   - `GET`/`POST /api/affaires/[id]/rapport-fin-fabrication` — validation
     du rapport (niveau 3, voir le cahier des charges : "signé par une
     personne habilitée"). Pas de nouvelle table : la validation, c'est la

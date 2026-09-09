@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { calculerStatut } from "@/lib/statutValidite";
 import { calculerAvancementAffaire, type AvancementAffaire } from "@/lib/avancement";
 import { pointsBloquants } from "@/lib/dossierReglementaire";
+import { traitementFNC, type TraitementFNC } from "@/lib/remiseEnConformite";
 
 // Compilation du rapport de fin de fabrication (voir cahier des charges,
 // "RAPPORT DE FIN DE FABRICATION") : rassemble ce qui existe déjà dans
@@ -65,6 +66,7 @@ export interface DossierFinFabrication {
     statut: string;
     dateCreation: Date;
     jointNumero: string | null;
+    traitement: TraitementFNC;
   }[];
   elementsManquants: ElementManquant[];
   photosCount: number;
@@ -75,6 +77,45 @@ export interface DossierFinFabrication {
   // validation — utilisé ici pour ne même pas proposer de signer.
   pointsReglementairesBloquants: { id: string; intitule: string }[];
   validation: { personnel: { nom: string; prenom: string }; dateSignature: Date } | null;
+  // Structure propre au rapport de fin d'intervention (RFI) — voir le
+  // modèle réel fourni par l'entreprise (src/lib/dossierReglementaire.ts
+  // reste pour le blocage réglementaire, distinct de ceci).
+  rfi: {
+    bilanIntervention: {
+      entiteEmettrice: string | null;
+      referenceOffreService: string | null;
+      accessibilite: string | null;
+      definitionIntervention: string | null;
+      rexPosesDeposes: string | null;
+      ecartsTravauxPrevusRealises: string | null;
+      conformiteTravaux: string | null;
+      bilanActionsRadioprotection: string | null;
+      analyseEcartsRadioprotectionAmelioration: string | null;
+      bonnesPratiques: string | null;
+      dysfonctionnements: string | null;
+      mesuresCorrectivesSuivantes: string | null;
+    } | null;
+    diffusions: { portee: string; nom: string; organisme: string | null }[];
+    revisions: {
+      indice: string;
+      date: Date;
+      natureEvolutions: string;
+      redacteurs: string | null;
+      verificateurs: string | null;
+      approbateurs: string | null;
+    }[];
+    perimetresTravaux: { intervenant: string; description: string }[];
+    chronologie: { date: Date; description: string }[];
+    piecesRemplacees: { designation: string; nuance: string | null; fournisseur: string }[];
+    bilanDosimetrique: {
+      edpiMsv: number | null;
+      edpoMsv: number | null;
+      realiseMsv: number | null;
+      deltaMsv: number | null;
+      alea: string | null;
+    } | null;
+    portiquesRadioprotection: { categorie: string; nombre: number; localisation: string | null; observations: string | null }[];
+  };
 }
 
 export async function compilerDossierFinFabrication(affaireId: string): Promise<DossierFinFabrication | null> {
@@ -88,7 +129,23 @@ export async function compilerDossierFinFabrication(affaireId: string): Promise<
     (id): id is string => Boolean(id)
   );
 
-  const [personnesRoles, joints, fncs, validation, photosCount, pointsReglementairesCount, bloquants] = await Promise.all([
+  const [
+    personnesRoles,
+    joints,
+    fncs,
+    validation,
+    photosCount,
+    pointsReglementairesCount,
+    bloquants,
+    bilanIntervention,
+    diffusions,
+    revisions,
+    perimetresTravaux,
+    chronologie,
+    matieres,
+    bilanDosimetrique,
+    portiquesRadioprotection,
+  ] = await Promise.all([
     prisma.personnel.findMany({ where: { id: { in: idsRoles } }, select: { id: true, nom: true, prenom: true } }),
     prisma.joint.findMany({
       where: { affaireId },
@@ -125,7 +182,11 @@ export async function compilerDossierFinFabrication(affaireId: string): Promise<
       },
       orderBy: [{ numero: "asc" }, { indiceReparation: "asc" }],
     }),
-    prisma.fNC.findMany({ where: { affaireId }, include: { joint: { select: { numero: true } } }, orderBy: { dateCreation: "desc" } }),
+    prisma.fNC.findMany({
+      where: { affaireId },
+      include: { joint: { select: { numero: true } }, actionCorrectiveJoint: { select: { typeAction: true } } },
+      orderBy: { dateCreation: "desc" },
+    }),
     prisma.signature.findFirst({
       where: { documentType: "RAPPORT_FIN_FABRICATION", documentId: affaireId },
       orderBy: { dateSignature: "desc" },
@@ -134,6 +195,14 @@ export async function compilerDossierFinFabrication(affaireId: string): Promise<
     prisma.photo.count({ where: { affaireId } }),
     prisma.pointReglementaire.count({ where: { affaireId } }),
     pointsBloquants(affaireId),
+    prisma.bilanIntervention.findUnique({ where: { affaireId } }),
+    prisma.diffusionRFI.findMany({ where: { affaireId }, orderBy: { nom: "asc" } }),
+    prisma.revisionRFI.findMany({ where: { affaireId }, orderBy: { date: "desc" } }),
+    prisma.perimetreTravaux.findMany({ where: { affaireId }, orderBy: { ordre: "asc" } }),
+    prisma.evenementChronologie.findMany({ where: { affaireId }, orderBy: { date: "asc" } }),
+    prisma.matiere.findMany({ where: { affaireId }, select: { designation: true, nuance: true, fournisseur: true } }),
+    prisma.bilanDosimetrique.findUnique({ where: { affaireId } }),
+    prisma.portiqueRadioprotection.findMany({ where: { affaireId }, orderBy: { categorie: "asc" } }),
   ]);
 
   const avancement = await calculerAvancementAffaire(affaireId);
@@ -293,11 +362,38 @@ export async function compilerDossierFinFabrication(affaireId: string): Promise<
       statut: f.statut,
       dateCreation: f.dateCreation,
       jointNumero: f.joint?.numero ?? null,
+      traitement: traitementFNC({
+        statut: f.statut,
+        actionCorrectiveJointId: f.actionCorrectiveJointId,
+        actionCorrectiveJointTypeAction: f.actionCorrectiveJoint?.typeAction ?? null,
+      }),
     })),
     elementsManquants,
     photosCount,
     pointsReglementairesCount,
     pointsReglementairesBloquants: bloquants,
+    rfi: {
+      bilanIntervention,
+      diffusions: diffusions.map((d) => ({ portee: d.portee, nom: d.nom, organisme: d.organisme })),
+      revisions: revisions.map((r) => ({
+        indice: r.indice,
+        date: r.date,
+        natureEvolutions: r.natureEvolutions,
+        redacteurs: r.redacteurs,
+        verificateurs: r.verificateurs,
+        approbateurs: r.approbateurs,
+      })),
+      perimetresTravaux: perimetresTravaux.map((p) => ({ intervenant: p.intervenant, description: p.description })),
+      chronologie: chronologie.map((c) => ({ date: c.date, description: c.description })),
+      piecesRemplacees: matieres,
+      bilanDosimetrique,
+      portiquesRadioprotection: portiquesRadioprotection.map((p) => ({
+        categorie: p.categorie,
+        nombre: p.nombre,
+        localisation: p.localisation,
+        observations: p.observations,
+      })),
+    },
     validation: validation ? { personnel: validation.personnel, dateSignature: validation.dateSignature } : null,
   };
 }

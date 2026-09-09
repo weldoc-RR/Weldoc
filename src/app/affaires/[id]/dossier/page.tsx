@@ -4,11 +4,24 @@ import { getUtilisateurConnecteServeur, aNiveauMinimum } from "@/lib/auth";
 import { compilerDossierFinFabrication } from "@/lib/dossierFinFabrication";
 import { ValiderRapport } from "./valider-rapport";
 import { BoutonImprimer } from "./bouton-imprimer";
+import { FormulaireBilanIntervention } from "./formulaire-bilan-intervention";
+import { AjouterDiffusion } from "./ajouter-diffusion";
+import { AjouterRevision } from "./ajouter-revision";
+import { AjouterPerimetre } from "./ajouter-perimetre";
+import { AjouterEvenementChronologie } from "./ajouter-evenement-chronologie";
+import { FormulaireBilanDosimetrique } from "./formulaire-bilan-dosimetrique";
+import { AjouterPortique } from "./ajouter-portique";
 
 export const dynamic = "force-dynamic";
 
 const LIBELLE_TYPE_REALISATION: Record<string, string> = { CHANTIER: "chantier", ATELIER: "atelier" };
+const LIBELLE_TRAITEMENT: Record<string, string> = { ACCEPTE: "accepté", REMPLACE: "remplacé", REPARE: "réparé" };
 
+// Suit, section par section, la structure du modèle réel de "Rapport de
+// Fin d'Intervention" (RFI) fourni par l'entreprise — voir
+// src/lib/dossierFinFabrication.ts. Les intitulés sont ceux du modèle
+// réel ; aucune valeur n'est préremplie avec des données d'un chantier
+// réel (confidentialité).
 export default async function DossierPage({ params }: { params: { id: string } }) {
   const utilisateur = await getUtilisateurConnecteServeur();
   if (!utilisateur) {
@@ -19,6 +32,11 @@ export default async function DossierPage({ params }: { params: { id: string } }
   if (!dossier) {
     notFound();
   }
+
+  const peutModifier = aNiveauMinimum(utilisateur.niveau, "NIVEAU_2");
+  const bilan = dossier.rfi.bilanIntervention;
+  const diffusionsInternes = dossier.rfi.diffusions.filter((d) => d.portee === "INTERNE");
+  const diffusionsExternes = dossier.rfi.diffusions.filter((d) => d.portee === "EXTERNE");
 
   return (
     <main style={{ fontFamily: "sans-serif", padding: "2rem", maxWidth: 900 }}>
@@ -31,10 +49,11 @@ export default async function DossierPage({ params }: { params: { id: string } }
         </Link>
       </p>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start" }}>
-        <h1>Rapport de fin de fabrication</h1>
+        <h1>Rapport de fin de fabrication (RFI)</h1>
         <BoutonImprimer />
       </div>
 
+      {/* ————— Cartouche ————— */}
       <h2>
         {dossier.affaire.numero} — {dossier.affaire.client} / {dossier.affaire.projet}
       </h2>
@@ -46,8 +65,77 @@ export default async function DossierPage({ params }: { params: { id: string } }
         {dossier.affaire.dateFin && ` au ${dossier.affaire.dateFin.toLocaleDateString("fr-FR")}`}
       </p>
       {dossier.affaire.referentiels.length > 0 && <p>Référentiels : {dossier.affaire.referentiels.join(", ")}</p>}
+      {bilan?.entiteEmettrice && <p>Entité émettrice : {bilan.entiteEmettrice}</p>}
+      {bilan?.referenceOffreService && <p>Offre de service : {bilan.referenceOffreService}</p>}
+      {bilan?.accessibilite && <p>Accessibilité : {bilan.accessibilite.toLowerCase()}</p>}
+      {peutModifier && <FormulaireBilanIntervention affaireId={dossier.affaire.id} valeurs={bilan} />}
 
-      <h3>Organigramme</h3>
+      <h3>Historique des révisions</h3>
+      {dossier.rfi.revisions.length === 0 ? (
+        <p>Aucune révision enregistrée.</p>
+      ) : (
+        <table style={{ borderCollapse: "collapse", width: "100%", fontSize: "0.9rem" }}>
+          <thead>
+            <tr>
+              {["Ind.", "Date", "Nature des évolutions", "Rédacteur(s)", "Vérificateur(s)", "Approbateur(s)"].map((h) => (
+                <th key={h} style={{ textAlign: "left", borderBottom: "1px solid #ccc", padding: "0.2rem 0.4rem" }}>
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {dossier.rfi.revisions.map((r, i) => (
+              <tr key={i}>
+                <td style={{ padding: "0.2rem 0.4rem" }}>{r.indice}</td>
+                <td style={{ padding: "0.2rem 0.4rem" }}>{r.date.toLocaleDateString("fr-FR")}</td>
+                <td style={{ padding: "0.2rem 0.4rem" }}>{r.natureEvolutions}</td>
+                <td style={{ padding: "0.2rem 0.4rem" }}>{r.redacteurs ?? "—"}</td>
+                <td style={{ padding: "0.2rem 0.4rem" }}>{r.verificateurs ?? "—"}</td>
+                <td style={{ padding: "0.2rem 0.4rem" }}>{r.approbateurs ?? "—"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+      {peutModifier && <AjouterRevision affaireId={dossier.affaire.id} />}
+
+      <h3>Diffusion</h3>
+      <p style={{ fontSize: "0.9rem" }}>
+        <strong>Interne :</strong>{" "}
+        {diffusionsInternes.length === 0 ? "—" : diffusionsInternes.map((d) => `${d.nom}${d.organisme ? ` (${d.organisme})` : ""}`).join(", ")}
+      </p>
+      <p style={{ fontSize: "0.9rem" }}>
+        <strong>Externe :</strong>{" "}
+        {diffusionsExternes.length === 0 ? "—" : diffusionsExternes.map((d) => `${d.nom}${d.organisme ? ` (${d.organisme})` : ""}`).join(", ")}
+      </p>
+      {peutModifier && <AjouterDiffusion affaireId={dossier.affaire.id} />}
+
+      {/* ————— 1. Définition ————— */}
+      {bilan?.definitionIntervention && (
+        <>
+          <h3>1. Définition</h3>
+          <p>{bilan.definitionIntervention}</p>
+        </>
+      )}
+
+      {/* ————— 3. Travaux réalisés ————— */}
+      <h3>3. Travaux réalisés</h3>
+      {dossier.rfi.perimetresTravaux.length === 0 ? (
+        <p>Aucun périmètre de travaux enregistré.</p>
+      ) : (
+        <ul>
+          {dossier.rfi.perimetresTravaux.map((p, i) => (
+            <li key={i}>
+              <strong>{p.intervenant}</strong> — {p.description}
+            </li>
+          ))}
+        </ul>
+      )}
+      {peutModifier && <AjouterPerimetre affaireId={dossier.affaire.id} />}
+
+      {/* ————— 4. Organigramme ————— */}
+      <h3>4. Organigramme de l&apos;intervention</h3>
       <ul>
         <li>
           Responsable :{" "}
@@ -69,6 +157,143 @@ export default async function DossierPage({ params }: { params: { id: string } }
         </li>
       </ul>
 
+      {/* ————— 6. Bilan technique de la prestation ————— */}
+      <h3>6. Bilan technique de la prestation</h3>
+
+      <h4>6.1. Résumé de l&apos;intervention (chronologie)</h4>
+      {dossier.rfi.chronologie.length === 0 ? (
+        <p>Aucun événement enregistré.</p>
+      ) : (
+        <ul>
+          {dossier.rfi.chronologie.map((c, i) => (
+            <li key={i}>
+              {c.date.toLocaleDateString("fr-FR")} — {c.description}
+            </li>
+          ))}
+        </ul>
+      )}
+      {peutModifier && <AjouterEvenementChronologie affaireId={dossier.affaire.id} />}
+
+      <h4>6.2. Liste des pièces remplacées</h4>
+      {dossier.rfi.piecesRemplacees.length === 0 ? (
+        <p>Aucune matière enregistrée sur cette affaire.</p>
+      ) : (
+        <ul>
+          {dossier.rfi.piecesRemplacees.map((m, i) => (
+            <li key={i}>
+              {m.designation} — {m.nuance}
+              {m.fournisseur && ` (${m.fournisseur})`}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {bilan?.rexPosesDeposes && (
+        <>
+          <h4>6.3. Retour d&apos;expérience sur les poses/déposes</h4>
+          <p>{bilan.rexPosesDeposes}</p>
+        </>
+      )}
+
+      <h4>6.4. Liste des FNC</h4>
+      {dossier.fncs.length === 0 ? (
+        <p>Aucune FNC pour cette affaire.</p>
+      ) : (
+        <ul>
+          {dossier.fncs.map((f) => (
+            <li key={f.id}>
+              <strong>{f.reference}</strong>
+              {f.jointNumero && ` (${f.jointNumero})`} — {f.description} — impact {f.impact.toLowerCase()} —{" "}
+              <span style={{ color: f.statut === "CLOTUREE" ? "inherit" : "crimson" }}>{f.statut.toLowerCase()}</span>
+              {f.traitement && ` — traitement : ${LIBELLE_TRAITEMENT[f.traitement]}`}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <h4>6.5. Conclusion technique</h4>
+      <p>
+        <strong>6.5.1. Écarts entre travaux prévus et réalisés :</strong> {bilan?.ecartsTravauxPrevusRealises || "—"}
+      </p>
+      <p>
+        <strong>6.5.2. Conformité des travaux :</strong> {bilan?.conformiteTravaux || "—"}
+      </p>
+
+      {/* ————— 7. Bilan radioprotection ————— */}
+      <h3>7. Bilan radioprotection</h3>
+      <h4>7.1. Bilan dosimétrique</h4>
+      {dossier.rfi.bilanDosimetrique ? (
+        <p>
+          EDPI : {dossier.rfi.bilanDosimetrique.edpiMsv ?? "—"} mSv — EDPO : {dossier.rfi.bilanDosimetrique.edpoMsv ?? "—"} mSv — Réalisé :{" "}
+          {dossier.rfi.bilanDosimetrique.realiseMsv ?? "—"} mSv — Delta : {dossier.rfi.bilanDosimetrique.deltaMsv ?? "—"} mSv
+          {dossier.rfi.bilanDosimetrique.alea && ` — Aléa : ${dossier.rfi.bilanDosimetrique.alea}`}
+        </p>
+      ) : (
+        <p>Aucun bilan dosimétrique enregistré.</p>
+      )}
+      {peutModifier && <FormulaireBilanDosimetrique affaireId={dossier.affaire.id} valeurs={dossier.rfi.bilanDosimetrique} />}
+
+      <p style={{ marginTop: "0.5rem" }}>
+        <strong>Portiques :</strong>
+      </p>
+      {dossier.rfi.portiquesRadioprotection.length === 0 ? (
+        <p>Aucun relevé de portique enregistré.</p>
+      ) : (
+        <table style={{ borderCollapse: "collapse", fontSize: "0.9rem" }}>
+          <thead>
+            <tr>
+              {["Catégorie", "Nombre", "Localisation", "Observations"].map((h) => (
+                <th key={h} style={{ textAlign: "left", borderBottom: "1px solid #ccc", padding: "0.2rem 0.4rem" }}>
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {dossier.rfi.portiquesRadioprotection.map((p, i) => (
+              <tr key={i}>
+                <td style={{ padding: "0.2rem 0.4rem" }}>{p.categorie}</td>
+                <td style={{ padding: "0.2rem 0.4rem" }}>{p.nombre}</td>
+                <td style={{ padding: "0.2rem 0.4rem" }}>{p.localisation ?? "—"}</td>
+                <td style={{ padding: "0.2rem 0.4rem" }}>{p.observations ?? "—"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+      {peutModifier && <AjouterPortique affaireId={dossier.affaire.id} />}
+
+      {bilan?.bilanActionsRadioprotection && (
+        <>
+          <h4>7.2. Bilan des actions radioprotection</h4>
+          <p>{bilan.bilanActionsRadioprotection}</p>
+        </>
+      )}
+      {bilan?.analyseEcartsRadioprotectionAmelioration && (
+        <>
+          <h4>7.3. Analyse des écarts et proposition d&apos;amélioration</h4>
+          <p>{bilan.analyseEcartsRadioprotectionAmelioration}</p>
+        </>
+      )}
+
+      {/* ————— 8. Bilan global et retour d'expérience ————— */}
+      <h3>8. Bilan global et retour d&apos;expérience</h3>
+      <p>
+        <strong>8.1. Bonnes pratiques :</strong> {bilan?.bonnesPratiques || "—"}
+      </p>
+      <p>
+        <strong>8.2. Dysfonctionnements rencontrés :</strong> {bilan?.dysfonctionnements || "—"}
+      </p>
+      <p>
+        <strong>8.3. Mesures correctives pour l&apos;intervention suivante :</strong> {bilan?.mesuresCorrectivesSuivantes || "—"}
+      </p>
+
+      <p style={{ fontSize: "0.8rem", color: "#898781" }}>
+        Les annexes (organigrammes détaillés, dossier de réalisation de travaux, documents divers) ne sont pas
+        encore gérées dans Weldoc — voir le book photo et le dossier réglementaire ci-dessus en attendant.
+      </p>
+
+      {/* ————— Détails techniques Weldoc (au-delà du modèle RFI) ————— */}
       <h3>Avancement</h3>
       <p>
         {dossier.avancement.pourcentageGlobal}% global — {dossier.avancement.joints.total} joint(s)
@@ -157,21 +382,6 @@ export default async function DossierPage({ params }: { params: { id: string } }
             ))}
           </tbody>
         </table>
-      )}
-
-      <h3>FNC ({dossier.fncs.length})</h3>
-      {dossier.fncs.length === 0 ? (
-        <p>Aucune FNC pour cette affaire.</p>
-      ) : (
-        <ul>
-          {dossier.fncs.map((f) => (
-            <li key={f.id}>
-              <strong>{f.reference}</strong>
-              {f.jointNumero && ` (${f.jointNumero})`} — {f.description} — impact {f.impact.toLowerCase()} —{" "}
-              <span style={{ color: f.statut === "CLOTUREE" ? "inherit" : "crimson" }}>{f.statut.toLowerCase()}</span>
-            </li>
-          ))}
-        </ul>
       )}
 
       <h3>Éléments manquants signalés</h3>

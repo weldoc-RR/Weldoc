@@ -151,11 +151,19 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
     saisi pour tout le lot.
   - `POST /api/demandes-sequencement` — demande de modification du
     séquencement par le terrain (phases concernées, motif, urgence,
-    photo/document)
+    photo/document). **Interface** (jusqu'ici API seule, sans aucun
+    écran) : section "Demandes de modification de séquencement" sur
+    `/avancement/[id]` (`demandes-sequencement.tsx`) — cases à cocher
+    pour les phases concernées, motif, urgence, dépôt direct de la
+    photo/du document (`FileUpload`).
   - `POST /api/demandes-sequencement/[id]/decision` — accepte/refuse/
     demande une modification, réservé au niveau 3, tracé dans l'audit
     trail ; une demande ACCEPTEE lève le blocage d'ordre précisément pour
-    les phases qu'elle liste
+    les phases qu'elle liste. Décision prise directement sur la même
+    section (sélecteur + commentaire + conditions, visible seulement au
+    niveau 3), avec l'historique des décisions déjà prises affiché sous
+    chaque demande. Remontée aussi sur `/alertes`
+    ("Demandes de modification de séquencement en attente").
   - `POST /api/joints` — créer un joint (numérotation automatique,
     authentification requise)
   - `POST /api/controles-dimensionnels` — réaliser un contrôle (le
@@ -817,7 +825,7 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   documents obsolètes, FNC ouvertes, blocages, validations niveau 3 en
   attente, dossiers réglementaires incomplets, contrôles manquants, outils
   métrologiques expirés, documents manquants") : un seul écran plutôt que
-  d'aller chercher chaque signal sur sa page d'origine. Dix catégories :
+  d'aller chercher chaque signal sur sa page d'origine. Onze catégories :
   qualifications et habilitations à échéance ou expirées (`calculerStatut`,
   même calcul que sur la fiche personnel), confirmations de validité de
   qualification et reconductions proposées (déjà existantes), FNC ouvertes
@@ -826,9 +834,11 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   (voir `src/lib/controlesManquants.ts` ci-dessous), vérifications
   d'outillage, et **validations niveau 3 en attente** : reconductions de
   qualification, documents externes non validés
-  (`DocumentExterne.valideConclusion` null) et PV externes non revus
-  (`PVExterne.revueConclusion` null) — trois états déjà modélisés ailleurs
-  dans l'application (pages `/documents` et `/affaires/[id]/pv-externes`),
+  (`DocumentExterne.valideConclusion` null), PV externes non revus
+  (`PVExterne.revueConclusion` null) et demandes de modification de
+  séquencement non tranchées (`DemandeModificationSequencement.statut`
+  `EN_ATTENTE`) — quatre états déjà modélisés ailleurs dans l'application
+  (pages `/documents`, `/affaires/[id]/pv-externes`, `/avancement/[id]`),
   simplement pas remontés ici jusque-là. Chaque catégorie réutilise un
   calcul déjà en place ailleurs dans l'application — rien n'est recalculé
   différemment ici, tout reste recalculé à la lecture, jamais stocké.
@@ -1086,8 +1096,9 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   de notion de "documents attendus" pour une affaire à comparer à
   l'existant. "Validations niveau 3 en attente" couvre maintenant les
   reconductions de qualification proposées, les documents externes non
-  validés (`DocumentExterne.valideConclusion`) et les PV externes non
-  revus (`PVExterne.revueConclusion`) — trois états déjà modélisés,
+  validés (`DocumentExterne.valideConclusion`), les PV externes non
+  revus (`PVExterne.revueConclusion`) et les demandes de modification de
+  séquencement non tranchées — quatre états déjà modélisés,
   simplement pas remontés ici jusque-là. Le rapport de fin de fabrication
   n'y figure volontairement pas : rien ne permet aujourd'hui de
   distinguer une affaire réellement prête à valider d'une affaire encore

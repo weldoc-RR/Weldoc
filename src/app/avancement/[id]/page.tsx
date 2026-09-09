@@ -1,11 +1,12 @@
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { getUtilisateurConnecteServeur } from "@/lib/auth";
+import { getUtilisateurConnecteServeur, aNiveauMinimum } from "@/lib/auth";
 import { calculerAvancementAffaire } from "@/lib/avancement";
 import { BarreSequence, LegendeStatutsPhase } from "../barre-sequence";
 import { PhasesSection } from "./phases-section";
 import { DefinirJointsPrevus } from "./definir-joints-prevus";
+import { DemandesSequencement } from "./demandes-sequencement";
 
 export const dynamic = "force-dynamic";
 
@@ -53,6 +54,39 @@ export default async function AvancementAffairePage({ params }: { params: { id: 
       };
     }
   }
+
+  const toutesPhases = sequencesAvecPhases.flatMap((s) => s.phases.map((p) => ({ id: p.id, nom: p.nom, sequenceNom: s.nom })));
+
+  // demandeParId/decisionParId restent des références libres (comme
+  // signatureId ailleurs dans le modèle), donc on résout ici les
+  // personnes correspondantes plutôt que par une relation Prisma.
+  const demandesSequencementBrutes = await prisma.demandeModificationSequencement.findMany({
+    where: { affaireId: params.id },
+    orderBy: { dateDemande: "desc" },
+  });
+  const idsPersonnesDemandes = [
+    ...new Set(demandesSequencementBrutes.flatMap((d) => [d.demandeParId, d.decisionParId].filter((id): id is string => id != null))),
+  ];
+  const personnesDemandes =
+    idsPersonnesDemandes.length > 0
+      ? await prisma.personnel.findMany({ where: { id: { in: idsPersonnesDemandes } }, select: { id: true, nom: true, prenom: true } })
+      : [];
+  const personneParId = new Map(personnesDemandes.map((p) => [p.id, p]));
+  const demandesSequencement = demandesSequencementBrutes.map((d) => ({
+    id: d.id,
+    phasesConcerneesIds: d.phasesConcerneesIds,
+    motif: d.motif,
+    urgent: d.urgent,
+    photoUrl: d.photoUrl,
+    documentUrl: d.documentUrl,
+    dateDemande: d.dateDemande.toISOString(),
+    statut: d.statut,
+    commentaireDecision: d.commentaireDecision,
+    conditions: d.conditions,
+    dateDecision: d.dateDecision ? d.dateDecision.toISOString() : null,
+    demandeur: personneParId.get(d.demandeParId) ?? null,
+    decideur: d.decisionParId ? (personneParId.get(d.decisionParId) ?? null) : null,
+  }));
 
   return (
     <main style={{ fontFamily: "sans-serif", padding: "2rem" }}>
@@ -132,6 +166,13 @@ export default async function AvancementAffairePage({ params }: { params: { id: 
           </tbody>
         </table>
       )}
+
+      <DemandesSequencement
+        affaireId={affaire.id}
+        phases={toutesPhases}
+        demandes={demandesSequencement}
+        peutDecider={aNiveauMinimum(utilisateur.niveau, "NIVEAU_3")}
+      />
 
       <h2 style={{ marginTop: "2rem" }}>Phases</h2>
       <p style={{ fontSize: "0.85rem", color: "#52514e" }}>

@@ -30,9 +30,12 @@ export const dynamic = "force-dynamic";
 // rapport de fin de fabrication n'y figure pas : rien ne permet
 // aujourd'hui de distinguer une affaire réellement prête à valider d'une
 // affaire encore en cours, et Weldoc ne devine jamais ce genre de seuil.
-// "Documents obsolètes/manquants" reste hors de cette page : Weldoc n'a
-// pas encore de notion de "documents attendus" pour une affaire à
-// comparer à l'existant.
+// Elle couvre aussi les demandes de modification de séquencement en
+// attente (voir /avancement/[id], "Demandes de modification de
+// séquencement" — jusqu'ici sans aucune interface). "Documents
+// obsolètes/manquants" reste hors de cette page : Weldoc n'a pas encore
+// de notion de "documents attendus" pour une affaire à comparer à
+// l'existant.
 export default async function AlertesPage() {
   const utilisateur = await getUtilisateurConnecteServeur();
   if (!utilisateur) {
@@ -50,6 +53,7 @@ export default async function AlertesPage() {
     jointsControlesManquants,
     documentsExternesEnAttente,
     pvExternesEnAttente,
+    demandesSequencementEnAttente,
   ] = await Promise.all([
       prisma.outil.findMany({ where: { statut: { not: "HORS_SERVICE" } } }),
       prisma.qualification.findMany({
@@ -81,6 +85,11 @@ export default async function AlertesPage() {
         where: { revueConclusion: null },
         include: { affaire: { select: { numero: true } } },
         orderBy: { dateImport: "asc" },
+      }),
+      prisma.demandeModificationSequencement.findMany({
+        where: { statut: "EN_ATTENTE" },
+        include: { affaire: { select: { numero: true } } },
+        orderBy: { dateDemande: "asc" },
       }),
     ]);
 
@@ -269,6 +278,21 @@ export default async function AlertesPage() {
               <strong>{p.intitule}</strong> — affaire {p.affaire.numero} — importé le{" "}
               {p.dateImport.toLocaleDateString("fr-FR")}, en attente de revue (
               <Link href={`/affaires/${p.affaireId}/pv-externes`}>voir les PV externes</Link>)
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <h2>Demandes de modification de séquencement en attente</h2>
+      {demandesSequencementEnAttente.length === 0 ? (
+        <p>Aucune alerte pour l&apos;instant.</p>
+      ) : (
+        <ul>
+          {demandesSequencementEnAttente.map((d) => (
+            <li key={d.id} style={{ color: d.urgent ? "crimson" : "darkorange" }}>
+              Affaire {d.affaire.numero}
+              {d.urgent && " (urgent)"} — {d.motif} — demandée le {d.dateDemande.toLocaleDateString("fr-FR")} (
+              <Link href={`/avancement/${d.affaireId}`}>voir l&apos;avancement</Link>)
             </li>
           ))}
         </ul>

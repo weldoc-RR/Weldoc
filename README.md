@@ -817,19 +817,25 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   documents obsolètes, FNC ouvertes, blocages, validations niveau 3 en
   attente, dossiers réglementaires incomplets, contrôles manquants, outils
   métrologiques expirés, documents manquants") : un seul écran plutôt que
-  d'aller chercher chaque signal sur sa page d'origine. Huit catégories :
+  d'aller chercher chaque signal sur sa page d'origine. Dix catégories :
   qualifications et habilitations à échéance ou expirées (`calculerStatut`,
   même calcul que sur la fiche personnel), confirmations de validité de
   qualification et reconductions proposées (déjà existantes), FNC ouvertes
   (bloquantes mises en évidence), points bloquants du dossier réglementaire
   (`pointBloque`, même calcul que `/systeme-qualite`), contrôles manquants
-  (voir `src/lib/controlesManquants.ts` ci-dessous), et vérifications
-  d'outillage. Chaque catégorie réutilise un calcul déjà en place ailleurs
-  dans l'application — rien n'est recalculé différemment ici, tout reste
-  recalculé à la lecture, jamais stocké. "Documents obsolètes/manquants"
-  n'est pas repris : Weldoc n'a pas encore de notion de "documents
-  attendus" pour une affaire à comparer à l'existant. Bibliothèque des
-  destinataires du récapitulatif hebdomadaire par email, inchangée.
+  (voir `src/lib/controlesManquants.ts` ci-dessous), vérifications
+  d'outillage, et **validations niveau 3 en attente** : reconductions de
+  qualification, documents externes non validés
+  (`DocumentExterne.valideConclusion` null) et PV externes non revus
+  (`PVExterne.revueConclusion` null) — trois états déjà modélisés ailleurs
+  dans l'application (pages `/documents` et `/affaires/[id]/pv-externes`),
+  simplement pas remontés ici jusque-là. Chaque catégorie réutilise un
+  calcul déjà en place ailleurs dans l'application — rien n'est recalculé
+  différemment ici, tout reste recalculé à la lecture, jamais stocké.
+  "Documents obsolètes/manquants" n'est pas repris : Weldoc n'a pas encore
+  de notion de "documents attendus" pour une affaire à comparer à
+  l'existant. Bibliothèque des destinataires du récapitulatif hebdomadaire
+  par email, inchangée.
 - `src/app/pieces/page.tsx` — prise en charge de pièces (atelier) et suivi
   de leur statut. "Photos des repères présents sur la pièce" accepte
   toujours des adresses collées à la main (une par ligne), et propose
@@ -1078,11 +1084,14 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   rien déclaré n'apparaît jamais dans cette alerte. "Documents
   obsolètes/manquants" reste hors de `/alertes` — Weldoc n'a pas encore
   de notion de "documents attendus" pour une affaire à comparer à
-  l'existant. "Validations niveau 3
-  en attente" n'a qu'un seul cas couvert pour l'instant (reconductions de
-  qualification proposées) ; d'autres validations niveau 3 existent dans
-  l'application (documents externes, RFF...) sans être encore remontées
-  ici comme alerte.
+  l'existant. "Validations niveau 3 en attente" couvre maintenant les
+  reconductions de qualification proposées, les documents externes non
+  validés (`DocumentExterne.valideConclusion`) et les PV externes non
+  revus (`PVExterne.revueConclusion`) — trois états déjà modélisés,
+  simplement pas remontés ici jusque-là. Le rapport de fin de fabrication
+  n'y figure volontairement pas : rien ne permet aujourd'hui de
+  distinguer une affaire réellement prête à valider d'une affaire encore
+  en cours, et Weldoc ne devine jamais ce genre de seuil.
 - L'adaptation complète à la fabrication en atelier : le cahier des
   charges est écrit en vocabulaire "chantier" (organigramme chantier,
   prise en charge du chantier...). `Affaire.typeRealisation`

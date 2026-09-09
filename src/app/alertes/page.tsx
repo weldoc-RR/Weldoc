@@ -22,17 +22,35 @@ export const dynamic = "force-dynamic";
 // différemment ici. "Contrôles manquants" compare maintenant les contrôles
 // réellement enregistrés à ceux déclarés requis par affaire (voir
 // src/lib/controlesManquants.ts et /affaires/[id]/reglementaire — additif :
-// une affaire n'ayant rien déclaré n'apparaît jamais ici). "Documents
-// obsolètes/manquants" reste hors de cette page : Weldoc n'a pas encore de
-// notion de "documents attendus" pour une affaire à comparer à l'existant.
+// une affaire n'ayant rien déclaré n'apparaît jamais ici). "Validations
+// niveau 3 en attente" couvre maintenant, en plus des reconductions de
+// qualification, les documents externes non validés et les PV externes
+// non revus (deux états déjà modélisés, DocumentExterne.valideConclusion/
+// PVExterne.revueConclusion, simplement pas encore remontés ici). Le
+// rapport de fin de fabrication n'y figure pas : rien ne permet
+// aujourd'hui de distinguer une affaire réellement prête à valider d'une
+// affaire encore en cours, et Weldoc ne devine jamais ce genre de seuil.
+// "Documents obsolètes/manquants" reste hors de cette page : Weldoc n'a
+// pas encore de notion de "documents attendus" pour une affaire à
+// comparer à l'existant.
 export default async function AlertesPage() {
   const utilisateur = await getUtilisateurConnecteServeur();
   if (!utilisateur) {
     redirect("/login");
   }
 
-  const [outils, qualifications, qualificationsToutes, habilitations, fncsOuvertes, pointsReglementaires, destinataires, jointsControlesManquants] =
-    await Promise.all([
+  const [
+    outils,
+    qualifications,
+    qualificationsToutes,
+    habilitations,
+    fncsOuvertes,
+    pointsReglementaires,
+    destinataires,
+    jointsControlesManquants,
+    documentsExternesEnAttente,
+    pvExternesEnAttente,
+  ] = await Promise.all([
       prisma.outil.findMany({ where: { statut: { not: "HORS_SERVICE" } } }),
       prisma.qualification.findMany({
         where: { statut: { not: "SUSPENDU" }, frequenceConfirmationMois: { not: null } },
@@ -55,6 +73,15 @@ export default async function AlertesPage() {
       }),
       prisma.destinataireAlerte.findMany({ orderBy: { email: "asc" } }),
       controlesManquants(),
+      prisma.documentExterne.findMany({
+        where: { valideConclusion: null, retiree: false },
+        orderBy: { dateImport: "asc" },
+      }),
+      prisma.pVExterne.findMany({
+        where: { revueConclusion: null },
+        include: { affaire: { select: { numero: true } } },
+        orderBy: { dateImport: "asc" },
+      }),
     ]);
 
   const alertesQualification = qualificationsToutes
@@ -212,6 +239,36 @@ export default async function AlertesPage() {
               <strong>{q.reference}</strong> ({q.personnel.prenom} {q.personnel.nom}) — proposée le{" "}
               {q.evenements[0]?.date.toLocaleDateString("fr-FR")}, en attente de validation (
               <Link href="/personnel">voir la fiche personnel</Link>)
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <h2>Documents externes en attente de validation</h2>
+      {documentsExternesEnAttente.length === 0 ? (
+        <p>Aucune alerte pour l&apos;instant.</p>
+      ) : (
+        <ul>
+          {documentsExternesEnAttente.map((d) => (
+            <li key={d.id} style={{ color: "darkorange" }}>
+              <strong>{d.reference}</strong> ({d.version}) — {d.titre} — importé le{" "}
+              {d.dateImport.toLocaleDateString("fr-FR")}, en attente de validation (
+              <Link href="/documents">voir les documents externes</Link>)
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <h2>PV externes en attente de revue</h2>
+      {pvExternesEnAttente.length === 0 ? (
+        <p>Aucune alerte pour l&apos;instant.</p>
+      ) : (
+        <ul>
+          {pvExternesEnAttente.map((p) => (
+            <li key={p.id} style={{ color: "darkorange" }}>
+              <strong>{p.intitule}</strong> — affaire {p.affaire.numero} — importé le{" "}
+              {p.dateImport.toLocaleDateString("fr-FR")}, en attente de revue (
+              <Link href={`/affaires/${p.affaireId}/pv-externes`}>voir les PV externes</Link>)
             </li>
           ))}
         </ul>

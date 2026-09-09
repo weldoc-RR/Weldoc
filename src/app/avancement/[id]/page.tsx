@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getUtilisateurConnecteServeur } from "@/lib/auth";
 import { calculerAvancementAffaire } from "@/lib/avancement";
 import { BarreSequence, LegendeStatutsPhase } from "../barre-sequence";
+import { PhaseLigne } from "./phase-ligne";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +19,15 @@ export default async function AvancementAffairePage({ params }: { params: { id: 
     notFound();
   }
   const avancement = await calculerAvancementAffaire(params.id);
+  const [sequencesAvecPhases, procedures] = await Promise.all([
+    prisma.sequence.findMany({
+      where: { affaireId: params.id },
+      include: { phases: { orderBy: { ordre: "asc" } } },
+      orderBy: { ordre: "asc" },
+    }),
+    prisma.procedureInterne.findMany({ where: { retiree: false }, orderBy: [{ reference: "asc" }, { dateEmission: "desc" }] }),
+  ]);
+  const procInternesOptions = procedures.map((p) => ({ id: p.id, reference: p.reference, version: p.version, titre: p.titre }));
 
   return (
     <main style={{ fontFamily: "sans-serif", padding: "2rem" }}>
@@ -72,6 +82,27 @@ export default async function AvancementAffairePage({ params }: { params: { id: 
             ))}
           </tbody>
         </table>
+      )}
+
+      <h2 style={{ marginTop: "2rem" }}>Phases</h2>
+      <p style={{ fontSize: "0.85rem", color: "#52514e" }}>
+        Fait avancer chaque phase et lui relie, si besoin, la procédure interne applicable (voir{" "}
+        <Link href="/procedures">la bibliothèque de procédures</Link>).
+      </p>
+      {sequencesAvecPhases.every((s) => s.phases.length === 0) ? (
+        <p>Aucune phase pour l&apos;instant.</p>
+      ) : (
+        sequencesAvecPhases.map(
+          (s) =>
+            s.phases.length > 0 && (
+              <div key={s.id} style={{ marginBottom: "1rem" }}>
+                <h3 style={{ fontSize: "1rem", marginBottom: "0.2rem" }}>{s.nom}</h3>
+                {s.phases.map((p) => (
+                  <PhaseLigne key={p.id} phase={p} procedures={procInternesOptions} />
+                ))}
+              </div>
+            )
+        )
       )}
     </main>
   );

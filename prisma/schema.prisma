@@ -502,6 +502,15 @@ model Phase {
   obligatoire  Boolean     @default(true)
   statut       StatutPhase @default(A_FAIRE)
   justificationNA String?
+  // Procédure/instruction/formulaire/PV/fiche technique applicable (voir
+  // le cahier des charges, "DOCUMENTATION ET PROCÉDURES INTERNES") : un
+  // lien vers une révision précise de la bibliothèque ProcedureInterne, ce
+  // qui conserve automatiquement "la version réellement utilisée à
+  // l'exécution" — une révision n'y est jamais modifiée après coup (même
+  // principe que WPS/QMOS), donc ce lien suffit, pas besoin d'un
+  // historique séparé.
+  procedureInterne   ProcedureInterne? @relation(fields: [procedureInterneId], references: [id])
+  procedureInterneId String?
   photos       Photo[]
   pointsReglementaires PointReglementaire[]
   pvExternes   PVExterne[]
@@ -1478,4 +1487,27 @@ model WpsPasse {
   observations   String?
 
   @@index([wpsId])
+}
+
+// Bibliothèque des procédures internes de l'entreprise (voir le cahier
+// des charges, "DOCUMENTATION ET PROCÉDURES INTERNES") : procédure,
+// instruction, formulaire, PV type, fiche technique... `type` reste en
+// texte libre (ces catégories varient d'une entreprise à l'autre). Même
+// principe de versionnage que WPS/QMOS (src/lib/procedures.ts,
+// `annoterStatutProcedures`, réutilisé tel quel) : une nouvelle révision
+// est un nouvel enregistrement, jamais une modification de la précédente.
+model ProcedureInterne {
+  id           String   @id @default(cuid())
+  reference    String
+  version      String   @default("Rev 0")
+  titre        String
+  type         String?
+  documentUrl  String?
+  dateEmission DateTime
+  retiree      Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  phases       Phase[]
+
+  @@index([reference])
 }

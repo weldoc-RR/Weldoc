@@ -2,7 +2,15 @@
 
 import { useRouter } from "next/navigation";
 
-export function RetirerProcedure({ endpoint, id, retiree }: { endpoint: "/api/wps" | "/api/qmos"; id: string; retiree: boolean }) {
+export function RetirerProcedure({
+  endpoint,
+  id,
+  retiree,
+}: {
+  endpoint: "/api/wps" | "/api/qmos" | "/api/procedures-internes";
+  id: string;
+  retiree: boolean;
+}) {
   const router = useRouter();
 
   async function basculer() {

@@ -561,6 +561,25 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   soudeur suit réellement pendant le soudage), créé en même temps que le
   WPS et jamais modifié ensuite — une correction se fait via une nouvelle
   révision.
+  - Une troisième section "Procédures internes" sur la même page (voir le
+    cahier des charges, "DOCUMENTATION ET PROCÉDURES INTERNES") :
+    bibliothèque des procédures/instructions/formulaires/PV
+    types/fiches techniques de l'entreprise (`ProcedureInterne`,
+    `GET`/`POST`/`PATCH /api/procedures-internes`), même principe de
+    versionnage que WPS/QMOS — `annoterStatutProcedures` est directement
+    réutilisée, générique, sans rien dupliquer. `Phase.procedureInterneId`
+    relie une phase à une révision précise : comme cette révision n'est
+    elle-même jamais modifiée après coup, ce simple lien suffit à
+    conserver "la version réellement utilisée à l'exécution" (pas besoin
+    d'un historique séparé). Le lien se change indépendamment du statut
+    de la phase, et chaque changement (statut ou procédure) est tracé par
+    l'audit trail (voir plus bas).
+  - `/avancement/[id]` (page de détail d'une affaire) affiche maintenant
+    aussi, sous les séquences, la liste de ses phases avec un formulaire
+    par phase (`phase-ligne.tsx`) : changer le statut, marquer non
+    applicable avec justification, et relier une procédure interne — la
+    seule interface qui permettait jusqu'ici de faire avancer une phase
+    était `PATCH /api/phases` en API brute.
 - `src/lib/verificationQS.ts` — rapproche les qualifications soudage
   actives d'un soudeur avec le domaine d'un WPS (procédé, groupe de
   matériaux, épaisseur, diamètre), pour aider à vérifier qu'il est bien

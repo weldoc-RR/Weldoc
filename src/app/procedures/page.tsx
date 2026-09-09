@@ -5,6 +5,7 @@ import { getUtilisateurConnecteServeur } from "@/lib/auth";
 import { annoterStatutProcedures, type StatutAffichageProcedure } from "@/lib/procedures";
 import { AjouterQmos } from "./ajouter-qmos";
 import { AjouterWps } from "./ajouter-wps";
+import { AjouterProcedureInterne } from "./ajouter-procedure-interne";
 import { RetirerProcedure } from "./retirer-procedure";
 
 export const dynamic = "force-dynamic";
@@ -50,23 +51,25 @@ export default async function ProceduresPage() {
     redirect("/login");
   }
 
-  const [wpsList, qmosList] = await Promise.all([
+  const [wpsList, qmosList, procInternesList] = await Promise.all([
     prisma.wps.findMany({
       include: { qmos: { select: { reference: true, version: true } }, passes: { orderBy: { ordre: "asc" } } },
       orderBy: [{ reference: "asc" }, { dateEmission: "desc" }],
     }),
     prisma.qmos.findMany({ orderBy: [{ reference: "asc" }, { createdAt: "desc" }] }),
+    prisma.procedureInterne.findMany({ orderBy: [{ reference: "asc" }, { dateEmission: "desc" }] }),
   ]);
   const wpsAnnotes = annoterStatutProcedures(wpsList, (w) => w.dateEmission);
   const qmosAnnotes = annoterStatutProcedures(qmosList, (q) => q.dateEssai ?? q.createdAt);
   const qmosDisponibles = qmosAnnotes.filter((q) => q.statutAffiche !== "RETIREE");
+  const procInternesAnnotees = annoterStatutProcedures(procInternesList, (p) => p.dateEmission);
 
   return (
     <main style={{ fontFamily: "sans-serif", padding: "2rem" }}>
       <p>
         <Link href="/">← Affaires</Link>
       </p>
-      <h1>Weldoc — WPS/DMOS et QMOS</h1>
+      <h1>Weldoc — Procédures</h1>
       <p>
         Bibliothèque des procédures de soudage, réutilisables sur les joints plutôt que ressaisies à chaque fois.
         Une nouvelle révision (Rev 1, Rev 2...) ne remplace jamais la précédente : c&apos;est un nouvel
@@ -169,6 +172,35 @@ export default async function ProceduresPage() {
                     </table>
                   </div>
                 </details>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <h2 style={{ marginTop: "2rem" }}>Procédures internes</h2>
+      <p style={{ fontSize: "0.85rem", color: "#52514e" }}>
+        Procédures, instructions, formulaires, PV types, fiches techniques... (voir le cahier des charges,
+        "DOCUMENTATION ET PROCÉDURES INTERNES"). Une phase peut être reliée à une révision précise ici — c&apos;est
+        ce lien qui conserve la version réellement utilisée à l&apos;exécution.
+      </p>
+      <AjouterProcedureInterne />
+      {procInternesAnnotees.length === 0 ? (
+        <p>Aucune procédure interne enregistrée pour l&apos;instant.</p>
+      ) : (
+        <ul style={{ listStyle: "none", padding: 0, marginTop: "1.5rem" }}>
+          {procInternesAnnotees.map((p) => (
+            <li key={p.id} style={{ marginBottom: "0.6rem", borderBottom: "1px solid #ddd", paddingBottom: "0.4rem" }}>
+              <strong>{p.reference}</strong> ({p.version}) — {p.titre}
+              {p.type && ` — ${p.type}`}
+              <BadgeStatut statut={p.statutAffiche} />
+              <RetirerProcedure endpoint="/api/procedures-internes" id={p.id} retiree={p.retiree} />
+              {p.documentUrl && (
+                <div style={{ fontSize: "0.85rem", marginTop: "0.2rem" }}>
+                  <a href={p.documentUrl} target="_blank" rel="noopener noreferrer">
+                    voir le document
+                  </a>
+                </div>
               )}
             </li>
           ))}

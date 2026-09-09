@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 type Procedure = { id: string; reference: string; version: string; titre: string };
+type InfoSignature = { nom: string; prenom: string; dateSignature: string };
 
 const LIBELLE_STATUT: Record<string, string> = {
   A_FAIRE: "À faire",
@@ -17,12 +18,22 @@ const LIBELLE_STATUT: Record<string, string> = {
 // PROCÉDURES INTERNES" : "la version réellement utilisée à l'exécution
 // est conservée dans l'historique" — ce lien vers une révision précise de
 // la bibliothèque suffit, une révision n'étant elle-même jamais modifiée).
+// La case à cocher (voir `selection`) est la voie normale pour clore une
+// phase réalisée : cocher puis signer (QR/PIN) sur plusieurs phases à la
+// fois — voir SignerPhases ci-dessous et POST /api/phases/signer. Ce
+// formulaire reste utile pour EN_COURS, NON_APPLICABLE (avec
+// justification) ou relier une procédure, qui ne sont pas des actes de
+// signature.
 export function PhaseLigne({
   phase,
   procedures,
+  signature,
+  selection,
 }: {
   phase: { id: string; nom: string; statut: string; justificationNA: string | null; procedureInterneId: string | null };
   procedures: Procedure[];
+  signature?: InfoSignature;
+  selection?: { coche: boolean; onToggle: () => void };
 }) {
   const router = useRouter();
   const [statut, setStatut] = useState(phase.statut);
@@ -62,6 +73,15 @@ export function PhaseLigne({
 
   return (
     <form onSubmit={enregistrer} style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem", alignItems: "center", padding: "0.4rem 0", borderBottom: "1px solid #eee" }}>
+      {selection && (
+        <input
+          type="checkbox"
+          checked={selection.coche}
+          onChange={selection.onToggle}
+          title="Sélectionner pour signer"
+          style={{ marginRight: "0.2rem" }}
+        />
+      )}
       <span style={{ minWidth: 180 }}>{phase.nom}</span>
       <select value={statut} onChange={(e) => setStatut(e.target.value)} style={{ fontSize: "0.85rem", padding: "0.2rem" }}>
         {Object.entries(LIBELLE_STATUT).map(([valeur, libelle]) => (
@@ -91,6 +111,11 @@ export function PhaseLigne({
         {enCours ? "..." : "Enregistrer"}
       </button>
       {erreur && <span style={{ color: "crimson", fontSize: "0.8rem" }}>{erreur}</span>}
+      {signature && (
+        <span style={{ fontSize: "0.75rem", color: "#0ca30c" }}>
+          ✓ Signée par {signature.prenom} {signature.nom} le {new Date(signature.dateSignature).toLocaleDateString("fr-FR")}
+        </span>
+      )}
     </form>
   );
 }

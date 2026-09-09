@@ -562,6 +562,12 @@ model Phase {
   pointsReglementaires PointReglementaire[]
   pvExternes   PVExterne[]
   documentsExternes DocumentExterne[]
+  // Référence libre vers Signature.id (documentType "PHASE"), comme
+  // signatureId ailleurs dans le modèle — voir POST /api/phases/signer :
+  // l'exécutant sélectionne les phases réalisées et s'identifie une seule
+  // fois (QR/matricule + PIN), ce qui vaut signature pour chacune d'elles
+  // et les passe TERMINEE.
+  signatureId  String?
 }
 
 model Matiere {

@@ -139,6 +139,16 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
     n'est pas terminée (sauf dérogation accordée par une demande de
     modification de séquencement acceptée, voir plus bas) ; passer en
     NON_APPLICABLE exige une justification
+  - `POST /api/phases/signer` — signature groupée de phases : l'exécutant
+    coche sur `/avancement/[id]` les phases qu'il vient de réaliser, puis
+    s'identifie une seule fois (QR/matricule + code PIN, même parcours que
+    `src/lib/signature.ts` : identification → PIN → charte acceptée →
+    contrôle des droits) — ça vaut signature pour chacune des phases
+    cochées et les passe TERMINEE. Vérifie séquencement et points
+    réglementaires bloquants pour chaque phase AVANT de signer quoi que ce
+    soit : soit toutes les phases cochées sont signées, soit aucune ne
+    l'est. Une signature par phase (`Phase.signatureId`), mais un seul PIN
+    saisi pour tout le lot.
   - `POST /api/demandes-sequencement` — demande de modification du
     séquencement par le terrain (phases concernées, motif, urgence,
     photo/document)
@@ -311,6 +321,21 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
     `/avancement` (liste) et la page d'accueil, partout où l'avancement
     par phase l'était déjà — masqué tant que le nombre prévu n'a pas été
     saisi, pour ne jamais afficher un pourcentage inventé.
+  - **Clore une phase par signature QR + PIN** — jusqu'ici, faire avancer
+    une phase se faisait par un simple menu déroulant "Enregistrer", sans
+    aucune identification. Chaque phase de `/avancement/[id]`
+    (`PhaseLigne`) porte maintenant une case à cocher (masquée une fois
+    Terminée ou Non applicable), et une barre "Signer les phases cochées"
+    en bas de la liste (`PhasesSection`) : l'exécutant coche une ou
+    plusieurs phases qu'il vient de réaliser, saisit son identifiant
+    (matricule ou QR) et son code PIN **une seule fois**, et ça vaut
+    signature pour chacune (`POST /api/phases/signer`,
+    `signerPlusieursDocuments` dans `src/lib/signature.ts` — même PIN que
+    pour signer un document ailleurs dans l'application, pas de nouveau
+    secret). Une ligne signée affiche "✓ Signée par Prénom Nom le
+    JJ/MM/AAAA". Le menu déroulant reste disponible pour EN_COURS, NON
+    APPLICABLE (avec justification) ou relier une procédure interne — des
+    actions qui ne sont pas des actes de signature.
 - `src/lib/dossierFinFabrication.ts` — rapport de fin d'intervention (RFI),
   restructuré pour suivre précisément le modèle réel fourni par
   l'entreprise (un vrai document EDF/ULM) : seule la **structure** du

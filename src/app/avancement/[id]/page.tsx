@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getUtilisateurConnecteServeur } from "@/lib/auth";
 import { calculerAvancementAffaire } from "@/lib/avancement";
 import { BarreSequence, LegendeStatutsPhase } from "../barre-sequence";
-import { PhaseLigne } from "./phase-ligne";
+import { PhasesSection } from "./phases-section";
 import { DefinirJointsPrevus } from "./definir-joints-prevus";
 
 export const dynamic = "force-dynamic";
@@ -29,6 +29,30 @@ export default async function AvancementAffairePage({ params }: { params: { id: 
     prisma.procedureInterne.findMany({ where: { retiree: false }, orderBy: [{ reference: "asc" }, { dateEmission: "desc" }] }),
   ]);
   const procInternesOptions = procedures.map((p) => ({ id: p.id, reference: p.reference, version: p.version, titre: p.titre }));
+
+  // Signature de chaque phase déjà signée (voir POST /api/phases/signer) :
+  // Phase.signatureId reste une référence libre (comme ailleurs dans le
+  // modèle), donc on résout ici les Signature correspondantes plutôt que
+  // par une relation Prisma.
+  const signatureIds = sequencesAvecPhases.flatMap((s) => s.phases.map((p) => p.signatureId).filter((id): id is string => id != null));
+  const signaturesPhases =
+    signatureIds.length > 0
+      ? await prisma.signature.findMany({
+          where: { id: { in: signatureIds } },
+          include: { personnel: { select: { nom: true, prenom: true } } },
+        })
+      : [];
+  const signatureParPhaseId: Record<string, { nom: string; prenom: string; dateSignature: string }> = {};
+  for (const s of sequencesAvecPhases.flatMap((seq) => seq.phases)) {
+    const signature = s.signatureId ? signaturesPhases.find((sig) => sig.id === s.signatureId) : undefined;
+    if (signature) {
+      signatureParPhaseId[s.id] = {
+        nom: signature.personnel.nom,
+        prenom: signature.personnel.prenom,
+        dateSignature: signature.dateSignature.toISOString(),
+      };
+    }
+  }
 
   return (
     <main style={{ fontFamily: "sans-serif", padding: "2rem" }}>
@@ -112,23 +136,10 @@ export default async function AvancementAffairePage({ params }: { params: { id: 
       <h2 style={{ marginTop: "2rem" }}>Phases</h2>
       <p style={{ fontSize: "0.85rem", color: "#52514e" }}>
         Fait avancer chaque phase et lui relie, si besoin, la procédure interne applicable (voir{" "}
-        <Link href="/procedures">la bibliothèque de procédures</Link>).
+        <Link href="/procedures">la bibliothèque de procédures</Link>). Pour clore une phase réalisée, la cocher
+        puis signer (QR/PIN) plutôt que de changer son statut manuellement.
       </p>
-      {sequencesAvecPhases.every((s) => s.phases.length === 0) ? (
-        <p>Aucune phase pour l&apos;instant.</p>
-      ) : (
-        sequencesAvecPhases.map(
-          (s) =>
-            s.phases.length > 0 && (
-              <div key={s.id} style={{ marginBottom: "1rem" }}>
-                <h3 style={{ fontSize: "1rem", marginBottom: "0.2rem" }}>{s.nom}</h3>
-                {s.phases.map((p) => (
-                  <PhaseLigne key={p.id} phase={p} procedures={procInternesOptions} />
-                ))}
-              </div>
-            )
-        )
-      )}
+      <PhasesSection sequencesAvecPhases={sequencesAvecPhases} procedures={procInternesOptions} signatures={signatureParPhaseId} />
     </main>
   );
 }

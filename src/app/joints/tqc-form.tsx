@@ -1,0 +1,134 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { SignerQrPin } from "@/components/signer-qr-pin";
+
+export type Tqc = {
+  localisation: string | null;
+  equipement: string | null;
+  support: string | null;
+  ecarts: string | null;
+  observations: string | null;
+  signatureId: string | null;
+} | null;
+
+// TQC ("tel que construit", voir le cahier des charges) : localisation,
+// équipement/support, écarts et observations par rapport au prévu. Les
+// dimensions mesurées et les photos ne sont pas ressaisies ici — elles
+// restent sur le contrôle dimensionnel et le book photo du joint (déjà
+// consultables ci-dessus/sur la page book photo de l'affaire). Modifiable
+// tant que non signé (PATCH /api/joints/[id]/tqc) ; une fois signé,
+// affichage seul.
+export function TqcForm({ jointId, tqc, onFermer }: { jointId: string; tqc: Tqc; onFermer: () => void }) {
+  const router = useRouter();
+  const [localisation, setLocalisation] = useState(tqc?.localisation ?? "");
+  const [equipement, setEquipement] = useState(tqc?.equipement ?? "");
+  const [support, setSupport] = useState(tqc?.support ?? "");
+  const [ecarts, setEcarts] = useState(tqc?.ecarts ?? "");
+  const [observations, setObservations] = useState(tqc?.observations ?? "");
+  const [signatureId, setSignatureId] = useState<string | null>(null);
+  const [erreur, setErreur] = useState<string | null>(null);
+  const [enCours, setEnCours] = useState(false);
+
+  const dejaSigne = Boolean(tqc?.signatureId);
+
+  async function enregistrer(e: React.FormEvent) {
+    e.preventDefault();
+    setErreur(null);
+    setEnCours(true);
+    const corps: Record<string, unknown> = {
+      localisation: localisation || undefined,
+      equipement: equipement || undefined,
+      support: support || undefined,
+      ecarts: ecarts || undefined,
+      observations: observations || undefined,
+    };
+    if (signatureId) corps.signatureId = signatureId;
+
+    const res = await fetch(`/api/joints/${jointId}/tqc`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(corps),
+    });
+    setEnCours(false);
+    if (!res.ok) {
+      const corpsErr = await res.json().catch(() => null);
+      setErreur(corpsErr?.error ?? "Impossible d'enregistrer.");
+      return;
+    }
+    router.refresh();
+    if (signatureId) onFermer();
+  }
+
+  if (dejaSigne) {
+    return (
+      <div style={{ border: "1px solid #ddd", padding: "0.6rem", marginTop: "0.4rem", maxWidth: 600 }}>
+        <p style={{ color: "#0ca30c", fontSize: "0.85rem" }}>✓ TQC signé (lecture seule).</p>
+        <p style={{ fontSize: "0.85rem" }}>
+          Localisation : {tqc?.localisation ?? "—"} · Équipement : {tqc?.equipement ?? "—"} · Support :{" "}
+          {tqc?.support ?? "—"}
+        </p>
+        {tqc?.ecarts && <p style={{ fontSize: "0.85rem" }}>Écarts : {tqc.ecarts}</p>}
+        {tqc?.observations && <p style={{ fontSize: "0.85rem" }}>{tqc.observations}</p>}
+        <button type="button" onClick={onFermer}>
+          Fermer
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <form onSubmit={enregistrer} style={{ border: "1px solid #ddd", padding: "0.6rem", marginTop: "0.4rem", maxWidth: 600 }}>
+      <p style={{ fontSize: "0.75rem", color: "#898781", margin: "0 0 0.4rem 0" }}>
+        Dimensions mesurées et photos : voir le contrôle dimensionnel et le book photo de ce joint, déjà saisis
+        ailleurs — pas de nouvelle saisie ici.
+      </p>
+      <label style={{ fontSize: "0.85rem" }}>
+        Localisation
+        <input type="text" value={localisation} onChange={(e) => setLocalisation(e.target.value)} style={{ display: "block", width: "100%", padding: "0.3rem" }} />
+      </label>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.4rem", marginTop: "0.4rem" }}>
+        <label style={{ fontSize: "0.85rem" }}>
+          Équipement
+          <input type="text" value={equipement} onChange={(e) => setEquipement(e.target.value)} style={{ display: "block", width: "100%", padding: "0.3rem" }} />
+        </label>
+        <label style={{ fontSize: "0.85rem" }}>
+          Support
+          <input type="text" value={support} onChange={(e) => setSupport(e.target.value)} style={{ display: "block", width: "100%", padding: "0.3rem" }} />
+        </label>
+      </div>
+      <label style={{ fontSize: "0.85rem", display: "block", marginTop: "0.4rem" }}>
+        Écarts par rapport au prévu
+        <textarea value={ecarts} onChange={(e) => setEcarts(e.target.value)} rows={2} style={{ display: "block", width: "100%", padding: "0.3rem", fontFamily: "inherit" }} />
+      </label>
+      <label style={{ fontSize: "0.85rem", display: "block", marginTop: "0.4rem" }}>
+        Observations
+        <textarea value={observations} onChange={(e) => setObservations(e.target.value)} rows={2} style={{ display: "block", width: "100%", padding: "0.3rem", fontFamily: "inherit" }} />
+      </label>
+
+      <div style={{ marginTop: "0.5rem" }}>
+        <button type="submit" disabled={enCours}>
+          {enCours ? "Enregistrement..." : "Enregistrer (sans signer)"}
+        </button>
+        <button type="button" onClick={onFermer} style={{ marginLeft: "0.4rem" }}>
+          Fermer
+        </button>
+        {erreur && <span style={{ color: "crimson", fontSize: "0.85rem", marginLeft: "0.4rem" }}>{erreur}</span>}
+      </div>
+
+      <div style={{ marginTop: "0.5rem" }}>
+        <p style={{ fontSize: "0.8rem", margin: "0 0 0.2rem 0" }}>
+          Signer pour clore le TQC (matricule/QR + PIN) — plus aucune modification possible ensuite :
+        </p>
+        {signatureId ? (
+          <button type="submit" disabled={enCours}>
+            {enCours ? "..." : "Confirmer et signer"}
+          </button>
+        ) : (
+          <SignerQrPin documentType="TQC" documentId={jointId} versionDocument="v1" onSigne={setSignatureId} />
+        )}
+      </div>
+    </form>
+  );
+}

@@ -533,6 +533,20 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
     modification n'est acceptée — la signature atteste des valeurs comme
     définitives, le bouton devient "Fiche soudage" et l'affichage passe
     en lecture seule.
+  - Bouton "+ TQC" : le "tel que construit" (voir le cahier des charges,
+    "TQC (TEL QUE CONSTRUIT)") — localisation de la soudure, équipement,
+    support, écarts par rapport au prévu, observations.
+    `GET`/`PATCH /api/joints/[id]/tqc`, modèle `TQC`, mêmes règles que la
+    fiche technique de suivi de soudage (modifiable jusqu'à la signature
+    QR/matricule + PIN, lecture seule ensuite). Les références M800/M801
+    (déjà sur `Joint`), les dimensions mesurées (déjà sur le contrôle
+    dimensionnel du joint) et les photos (déjà sur le book photo, via
+    `Photo.jointId`) ne sont jamais ressaisies ici. Sur les trois méthodes
+    prévues au cahier des charges (ISO manuel sur tablette, scan 3D
+    externe, book photo), seule la version texte + book photo est
+    construite pour l'instant : la saisie graphique au stylet et
+    l'import de scan 3D (fonction déjà signalée "complémentaire, non
+    obligatoire" par le cahier des charges) restent à construire.
 - `src/lib/procedures.ts` — bibliothèque des WPS/DMOS et des QMOS
   (`GET`/`POST`/`PATCH /api/wps` et `/api/qmos`, page `/procedures`) :
   une nouvelle révision (Rev 0, Rev 1...) n'écrase jamais la précédente,
@@ -646,14 +660,14 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   pas encore joint par joint (ex. "38 joints soudés sur 120 prévus") : ça
   suppose de connaître à l'avance le nombre de joints prévus sur l'affaire,
   ce qui n'est pas encore saisi dans Weldoc.
-- L'essentiel des ~50 modules du cahier des charges (REX, etc.). Le book
-  photo a une première version (voir ci-dessus), mais pas le TQC ("tel que
-  construit") lui-même : les trois méthodes prévues au cahier des charges
-  (ISO manuel au stylet sur tablette, ISO issu d'un scan 3D externe, book
-  photo pour localiser/identifier les soudures) restent à construire au-delà
-  du book photo — l'annotation au stylet et l'intégration d'un scan 3D sont
+- L'essentiel des ~50 modules du cahier des charges (REX, etc.). Le TQC
+  ("tel que construit") a une première version textuelle (voir ci-dessus,
+  bouton "+ TQC" sur `/joints`), mais deux des trois méthodes prévues au
+  cahier des charges restent à construire : l'ISO manuel au stylet sur
+  tablette (annotation graphique) et l'ISO issu d'un scan 3D externe —
   des chantiers UI/technique nettement plus lourds que ce qui a été fait
-  jusqu'ici.
+  jusqu'ici (le cahier des charges signale d'ailleurs le scan 3D comme une
+  fonction complémentaire, non obligatoire).
 - Une vraie interface tablette soignée (ici, des pages HTML minimales).
 - Les vraies valeurs de tolérances normatives (voir avertissement ci-dessus).
 - Les tests automatisés et le déploiement.

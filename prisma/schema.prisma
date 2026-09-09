@@ -568,6 +568,7 @@ model Joint {
   typeAction      TypeActionRemiseEnConformite?
 
   ficheSoudage    FicheTechniqueSoudage?
+  tqc             TQC?
   controlesDim    ControleDimensionnel[]
   controlesVisuels ControleVisuel[]
   controlesRessuage ControleRessuage[]
@@ -612,6 +613,28 @@ model FicheTechniqueSoudage {
   observations          String?
   photosUrls            String[]
   signatureId           String?
+}
+
+// TQC — "tel que construit" (voir le cahier des charges) : localisation
+// des soudures, équipement/support concerné, écarts et observations par
+// rapport au prévu. Les dimensions mesurées et les photos ne sont jamais
+// dupliquées ici : elles restent sur le contrôle dimensionnel et le book
+// photo du joint (déjà liables via Photo.jointId), qui font foi. Version
+// "ISO manuel" du cahier des charges (trois méthodes combinables prévues :
+// ISO manuel, scan 3D, book photo) — le scan 3D reste une fonction
+// complémentaire non obligatoire, hors périmètre pour l'instant. Modifiable
+// tant que non signé (POST /api/joints/[id]/tqc), même principe que la
+// fiche technique de suivi de soudage.
+model TQC {
+  id           String  @id @default(cuid())
+  joint        Joint   @relation(fields: [jointId], references: [id])
+  jointId      String  @unique
+  localisation String?
+  equipement   String?
+  support      String?
+  ecarts       String?
+  observations String?
+  signatureId  String?
 }
 
 enum StatutOutil {

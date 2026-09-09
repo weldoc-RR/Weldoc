@@ -655,11 +655,25 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
     QR/matricule + PIN, lecture seule ensuite). Les références M800/M801
     (déjà sur `Joint`), les dimensions mesurées (déjà sur le contrôle
     dimensionnel du joint) et les photos (déjà sur le book photo, via
-    `Photo.jointId`) ne sont jamais ressaisies ici. Sur les trois méthodes
+    `Photo.jointId`) ne sont jamais ressaisies ici. Les trois méthodes
     prévues au cahier des charges (ISO manuel sur tablette, scan 3D
-    externe, book photo), la version texte + book photo et le scan 3D
-    sont construits ; seule la saisie graphique au stylet sur tablette
-    reste à construire.
+    externe, book photo) sont maintenant toutes les trois construites —
+    voir ci-dessous pour l'ISO manuel au stylet et le scan 3D.
+  - ISO manuel au stylet (troisième méthode du TQC) :
+    `src/app/joints/iso-canvas.tsx` (`IsoCanvas`), une zone de dessin à
+    main levée par-dessus un fond optionnel (`TQC.isoFondUrl`, un lien
+    vers un schéma iso déjà hébergé, même principe que le scan 3D
+    ci-dessous). Fonctionne au stylet, au doigt ou à la souris via les
+    événements `pointer` du navigateur — aucune bibliothèque ni matériel
+    spécifique nécessaire, testé en conditions réelles (Chromium
+    headless piloté par Playwright) : le trait se dessine, s'annule et
+    s'enregistre correctement. Les traits (`TQC.isoTraits`, colonne
+    `Json`) sont stockés comme des tracés vectoriels — liste de points en
+    coordonnées relatives 0..1, couleur, épaisseur — jamais une image
+    figée, pour rester nets sur n'importe quel écran et modifiables comme
+    le reste du TQC tant qu'il n'est pas signé (mêmes boutons "Annuler le
+    dernier trait" / "Tout effacer" avant l'enregistrement). Le TQC est
+    donc maintenant complet sur ses trois méthodes.
   - Scan 3D (deuxième méthode du TQC, "voir le cahier des charges,
     'TQC (TEL QUE CONSTRUIT)' > 'Scan 3D'", signalée "fonction
     complémentaire, non obligatoire") : `GET`/`POST /api/scans-tqc`,
@@ -823,13 +837,12 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
 - Quelques modules plus secondaires du cahier des charges restent encore à
   construire (offre documentaire Weldoc, formation/déploiement — plutôt
   des sujets d'offre commerciale que des écrans à construire). Le TQC
-  ("tel que construit") a maintenant deux de ses trois méthodes : la
-  version texte + book photo (bouton "+ TQC" sur `/joints`) et le scan 3D
-  (section "Scan 3D (TQC)" sur `/joints`, voir ci-dessus). Seule l'ISO
-  manuel au stylet sur tablette (annotation graphique directement à
-  l'écran) reste à construire — un chantier UI/technique nettement plus
-  lourd que ce qui a été fait jusqu'ici.
-- Une vraie interface tablette soignée (ici, des pages HTML minimales).
+  ("tel que construit") est maintenant complet sur ses trois méthodes :
+  texte + book photo, scan 3D, et ISO manuel au stylet (voir ci-dessus).
+- Une vraie interface tablette soignée (ici, des pages HTML minimales) —
+  le dessin au stylet fonctionne (testé au doigt/stylet/souris via les
+  événements `pointer`), mais le reste de l'écran garde le style HTML
+  minimal du squelette de démonstration.
 - Les vraies valeurs de tolérances normatives, sauf l'EN 10216-2 (Tableaux
   7, 9, 11 — voir ci-dessus) : toute autre norme reste à intégrer au fil de
   l'eau, au fur et à mesure qu'un utilisateur ou un expert métier avec

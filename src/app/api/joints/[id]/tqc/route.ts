@@ -3,12 +3,24 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
 
+// Un trait de l'ISO manuel au stylet (voir src/app/joints/iso-canvas.tsx) :
+// une liste de points en coordonnées relatives (0..1), une couleur, une
+// épaisseur — jamais une image figée, pour que le tracé reste net quel
+// que soit l'écran où il est redessiné.
+const IsoTraitSchema = z.object({
+  points: z.array(z.object({ x: z.number(), y: z.number() })).min(2),
+  couleur: z.string().min(1),
+  epaisseur: z.number().positive(),
+});
+
 const TqcSchema = z.object({
   localisation: z.string().optional(),
   equipement: z.string().optional(),
   support: z.string().optional(),
   ecarts: z.string().optional(),
   observations: z.string().optional(),
+  isoFondUrl: z.string().optional(),
+  isoTraits: z.array(IsoTraitSchema).optional(),
   signatureId: z.string().optional(),
 });
 

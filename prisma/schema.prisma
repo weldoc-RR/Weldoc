@@ -654,6 +654,16 @@ model TQC {
   support      String?
   ecarts       String?
   observations String?
+  // ISO manuel sur tablette (troisième méthode du TQC, voir le cahier des
+  // charges) : annotation graphique à main levée (stylet, doigt ou
+  // souris) par-dessus un fond optionnel déjà hébergé (schéma iso). Les
+  // traits sont conservés comme des tracés vectoriels (liste de points en
+  // coordonnées relatives 0..1, indépendantes de la taille d'écran) —
+  // jamais une image figée — pour rester modifiables comme le reste du
+  // TQC tant qu'il n'est pas signé. Voir IsoTrait dans
+  // src/app/joints/iso-canvas.tsx pour la forme exacte du JSON.
+  isoFondUrl   String?
+  isoTraits    Json?
   signatureId  String?
 }
 

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { SignerQrPin } from "@/components/signer-qr-pin";
+import { IsoCanvas, type IsoTrait } from "./iso-canvas";
 
 export type Tqc = {
   localisation: string | null;
@@ -10,8 +11,14 @@ export type Tqc = {
   support: string | null;
   ecarts: string | null;
   observations: string | null;
+  isoFondUrl: string | null;
+  isoTraits: unknown;
   signatureId: string | null;
 } | null;
+
+function traitsDepuis(isoTraits: unknown): IsoTrait[] {
+  return Array.isArray(isoTraits) ? (isoTraits as IsoTrait[]) : [];
+}
 
 // TQC ("tel que construit", voir le cahier des charges) : localisation,
 // équipement/support, écarts et observations par rapport au prévu. Les
@@ -27,6 +34,8 @@ export function TqcForm({ jointId, tqc, onFermer }: { jointId: string; tqc: Tqc;
   const [support, setSupport] = useState(tqc?.support ?? "");
   const [ecarts, setEcarts] = useState(tqc?.ecarts ?? "");
   const [observations, setObservations] = useState(tqc?.observations ?? "");
+  const [isoFondUrl, setIsoFondUrl] = useState(tqc?.isoFondUrl ?? "");
+  const [isoTraits, setIsoTraits] = useState<IsoTrait[]>(traitsDepuis(tqc?.isoTraits));
   const [signatureId, setSignatureId] = useState<string | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
   const [enCours, setEnCours] = useState(false);
@@ -43,6 +52,8 @@ export function TqcForm({ jointId, tqc, onFermer }: { jointId: string; tqc: Tqc;
       support: support || undefined,
       ecarts: ecarts || undefined,
       observations: observations || undefined,
+      isoFondUrl: isoFondUrl || undefined,
+      isoTraits: isoTraits.length > 0 ? isoTraits : undefined,
     };
     if (signatureId) corps.signatureId = signatureId;
 
@@ -71,6 +82,12 @@ export function TqcForm({ jointId, tqc, onFermer }: { jointId: string; tqc: Tqc;
         </p>
         {tqc?.ecarts && <p style={{ fontSize: "0.85rem" }}>Écarts : {tqc.ecarts}</p>}
         {tqc?.observations && <p style={{ fontSize: "0.85rem" }}>{tqc.observations}</p>}
+        {(tqc?.isoFondUrl || isoTraits.length > 0) && (
+          <div style={{ marginTop: "0.4rem" }}>
+            <p style={{ fontSize: "0.8rem", margin: "0 0 0.2rem 0" }}>ISO manuel :</p>
+            <IsoCanvas fondUrl={tqc?.isoFondUrl ?? null} traits={isoTraits} />
+          </div>
+        )}
         <button type="button" onClick={onFermer}>
           Fermer
         </button>
@@ -106,6 +123,16 @@ export function TqcForm({ jointId, tqc, onFermer }: { jointId: string; tqc: Tqc;
         Observations
         <textarea value={observations} onChange={(e) => setObservations(e.target.value)} rows={2} style={{ display: "block", width: "100%", padding: "0.3rem", fontFamily: "inherit" }} />
       </label>
+
+      <label style={{ fontSize: "0.85rem", display: "block", marginTop: "0.4rem" }}>
+        ISO manuel — fond à annoter (optionnel, lien vers un schéma iso déjà hébergé)
+        <input type="text" value={isoFondUrl} onChange={(e) => setIsoFondUrl(e.target.value)} style={{ display: "block", width: "100%", padding: "0.3rem" }} />
+      </label>
+      <p style={{ fontSize: "0.75rem", color: "#898781", margin: "0.3rem 0 0.2rem 0" }}>
+        Dessinez au stylet, au doigt ou à la souris directement sur le schéma (ou sur fond blanc si aucun lien
+        renseigné) — le résultat est enregistré avec le reste du TQC.
+      </p>
+      <IsoCanvas fondUrl={isoFondUrl || null} traits={isoTraits} onChange={setIsoTraits} />
 
       <div style={{ marginTop: "0.5rem" }}>
         <button type="submit" disabled={enCours}>

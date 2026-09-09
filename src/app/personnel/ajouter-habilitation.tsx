@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { FileUpload } from "@/components/file-upload";
+import { LectureAutomatique } from "@/components/lecture-automatique";
 
 type Personnel = { id: string; nom: string; prenom: string };
 
@@ -95,6 +96,16 @@ export function AjouterHabilitation({ personnel }: { personnel: Personnel[] }) {
         <input type="text" value={certificatUrl} onChange={(e) => setCertificatUrl(e.target.value)} style={{ display: "block", width: "100%", padding: "0.4rem" }} />
       </label>
       <FileUpload onDepose={setCertificatUrl} />
+      <LectureAutomatique
+        documentUrl={certificatUrl}
+        type="HABILITATION"
+        onLu={(champs) => {
+          if (champs.intitule) setIntitule(champs.intitule);
+          if (champs.reference) setReference(champs.reference);
+          if (champs.dateObtention) setDateObtention(champs.dateObtention);
+          if (champs.dateExpiration) setDateExpiration(champs.dateExpiration);
+        }}
+      />
       <div>
         <button type="submit" disabled={enCours}>
           {enCours ? "Enregistrement..." : "Enregistrer"}

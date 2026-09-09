@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { FileUpload } from "@/components/file-upload";
+import { LectureAutomatique } from "@/components/lecture-automatique";
 
 type Personnel = { id: string; nom: string; prenom: string };
 type Referentiel = { id: string; code: string; domaine: string };
@@ -203,6 +204,17 @@ export function AjouterQualification({ personnel, referentiels }: { personnel: P
         <input type="text" value={certificatUrl} onChange={(e) => setCertificatUrl(e.target.value)} style={{ display: "block", width: "100%", padding: "0.4rem" }} />
       </label>
       <FileUpload onDepose={setCertificatUrl} />
+      <LectureAutomatique
+        documentUrl={certificatUrl}
+        type="QUALIFICATION"
+        onLu={(champs) => {
+          if (champs.reference) setReference(champs.reference);
+          if (champs.norme) setNorme(champs.norme);
+          if (champs.dateObtention) setDateObtention(champs.dateObtention);
+          if (champs.dateExpiration) setDateExpiration(champs.dateExpiration);
+          if (champs.organisme) setOrganismeExamen(champs.organisme);
+        }}
+      />
       <div>
         <button type="submit" disabled={enCours}>
           {enCours ? "Enregistrement..." : "Enregistrer"}

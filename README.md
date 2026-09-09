@@ -663,6 +663,28 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
     contrôle de type/taille et du message d'erreur "non configuré", qui
     ont bien été vérifiés) reste à confirmer une fois déployé avec le
     jeton en place.
+  - **Lecture automatique des documents déposés** (voir le cahier des
+    charges, "CONSOMMABLES" : "reconnaissance de caractères pour
+    proposer automatiquement... le contrôleur valide, la photo
+    originale est conservée comme preuve" — même principe appliqué ici
+    aux qualifications/habilitations) : une fois un certificat déposé
+    (ou lié), bouton "Lire automatiquement le document" sur les
+    formulaires "+ Enregistrer une qualification soudage" et "+
+    Enregistrer une habilitation" — `POST /api/lecture-document`
+    (`src/lib/lectureDocument.ts`) envoie le document à Claude (Anthropic,
+    voir `ANTHROPIC_API_KEY` dans `.env.example`) et propose
+    référence/norme/dates/organisme (qualification) ou
+    intitulé/référence/dates (habilitation). **L'IA ne décide jamais
+    seule** (PRINCIPE DE CONCEPTION) : les champs proposés se contentent
+    de pré-remplir le formulaire habituel, exactement comme une saisie
+    manuelle — la personne relit, corrige si besoin, et c'est elle qui
+    enregistre. Un champ absent ou illisible sur le document revient à
+    vide plutôt que d'être deviné. **Non testé en conditions réelles**
+    (même limite que le dépôt de fichiers ci-dessus) : pas de clé
+    Anthropic dans cet environnement de développement — authentification,
+    validation et message d'erreur "non configuré" vérifiés ; la lecture
+    effective d'un vrai certificat reste à confirmer une fois déployé
+    avec `ANTHROPIC_API_KEY` en place.
 - `src/app/alertes/page.tsx` — alertes centralisées (voir le cahier des
   charges, "ALERTES" : "Qualifications à échéance, habilitations expirées,
   documents obsolètes, FNC ouvertes, blocages, validations niveau 3 en

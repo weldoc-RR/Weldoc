@@ -666,32 +666,31 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   - Bouton "+ FTS" : la fiche technique de suivi de soudage (voir le
     cahier des charges, qui précise qu'"un exemple réel sera intégré
     ultérieurement pour finaliser tous les champs" — première version
-    donc). `GET`/`PATCH /api/joints/[id]/fiche-soudage` : procédé,
-    préchauffage, température interpasses, postchauffage, tension,
-    intensité, vitesse, énergie, nombre de passes, temps, observations.
-    L'identification (joint/soudeur/QS/WPS/QMOS/consommable/diamètre/
-    épaisseur) n'est jamais redemandée : elle vient déjà de `Joint`.
-    Modifiable/complétable au fil du soudage tant qu'elle n'est pas
-    signée ; une fois signée (QR/matricule + PIN), plus aucune
-    modification n'est acceptée — la signature atteste des valeurs comme
-    définitives, le bouton devient "Fiche soudage" et l'affichage passe
-    en lecture seule.
-  - **Saisie groupée** de la fiche technique de suivi de soudage (voir le
+    donc) : procédé, préchauffage, température interpasses, postchauffage,
+    tension, intensité, vitesse, énergie, nombre de passes, temps,
+    observations. L'identification (joint/soudeur/QS/WPS/QMOS/
+    consommable/diamètre/épaisseur) n'est jamais redemandée : elle vient
+    déjà de `Joint`. Modifiable/complétable tant qu'elle n'est pas signée ;
+    une fois signée (QR/matricule + PIN), plus aucune modification n'est
+    acceptée — la signature atteste des valeurs comme définitives.
+    **Une même fiche peut couvrir plusieurs joints à la fois** (voir le
     cahier des charges, PRINCIPE CENTRAL : "une donnée saisie une seule
-    fois") : quand un même soudeur a réalisé plusieurs joints avec les
-    mêmes paramètres (même procédé, même tension...) dans la même
-    période, bouton "+ Saisie groupée (fiche technique de soudage)" sur
-    `/joints` — remplit les paramètres une seule fois, coche les joints
-    concernés (fiche pas encore signée uniquement), signe une seule fois
-    (`POST /api/fiches-soudage/lot`). Chaque joint garde sa propre fiche
-    et sa propre signature, tracées individuellement (`creerSignature()`
-    est appelée pour chaque joint du lot, avec les mêmes vérifications
-    PIN/charte/autorisation de signature qu'une signature à part) :
-    exactement comme si chaque joint avait été signé un par un, avec un
-    seul geste côté écran. Un joint déjà signé dans le lot refuse le lot
-    entier (rien n'est jamais écrasé) ; un PIN incorrect laisse les
-    paramètres déjà enregistrés (non signés, à corriger ou re-signer),
-    plutôt que de perdre la saisie.
+    fois") : quand un même soudeur a réalisé plusieurs soudures avec les
+    mêmes paramètres dans la même période (même procédé, même tension...),
+    le bouton "+ FTS" propose de cocher les autres joints de l'affaire pas
+    encore couverts par une fiche — une seule saisie des paramètres, une
+    seule signature (une seule fois le PIN) pour l'ensemble. Le modèle
+    `FicheTechniqueSoudage` porte donc `joints Joint[]` (un joint
+    n'appartient jamais qu'à une seule fiche à la fois — `Joint.
+    ficheSoudageId`), et `GET`/`POST`/`PATCH /api/fiches-soudage`
+    remplacent l'ancienne route par-joint (`GET /api/joints/[id]/
+    fiche-soudage` ne sert plus qu'à retrouver la fiche d'un joint donné,
+    avec la liste complète des joints qu'elle couvre). Retirer un joint
+    d'une fiche non signée le libère aussitôt pour une autre ; un joint
+    déjà couvert par une fiche ne peut pas être ajouté à une autre — il
+    faut d'abord le retirer de la sienne. Le bouton devient "Fiche
+    soudage" (au lieu de "+ FTS") pour chacun des joints déjà couverts, et
+    l'affichage passe en lecture seule une fois signée.
   - Bouton "+ TQC" : le "tel que construit" (voir le cahier des charges,
     "TQC (TEL QUE CONSTRUIT)") — localisation de la soudure, équipement,
     support, écarts par rapport au prévu, observations.
@@ -786,7 +785,12 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   module.
   - `src/app/productivite/page.tsx` — tableau théorique/prévu/réel par
     WPS, avec le nombre de joints ayant un temps réel renseigné. Lien
-    depuis la page d'accueil.
+    depuis la page d'accueil. Une fiche technique de suivi de soudage
+    pouvant désormais couvrir plusieurs joints à la fois (saisie
+    groupée, voir ci-dessus), son `tempsMin` compte une seule fois par
+    WPS distinct rencontré parmi ses joints — pas une fois par joint —
+    pour ne pas gonfler artificiellement l'échantillon avec la même
+    mesure répétée.
   - Champs ajoutés aux formulaires existants : "Temps théorique" sur
     "+ Créer le WPS/DMOS" (`/procedures`), "Temps prévu" sur
     "Affecter" (`/affaires/[id]/planning`, visible seulement quand un

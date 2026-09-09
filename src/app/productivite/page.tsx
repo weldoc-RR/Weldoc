@@ -29,8 +29,8 @@ export default async function ProductivitePage() {
       orderBy: [{ reference: "asc" }, { version: "asc" }],
     }),
     prisma.ficheTechniqueSoudage.findMany({
-      where: { tempsMin: { not: null }, joint: { wpsId: { not: null } } },
-      select: { tempsMin: true, joint: { select: { wpsId: true } } },
+      where: { tempsMin: { not: null }, joints: { some: { wpsId: { not: null } } } },
+      select: { tempsMin: true, joints: { select: { wpsId: true } } },
     }),
     prisma.affectation.findMany({
       where: { dureeEstimeeMin: { not: null }, joint: { wpsId: { not: null } } },
@@ -38,9 +38,16 @@ export default async function ProductivitePage() {
     }),
   ]);
 
-  const tempsReel = fichesAvecTemps
-    .filter((f) => f.joint?.wpsId)
-    .map((f) => ({ wpsId: f.joint!.wpsId!, tempsMin: f.tempsMin! }));
+  // Une même fiche peut couvrir plusieurs joints ("saisie groupée", voir
+  // FicheTechniqueSoudage dans schema.prisma) : son temps réel compte une
+  // seule fois par WPS distinct rencontré parmi ses joints (pas une fois
+  // par joint), pour ne pas gonfler artificiellement l'échantillon avec
+  // la même mesure répétée — dans l'immense majorité des cas un lot
+  // partage un seul WPS, donc une seule entrée.
+  const tempsReel = fichesAvecTemps.flatMap((f) => {
+    const wpsIds = [...new Set(f.joints.map((j) => j.wpsId).filter((id): id is string => id !== null))];
+    return wpsIds.map((wpsId) => ({ wpsId, tempsMin: f.tempsMin! }));
+  });
   const tempsPrevu = affectationsAvecDuree
     .filter((a) => a.joint?.wpsId)
     .map((a) => ({ wpsId: a.joint!.wpsId!, dureeEstimeeMin: a.dureeEstimeeMin! }));

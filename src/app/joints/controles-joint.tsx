@@ -21,6 +21,7 @@ type ProduitDimensionnel = {
   epaisseurNominaleMm: number | null;
 };
 type MatiereJoint = { normeProduit: string; diametre: number | null; epaisseur: number | null } | null;
+type JointCandidat = { id: string; numero: string; indiceReparation: number };
 
 type TypeFormulaireOuvert = "DIM" | "VT" | "PT" | "MT" | "RT" | "UT" | "FTS" | "TQC" | null;
 
@@ -38,21 +39,25 @@ const TYPES_PAR_METHODE: Record<"PT" | "MT" | "RT" | "UT", string[]> = {
 // pour rester lisible.
 export function ControlesJoint({
   jointId,
+  jointNumero,
   controlesVisuels,
   consommables,
   outils,
   produitsDimensionnels,
   matiere,
   ficheSoudage,
+  autresJointsSansFiche,
   tqc,
 }: {
   jointId: string;
+  jointNumero: string;
   controlesVisuels: ControleVisuel[];
   consommables: Consommable[];
   outils: Outil[];
   produitsDimensionnels: ProduitDimensionnel[];
   matiere: MatiereJoint;
   ficheSoudage: FicheSoudage;
+  autresJointsSansFiche: JointCandidat[];
   tqc: Tqc;
 }) {
   const [ouvert, setOuvert] = useState<TypeFormulaireOuvert>(null);
@@ -73,7 +78,15 @@ export function ControlesJoint({
       <button onClick={() => setOuvert("TQC")} style={{ fontSize: "0.8rem", marginRight: "0.2rem" }}>
         {tqc ? "TQC" : "+ TQC"}
       </button>
-      {ouvert === "FTS" && <FicheSoudageForm jointId={jointId} fiche={ficheSoudage} onFermer={fermer} />}
+      {ouvert === "FTS" && (
+        <FicheSoudageForm
+          jointId={jointId}
+          jointNumero={jointNumero}
+          fiche={ficheSoudage}
+          autresJoints={autresJointsSansFiche}
+          onFermer={fermer}
+        />
+      )}
       {ouvert === "TQC" && <TqcForm jointId={jointId} tqc={tqc} onFermer={fermer} />}
       {ouvert === "DIM" && (
         <ControleDimensionnelForm

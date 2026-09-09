@@ -594,7 +594,12 @@ model Joint {
   // une réparation (null pour un joint d'origine, indiceReparation 0).
   typeAction      TypeActionRemiseEnConformite?
 
-  ficheSoudage    FicheTechniqueSoudage?
+  // Une fiche technique de suivi de soudage peut couvrir plusieurs joints
+  // à la fois (voir FicheTechniqueSoudage ci-dessous : "saisie groupée",
+  // quand le même soudeur a réalisé plusieurs soudures avec les mêmes
+  // paramètres) — un joint n'appartient jamais qu'à une seule fiche.
+  ficheSoudage    FicheTechniqueSoudage? @relation(fields: [ficheSoudageId], references: [id])
+  ficheSoudageId  String?
   tqc             TQC?
   controlesDim    ControleDimensionnel[]
   controlesVisuels ControleVisuel[]
@@ -622,13 +627,18 @@ model Joint {
 // finaliser tous les champs" — les champs ci-dessous restent donc une
 // première version). L'identification du joint/soudeur/QS/WPS/QMOS/
 // consommable/diamètre/épaisseur n'est jamais redemandée ici : elle vient
-// déjà de Joint. Modifiable tant qu'elle n'est pas signée
-// (POST /api/joints/[id]/fiche-soudage) ; une fois signée, plus aucune
-// modification n'est acceptée — la signature atteste des valeurs finales.
+// déjà de Joint. Une même fiche peut couvrir plusieurs joints (`joints`)
+// quand le même soudeur a réalisé plusieurs soudures avec les mêmes
+// paramètres dans la même période ("saisie groupée", voir le cahier des
+// charges, PRINCIPE CENTRAL : "une donnée saisie une seule fois") — un
+// joint n'appartient jamais qu'à une seule fiche à la fois. Modifiable
+// (champs, et joints couverts) tant qu'elle n'est pas signée
+// (voir POST/PATCH /api/fiches-soudage) ; une fois signée, plus aucune
+// modification n'est acceptée — la signature atteste des valeurs finales
+// pour l'ensemble des joints couverts.
 model FicheTechniqueSoudage {
   id                    String   @id @default(cuid())
-  joint                 Joint    @relation(fields: [jointId], references: [id])
-  jointId               String   @unique
+  joints                Joint[]
   procede               String?
   preechauffageC        Float?
   temperatureInterpasses Float?

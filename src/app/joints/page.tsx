@@ -9,7 +9,6 @@ import { calculerStatutOutil, outilUtilisable } from "@/lib/statutOutil";
 import { AjouterJoint } from "./ajouter-joint";
 import { AjouterMatiere } from "./ajouter-matiere";
 import { AjouterScanTqc } from "./ajouter-scan-tqc";
-import { SaisieGroupeeFicheSoudage } from "./saisie-groupee-fiche-soudage";
 import { DeclarerReparation } from "./declarer-reparation";
 import { BadgeControle } from "./badge-controle";
 import { ControlesJoint } from "./controles-joint";
@@ -71,7 +70,9 @@ export default async function JointsPage() {
         controlesRadiographie: { select: { dateControle: true, resultat: true } },
         controlesUltrasons: { select: { dateControle: true, resultat: true } },
         fncs: { select: { id: true, reference: true, statut: true } },
-        ficheSoudage: true,
+        ficheSoudage: {
+          include: { joints: { select: { id: true, numero: true, indiceReparation: true } } },
+        },
         tqc: true,
       },
       orderBy: [{ affaireId: "asc" }, { numero: "asc" }, { indiceReparation: "asc" }],
@@ -165,17 +166,6 @@ export default async function JointsPage() {
       <AjouterScanTqc
         affaires={affaires}
         joints={joints.map((j) => ({ id: j.id, numero: j.numero, indiceReparation: j.indiceReparation, affaireId: j.affaireId }))}
-      />
-
-      <SaisieGroupeeFicheSoudage
-        affaires={affaires}
-        joints={joints.map((j) => ({
-          id: j.id,
-          numero: j.numero,
-          indiceReparation: j.indiceReparation,
-          affaireId: j.affaireId,
-          dejaSignee: Boolean(j.ficheSoudage?.signatureId),
-        }))}
       />
 
       <h2>Créer un joint</h2>
@@ -287,6 +277,7 @@ export default async function JointsPage() {
                     {estDernierDeLaChaine && <DeclarerReparation jointId={j.id} fncsOuvertes={fncsOuvertes} />}
                     <ControlesJoint
                       jointId={j.id}
+                      jointNumero={numeroAffiche}
                       controlesVisuels={j.controlesVisuels.map((cv) => ({
                         id: cv.id,
                         procedureRef: cv.procedureRef,
@@ -297,6 +288,9 @@ export default async function JointsPage() {
                       produitsDimensionnels={produitsDimEnVigueur}
                       matiere={j.matiere}
                       ficheSoudage={j.ficheSoudage}
+                      autresJointsSansFiche={jointsAffaire
+                        .filter((autre) => autre.id !== j.id && !autre.ficheSoudageId)
+                        .map((autre) => ({ id: autre.id, numero: autre.numero, indiceReparation: autre.indiceReparation }))}
                       tqc={j.tqc}
                     />
                   </li>

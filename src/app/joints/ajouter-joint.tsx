@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { RechercherMatiere } from "./rechercher-matiere";
 
 type Affaire = { id: string; numero: string; client: string };
 type Personnel = { id: string; nom: string; prenom: string };
@@ -106,8 +107,9 @@ export function AjouterJoint({
         DN (optionnel)
         <input type="text" value={dn} onChange={(e) => setDn(e.target.value)} style={{ display: "block", width: "100%", padding: "0.4rem" }} />
       </label>
+      <RechercherMatiere affaireId={affaireId} onTrouvee={setMatiereId} />
       <label>
-        Matière (optionnel)
+        ou choisir la matière dans la liste (optionnel)
         <select value={matiereId} onChange={(e) => setMatiereId(e.target.value)} style={{ display: "block", width: "100%", padding: "0.4rem" }}>
           <option value="">— non précisée —</option>
           {matieresAffaire.map((m) => (

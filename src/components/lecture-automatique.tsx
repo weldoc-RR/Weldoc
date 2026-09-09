@@ -9,6 +9,14 @@ export interface ChampsLus {
   dateObtention: string | null;
   dateExpiration: string | null;
   organisme: string | null;
+  fournisseur: string | null;
+  designation: string | null;
+  normeProduit: string | null;
+  nuance: string | null;
+  diametre: number | null;
+  epaisseur: number | null;
+  numeroCoulee: string | null;
+  numeroLot: string | null;
 }
 
 // Lecture automatique d'un document déjà déposé (voir POST
@@ -22,7 +30,7 @@ export function LectureAutomatique({
   onLu,
 }: {
   documentUrl: string;
-  type: "QUALIFICATION" | "HABILITATION";
+  type: "QUALIFICATION" | "HABILITATION" | "MATIERE";
   onLu: (champs: ChampsLus) => void;
 }) {
   const [enCours, setEnCours] = useState(false);

@@ -4,13 +4,13 @@ import Anthropic from "@anthropic-ai/sdk";
 // "CONSOMMABLES" : "reconnaissance de caractères pour proposer
 // automatiquement... le contrôleur valide, la photo originale est
 // conservée comme preuve" — même principe appliqué ici aux
-// qualifications/habilitations plutôt qu'aux étiquettes de consommables).
+// qualifications/habilitations et aux matières/CCPU).
 // L'IA ne décide jamais seule (PRINCIPE DE CONCEPTION) : cette fonction ne
 // fait que PROPOSER des valeurs à relire et corriger avant enregistrement,
 // via le même formulaire et la même route API que la saisie manuelle —
 // aucune écriture en base ne se fait ici.
 
-export type TypeDocumentLisible = "QUALIFICATION" | "HABILITATION";
+export type TypeDocumentLisible = "QUALIFICATION" | "HABILITATION" | "MATIERE";
 
 export interface ChampsExtraits {
   reference: string | null;
@@ -19,15 +19,23 @@ export interface ChampsExtraits {
   dateObtention: string | null; // YYYY-MM-DD
   dateExpiration: string | null; // YYYY-MM-DD
   organisme: string | null;
+  fournisseur: string | null;
+  designation: string | null;
+  normeProduit: string | null;
+  nuance: string | null;
+  diametre: number | null;
+  epaisseur: number | null;
+  numeroCoulee: string | null;
+  numeroLot: string | null;
 }
 
-const CHAMPS_PAR_TYPE: Record<TypeDocumentLisible, string[]> = {
-  // "intitule" n'a pas de sens pour une qualification (elle a une
-  // référence + une norme) ; "norme" n'a pas de sens pour une
-  // habilitation générique — chaque type ne demande que ses champs
-  // pertinents, jamais les deux à la fois.
+// Chaque type ne demande que ses champs pertinents, jamais tous à la
+// fois : "intitule" n'a pas de sens pour une qualification, "nuance" n'a
+// pas de sens pour une habilitation, etc.
+const CHAMPS_PAR_TYPE: Record<TypeDocumentLisible, (keyof ChampsExtraits)[]> = {
   QUALIFICATION: ["reference", "norme", "dateObtention", "dateExpiration", "organisme"],
-  HABILITATION: ["intitule", "reference", "dateObtention", "dateExpiration", "organisme"],
+  HABILITATION: ["intitule", "reference", "dateObtention", "dateExpiration"],
+  MATIERE: ["fournisseur", "designation", "normeProduit", "nuance", "diametre", "epaisseur", "numeroCoulee", "numeroLot"],
 };
 
 const CONSIGNE_PAR_TYPE: Record<TypeDocumentLisible, string> = {
@@ -39,17 +47,33 @@ const CONSIGNE_PAR_TYPE: Record<TypeDocumentLisible, string> = {
   HABILITATION:
     "Ce document est un certificat d'habilitation (électrique, travail en hauteur, échafaudage, " +
     "radioprotection...). Identifie : l'intitulé exact de l'habilitation, sa référence/numéro si indiqué, " +
-    "la date d'obtention, la date d'expiration si indiquée, et l'organisme délivreur.",
+    "la date d'obtention, la date d'expiration si indiquée.",
+  MATIERE:
+    "Ce document est un CCPU (certificat de contrôle des produits utilisés) ou un certificat matière " +
+    "(type 3.1/3.2) accompagnant un tube, une tôle ou un composant. Identifie : le fournisseur/fabricant, " +
+    "la désignation du produit (ex. \"Tube acier carbone\"), la norme produit (ex. \"EN 10216-2\"), la nuance " +
+    "d'acier (ex. \"P235GH\"), le diamètre et l'épaisseur nominaux en mm si indiqués, le numéro de coulée " +
+    "(heat/cast number) et le numéro de lot si distinct de la coulée.",
 };
 
-const LIBELLES_CHAMPS: Record<string, string> = {
+const LIBELLES_CHAMPS: Record<keyof ChampsExtraits, string> = {
   reference: "Numéro ou référence du certificat, tel qu'écrit sur le document. null si absent.",
   intitule: "Intitulé exact de l'habilitation. null si absent.",
   norme: "Code de la norme appliquée (ex. \"EN ISO 9606-1\"). null si absent.",
   dateObtention: "Date d'obtention/de passation, au format YYYY-MM-DD. null si absente ou illisible.",
   dateExpiration: "Date d'expiration/de validité, au format YYYY-MM-DD. null si absente ou illisible.",
   organisme: "Organisme ou personne ayant examiné/délivré le document. null si absent.",
+  fournisseur: "Fournisseur ou fabricant du produit. null si absent.",
+  designation: "Désignation du produit (ex. \"Tube acier carbone\"). null si absente.",
+  normeProduit: "Norme produit (ex. \"EN 10216-2\"). null si absente.",
+  nuance: "Nuance du matériau (ex. \"P235GH\"). null si absente.",
+  diametre: "Diamètre nominal en mm, un nombre. null si absent ou illisible.",
+  epaisseur: "Épaisseur nominale en mm, un nombre. null si absente ou illisible.",
+  numeroCoulee: "Numéro de coulée (heat/cast number), tel qu'écrit sur le document. null si absent.",
+  numeroLot: "Numéro de lot, si distinct du numéro de coulée. null si absent.",
 };
+
+const CHAMPS_NUMERIQUES = new Set<keyof ChampsExtraits>(["diametre", "epaisseur"]);
 
 function typeMedia(contentType: string): "application/pdf" | "image/jpeg" | "image/png" | "image/webp" | null {
   if (contentType.includes("pdf")) return "application/pdf";
@@ -64,7 +88,7 @@ function typeMedia(contentType: string): "application/pdf" | "image/jpeg" | "ima
 // technique (document illisible, clé absente...) — un champ non trouvé
 // sur le document lui-même revient simplement à `null`, à compléter à la
 // main comme aujourd'hui.
-export async function lireDocument(documentUrl: string, type: TypeDocumentLisible): Promise<ChampsExtraits> {
+export async function lireDocument(documentUrl: string, type: TypeDocumentLisible): Promise<Partial<ChampsExtraits>> {
   const reponseFichier = await fetch(documentUrl);
   if (!reponseFichier.ok) {
     throw new Error("Impossible de récupérer le document déposé.");
@@ -87,7 +111,9 @@ export async function lireDocument(documentUrl: string, type: TypeDocumentLisibl
         description: "Renvoie les champs identifiés sur le document justificatif.",
         input_schema: {
           type: "object",
-          properties: Object.fromEntries(champs.map((c) => [c, { type: ["string", "null"], description: LIBELLES_CHAMPS[c] }])),
+          properties: Object.fromEntries(
+            champs.map((c) => [c, { type: [CHAMPS_NUMERIQUES.has(c) ? "number" : "string", "null"], description: LIBELLES_CHAMPS[c] }])
+          ),
           required: champs,
           additionalProperties: false,
         },
@@ -113,13 +139,10 @@ export async function lireDocument(documentUrl: string, type: TypeDocumentLisibl
     throw new Error("La lecture automatique n'a renvoyé aucun résultat exploitable.");
   }
 
-  const brut = appelOutil.input as Record<string, string | null>;
-  return {
-    reference: brut.reference ?? null,
-    intitule: brut.intitule ?? null,
-    norme: brut.norme ?? null,
-    dateObtention: brut.dateObtention ?? null,
-    dateExpiration: brut.dateExpiration ?? null,
-    organisme: brut.organisme ?? null,
-  };
+  const brut = appelOutil.input as Record<string, string | number | null>;
+  const resultat: Partial<ChampsExtraits> = {};
+  for (const c of champs) {
+    resultat[c] = (brut[c] ?? null) as never;
+  }
+  return resultat;
 }

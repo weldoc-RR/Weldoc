@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { FileUpload } from "@/components/file-upload";
+import { LectureAutomatique } from "@/components/lecture-automatique";
 
 type Affaire = { id: string; numero: string };
 
@@ -160,6 +161,20 @@ export function AjouterMatiere({ affaires }: { affaires: Affaire[] }) {
         <input type="text" value={ccpuDocumentUrl} onChange={(e) => setCcpuDocumentUrl(e.target.value)} style={{ display: "block", width: "100%", padding: "0.4rem" }} />
       </label>
       <FileUpload onDepose={setCcpuDocumentUrl} />
+      <LectureAutomatique
+        documentUrl={ccpuDocumentUrl}
+        type="MATIERE"
+        onLu={(champs) => {
+          if (champs.fournisseur) setFournisseur(champs.fournisseur);
+          if (champs.designation) setDesignation(champs.designation);
+          if (champs.normeProduit) setNormeProduit(champs.normeProduit);
+          if (champs.nuance) setNuance(champs.nuance);
+          if (champs.diametre) setDiametre(String(champs.diametre));
+          if (champs.epaisseur) setEpaisseur(String(champs.epaisseur));
+          if (champs.numeroCoulee) setNumeroCoulee(champs.numeroCoulee);
+          if (champs.numeroLot) setNumeroLot(champs.numeroLot);
+        }}
+      />
       <label>
         Lien vers le certificat (optionnel)
         <input type="text" value={certificatUrl} onChange={(e) => setCertificatUrl(e.target.value)} style={{ display: "block", width: "100%", padding: "0.4rem" }} />

@@ -68,6 +68,23 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   `src/lib/tolerances.ts` (ex. "EN 10216-2 (T nominale)"), les critères
   applicables se déterminent alors sans aucune ressaisie, du début de
   l'affaire jusqu'au contrôle.
+  - **Retrouver une matière par son numéro de coulée/lot** : sur
+    `/joints`, le formulaire "Créer un joint" propose maintenant
+    `RechercherMatiere` (`GET /api/matieres?affaireId=...&recherche=...`,
+    recherche insensible à la casse sur le numéro de coulée OU le numéro
+    de lot, sans que l'intervenant ait besoin de savoir lequel des deux
+    c'est) — sur le chantier, il tape juste le numéro lu sur
+    l'étiquette de la matière et retrouve directement la matière déjà
+    réceptionnée avec son CCPU et son certificat, plutôt que de chercher
+    dans la liste déroulante. Recherche limitée à l'affaire en cours
+    (une matière reste réceptionnée pour une affaire précise). La liste
+    déroulante reste disponible juste en dessous.
+  - **Lecture automatique du CCPU/certificat** (voir "Lecture automatique
+    des documents déposés" ci-dessous) : `LectureAutomatique` avec
+    `type="MATIERE"` sur `AjouterMatiere` — propose fournisseur,
+    désignation, norme produit, nuance, diamètre, épaisseur, numéro de
+    coulée et numéro de lot à partir du CCPU déposé, à vérifier avant
+    d'enregistrer.
 - `src/app/api/` — points d'entrée de l'application :
   - `POST /api/personnel` — créer une fiche personne minimale (identité + niveau)
   - `POST /api/auth/comptes` — créer le compte de connexion d'une personne
@@ -671,14 +688,16 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
     charges, "CONSOMMABLES" : "reconnaissance de caractères pour
     proposer automatiquement... le contrôleur valide, la photo
     originale est conservée comme preuve" — même principe appliqué ici
-    aux qualifications/habilitations) : une fois un certificat déposé
-    (ou lié), bouton "Lire automatiquement le document" sur les
-    formulaires "+ Enregistrer une qualification soudage" et "+
-    Enregistrer une habilitation" — `POST /api/lecture-document`
+    aux qualifications/habilitations et aux CCPU/certificats matière) :
+    une fois un certificat déposé (ou lié), bouton "Lire automatiquement
+    le document" sur les formulaires "+ Enregistrer une qualification
+    soudage", "+ Enregistrer une habilitation" et "+ Réceptionner une
+    matière (CCPU)" — `POST /api/lecture-document`
     (`src/lib/lectureDocument.ts`) envoie le document à Claude (Anthropic,
     voir `ANTHROPIC_API_KEY` dans `.env.example`) et propose
-    référence/norme/dates/organisme (qualification) ou
-    intitulé/référence/dates (habilitation). **L'IA ne décide jamais
+    référence/norme/dates/organisme (qualification), intitulé/référence/
+    dates (habilitation) ou fournisseur/désignation/norme produit/
+    nuance/diamètre/épaisseur/coulée/lot (matière). **L'IA ne décide jamais
     seule** (PRINCIPE DE CONCEPTION) : les champs proposés se contentent
     de pré-remplir le formulaire habituel, exactement comme une saisie
     manuelle — la personne relit, corrige si besoin, et c'est elle qui

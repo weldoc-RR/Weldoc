@@ -20,17 +20,32 @@ const CreateMatiereSchema = z.object({
   certificatUrl: z.string().optional(),
 });
 
-// GET /api/matieres?affaireId=...&numeroCoulee=...
+// GET /api/matieres?affaireId=...&numeroCoulee=...&recherche=...
 // Réceptionnée une seule fois, une matière est ensuite réutilisée sur
 // chaque joint qui l'emploie (Joint.matiereId) sans être ressaisie.
+// `recherche` retrouve la matière à partir du seul numéro lisible sur
+// l'étiquette (coulée ou lot, sans que l'intervenant ait besoin de savoir
+// lequel des deux c'est) — voir "Rechercher une matière" sur /joints.
 export async function GET(req: NextRequest) {
   const auth = await requireAuth(req);
   if ("erreur" in auth) return auth.erreur;
 
   const affaireId = req.nextUrl.searchParams.get("affaireId");
   const numeroCoulee = req.nextUrl.searchParams.get("numeroCoulee");
+  const recherche = req.nextUrl.searchParams.get("recherche");
   const matieres = await prisma.matiere.findMany({
-    where: { affaireId: affaireId ?? undefined, numeroCoulee: numeroCoulee ?? undefined },
+    where: {
+      affaireId: affaireId ?? undefined,
+      numeroCoulee: numeroCoulee ?? undefined,
+      ...(recherche
+        ? {
+            OR: [
+              { numeroCoulee: { contains: recherche, mode: "insensitive" } },
+              { numeroLot: { contains: recherche, mode: "insensitive" } },
+            ],
+          }
+        : {}),
+    },
     orderBy: { numeroCoulee: "asc" },
   });
   return NextResponse.json(matieres);

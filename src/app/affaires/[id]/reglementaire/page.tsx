@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getUtilisateurConnecteServeur, aNiveauMinimum } from "@/lib/auth";
 import { AjouterPoint } from "./ajouter-point";
 import { PointReglementaireCarte } from "./point-reglementaire";
+import { ReferentielsAffaire } from "./referentiels-affaire";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +21,7 @@ export default async function DossierReglementairePage({ params }: { params: { i
     redirect("/login");
   }
 
-  const [affaire, points, joints, phases] = await Promise.all([
+  const [affaire, points, joints, phases, tousReferentiels, liensReferentiels] = await Promise.all([
     prisma.affaire.findUnique({ where: { id: params.id } }),
     prisma.pointReglementaire.findMany({
       where: { affaireId: params.id },
@@ -36,6 +37,8 @@ export default async function DossierReglementairePage({ params }: { params: { i
     }),
     prisma.joint.findMany({ where: { affaireId: params.id }, select: { id: true, numero: true, indiceReparation: true } }),
     prisma.phase.findMany({ where: { sequence: { affaireId: params.id } }, select: { id: true, nom: true } }),
+    prisma.referentiel.findMany({ orderBy: { code: "asc" } }),
+    prisma.affaireReferentiel.findMany({ where: { affaireId: params.id }, include: { referentiel: true } }),
   ]);
   if (!affaire) {
     notFound();
@@ -58,6 +61,12 @@ export default async function DossierReglementairePage({ params }: { params: { i
         du rapport de fin de fabrication, tant qu&apos;il n&apos;est pas levé (passage en &laquo;&nbsp;déblocage
         autorisé&nbsp;&raquo;, réservé au niveau 3 et signé).
       </p>
+
+      <ReferentielsAffaire
+        affaireId={affaire.id}
+        tous={tousReferentiels}
+        lies={liensReferentiels.map((l) => l.referentiel)}
+      />
 
       <AjouterPoint
         affaireId={affaire.id}

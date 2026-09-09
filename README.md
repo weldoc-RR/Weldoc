@@ -626,6 +626,20 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   protégées dans `src/lib/tolerances.ts`. Ça prépare le rapprochement
   automatique avec le domaine de validité d'un WPS, encore à construire
   (voir plus bas).
+- **Bibliothèque des référentiels** — jusqu'ici, le modèle `Referentiel`
+  existait et pouvait déjà être lié à une qualification ou un produit
+  dimensionnel (`referentielId`), mais rien ne permettait d'en créer un
+  sans accès direct à la base : les listes déroulantes concernées
+  restaient donc toujours vides. Page `/referentiels`
+  (`GET`/`POST /api/referentiels`, niveau 2 minimum, code unique — ex.
+  "EN 13480", "ASME B31.3", "EN ISO 9606-1") pour les enregistrer une
+  fois, puis les choisir ensuite partout où ils s'appliquent, jamais les
+  ressaisir. Un référentiel se lie aussi maintenant à une affaire (voir
+  `AffaireReferentiel`, jusqu'ici sans aucune interface) : section
+  "Référentiels applicables" sur le dossier réglementaire
+  (`/affaires/[id]/reglementaire`, `GET`/`POST`/`DELETE
+  /api/affaires/[id]/referentiels`) — lier/délier, le référentiel
+  lui-même n'est jamais supprimé, seul le lien l'est.
 - `src/lib/confirmationQualification.ts` — certains référentiels exigent,
   en plus de l'échéance finale d'une qualification, des confirmations
   périodiques (ex. tous les 6 mois) pour qu'elle reste valable — distinct
@@ -1004,11 +1018,6 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   alerte non bloquante sur `/joints` (badge orange) et disponible via
   `GET /api/qualifications/verification-qs`, jamais une décision
   automatique — la vérification finale reste humaine.
-- La gestion des `Referentiel` (créer/lister un code de norme comme "EN
-  ISO 9606-1") n'a pas encore de page ni de route API dédiées : le modèle
-  existe et peut être lié à une affaire ou une qualification, mais pour
-  l'instant seule une personne ayant accès à la base peut y ajouter une
-  ligne.
 - Les droits contextuels fins évoqués au cahier des charges ("selon le
   contexte de l'affaire") : pour l'instant, les droits ne dépendent que du
   niveau (1/2/3) de la personne, pas encore de son rôle ni de l'affaire

@@ -45,6 +45,7 @@ export default async function HomePage() {
         <Link href="/documents">Documents externes →</Link>{" "}
         <Link href="/rex">REX →</Link>{" "}
         <Link href="/productivite">Temps et productivité →</Link>{" "}
+        <Link href="/referentiels">Référentiels →</Link>{" "}
         {aNiveauMinimum(utilisateur.niveau, "NIVEAU_3") && (
           <>
             <Link href="/audit">Audit trail →</Link> <Link href="/systeme-qualite">Système qualité →</Link>

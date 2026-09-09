@@ -34,18 +34,29 @@ export function AjouterMatiere({ affaires }: { affaires: Affaire[] }) {
   const [certificatUrl, setCertificatUrl] = useState("");
   const [erreur, setErreur] = useState<string | null>(null);
   const [enCours, setEnCours] = useState(false);
+  const [alertes, setAlertes] = useState<string[]>([]);
 
   if (!ouvert) {
     return (
-      <button onClick={() => setOuvert(true)} style={{ marginBottom: "1rem" }}>
-        + Réceptionner une matière (CCPU)
-      </button>
+      <div style={{ marginBottom: "1rem" }}>
+        <button onClick={() => setOuvert(true)}>+ Réceptionner une matière (CCPU)</button>
+        {alertes.length > 0 && (
+          <ul style={{ margin: "0.4rem 0 0 0" }}>
+            {alertes.map((a, i) => (
+              <li key={i} style={{ color: "darkorange", fontSize: "0.85rem" }}>
+                {a}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     );
   }
 
   async function ajouter(e: React.FormEvent) {
     e.preventDefault();
     setErreur(null);
+    setAlertes([]);
     setEnCours(true);
 
     const res = await fetch("/api/matieres", {
@@ -74,6 +85,8 @@ export function AjouterMatiere({ affaires }: { affaires: Affaire[] }) {
       setErreur("Impossible d'enregistrer cette matière.");
       return;
     }
+    const corps = await res.json();
+    setAlertes(corps.alertes ?? []);
     setOuvert(false);
     router.refresh();
   }

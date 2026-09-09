@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAuth, requireNiveau } from "@/lib/auth";
+import { verifierConformiteMatiere } from "@/lib/conformiteMatiere";
+import { tracerModification } from "@/lib/auditTrail";
 
 const CreateMatiereSchema = z.object({
   affaireId: z.string().min(1),
@@ -52,7 +54,12 @@ export async function GET(req: NextRequest) {
 }
 
 // POST /api/matieres — réception d'une matière (fournisseur, CCPU,
-// certificat, numéro de coulée/lot...), niveau 2 minimum.
+// certificat, numéro de coulée/lot...), niveau 2 minimum. Vérifie sa
+// conformité par rapport à ce qui était prévu pour l'affaire (voir
+// src/lib/conformiteMatiere.ts), mais ne bloque jamais la réception :
+// les alertes sont renvoyées, la décision de passer outre reste humaine
+// (tracée dans l'audit trail s'il y en a) — même principe que
+// POST /api/affectations.
 export async function POST(req: NextRequest) {
   const droits = await requireNiveau(req, "NIVEAU_2");
   if ("erreur" in droits) return droits.erreur;
@@ -63,6 +70,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
+  const alertes = await verifierConformiteMatiere(parsed.data);
+
   const matiere = await prisma.matiere.create({ data: parsed.data });
-  return NextResponse.json(matiere, { status: 201 });
+
+  if (alertes.length > 0) {
+    await tracerModification({
+      utilisateurId: droits.utilisateur.personnelId,
+      entite: "Matiere",
+      entiteId: matiere.id,
+      nouvelleValeur: { alertes },
+      motif: "Matière réceptionnée malgré des alertes de conformité.",
+    });
+  }
+
+  return NextResponse.json({ matiere, alertes }, { status: 201 });
 }

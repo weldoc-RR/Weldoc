@@ -342,6 +342,7 @@ model Affaire {
 
   referentiels      AffaireReferentiel[]
   matieres          Matiere[]
+  matieresPrevues   MatierePrevue[]
   joints            Joint[]
   fncs              FNC[]
   sequences         Sequence[]
@@ -584,6 +585,26 @@ model Matiere {
   joints         Joint[]
 
   @@index([numeroCoulee])
+}
+
+// Ce qui est commandé/prévu pour l'affaire (norme produit, nuance,
+// diamètre/épaisseur), saisi une seule fois par l'encadrement, puis
+// comparé automatiquement à chaque matière réceptionnée (voir
+// src/lib/conformiteMatiere.ts) pour signaler un écart avant que la
+// matière ne soit mise en œuvre. Comme pour l'affectation adaptée,
+// Weldoc ne bloque jamais la réception : les alertes restent
+// indicatives, la décision reste humaine et tracée si elle passe outre.
+model MatierePrevue {
+  id             String   @id @default(cuid())
+  affaire        Affaire  @relation(fields: [affaireId], references: [id])
+  affaireId      String
+  designation    String
+  normeProduit   String
+  nuance         String
+  diametre       Float?
+  epaisseur      Float?
+  quantitePrevue String?
+  createdAt      DateTime @default(now())
 }
 
 model Joint {

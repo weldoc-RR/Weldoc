@@ -8,6 +8,7 @@ import { verifierQS } from "@/lib/verificationQS";
 import { calculerStatutOutil, outilUtilisable } from "@/lib/statutOutil";
 import { AjouterJoint } from "./ajouter-joint";
 import { AjouterMatiere } from "./ajouter-matiere";
+import { DeclarerMatierePrevue } from "./declarer-matiere-prevue";
 import { AjouterScanTqc } from "./ajouter-scan-tqc";
 import { DeclarerReparation } from "./declarer-reparation";
 import { BadgeControle } from "./badge-controle";
@@ -26,7 +27,7 @@ export default async function JointsPage() {
     redirect("/login");
   }
 
-  const [joints, affaires, soudeurs, matieres, wpsList, consommablesList, outilsList, produitsDimList, scansTqc] = await Promise.all([
+  const [joints, affaires, soudeurs, matieres, wpsList, consommablesList, outilsList, produitsDimList, scansTqc, matieresPrevues] = await Promise.all([
     prisma.joint.findMany({
       include: {
         affaire: { select: { numero: true, client: true } },
@@ -105,6 +106,10 @@ export default async function JointsPage() {
       },
       orderBy: { dateScan: "desc" },
     }),
+    prisma.matierePrevue.findMany({
+      include: { affaire: { select: { numero: true } } },
+      orderBy: { createdAt: "desc" },
+    }),
   ]);
   // Seule la révision la plus récente (non retirée) de chaque référence
   // est proposée au contrôle, même principe que les WPS en vigueur
@@ -154,6 +159,26 @@ export default async function JointsPage() {
         Chaque joint et, quand il y en a eu, sa chaîne de remise en conformité (M800 → M800 R1 → M800 R2...) —
         jamais un enregistrement écrasé par un autre.
       </p>
+
+      <h2>Matières prévues (commande) par affaire</h2>
+      <p style={{ fontSize: "0.85rem", color: "#52514e", maxWidth: 640 }}>
+        Déclaré une seule fois par l&apos;encadrement, puis comparé automatiquement à chaque matière réceptionnée
+        sur cette affaire (norme, nuance, diamètre, épaisseur) — un écart n&apos;empêche jamais la réception, il
+        se signale simplement en alerte.
+      </p>
+      <DeclarerMatierePrevue affaires={affaires} />
+      {matieresPrevues.length > 0 && (
+        <ul style={{ fontSize: "0.85rem", marginBottom: "1.5rem" }}>
+          {matieresPrevues.map((p) => (
+            <li key={p.id}>
+              {p.affaire.numero} — {p.designation}, {p.normeProduit} / {p.nuance}
+              {p.diametre != null ? ` — Ø${p.diametre} mm` : ""}
+              {p.epaisseur != null ? ` — ép. ${p.epaisseur} mm` : ""}
+              {p.quantitePrevue ? ` — ${p.quantitePrevue}` : ""}
+            </li>
+          ))}
+        </ul>
+      )}
 
       <h2>Réceptionner une matière</h2>
       <AjouterMatiere affaires={affaires} />

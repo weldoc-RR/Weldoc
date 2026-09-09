@@ -85,6 +85,25 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
     désignation, norme produit, nuance, diamètre, épaisseur, numéro de
     coulée et numéro de lot à partir du CCPU déposé, à vérifier avant
     d'enregistrer.
+  - **Vérification automatique de la conformité à la réception** — Weldoc
+    compare désormais chaque matière reçue à ce qui était commandé/prévu
+    pour l'affaire, plutôt que de laisser la réception sans aucun contrôle
+    croisé. Nouveau modèle `MatierePrevue` (`schema.prisma`) : norme
+    produit, nuance, diamètre/épaisseur, quantité prévue — saisi une seule
+    fois par l'encadrement via "+ Déclarer une matière prévue pour une
+    affaire" sur `/joints` (`declarer-matiere-prevue.tsx`,
+    `GET`/`POST /api/matieres-prevues`, niveau 2 minimum). À chaque
+    `POST /api/matieres`, `src/lib/conformiteMatiere.ts` compare la
+    matière reçue à ce qui est déclaré pour l'affaire : norme/nuance
+    différentes de tout ce qui est prévu, ou diamètre/épaisseur différents
+    de la matière prévue correspondante → alerte. Même principe que la
+    proposition d'affectation adaptée : **ça ne bloque jamais** la
+    réception, l'alerte est simplement affichée (`AjouterMatiere`) et
+    tracée dans l'audit trail si la réception est enregistrée malgré
+    l'alerte ; la décision reste humaine. Et tant qu'aucune matière prévue
+    n'a été déclarée pour une affaire, aucune alerte n'est levée (comme
+    les autorisations de signature : le contrôle ne devient actif que si
+    l'entreprise l'a configuré).
 - `src/app/api/` — points d'entrée de l'application :
   - `POST /api/personnel` — créer une fiche personne minimale (identité + niveau)
   - `POST /api/auth/comptes` — créer le compte de connexion d'une personne
@@ -135,7 +154,12 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
     pas exploitable
   - `POST /api/matieres` — réceptionner une matière (fournisseur, CCPU,
     certificat, coulée/lot...), niveau 2 minimum ; réutilisée ensuite sur
-    chaque joint (`Joint.matiereId`) sans être ressaisie
+    chaque joint (`Joint.matiereId`) sans être ressaisie ; renvoie
+    `{matiere, alertes}` (alertes de conformité par rapport à ce qui est
+    prévu pour l'affaire, jamais bloquant)
+  - `GET`/`POST /api/matieres-prevues` — déclarer ce qui est
+    commandé/prévu pour une affaire (niveau 2 minimum), comparé
+    automatiquement à chaque matière réceptionnée sur cette affaire
   - `POST /api/outils` — enregistrer un outil de métrologie/outillage,
     avec un QR code généré automatiquement (niveau 2 minimum). Si la date
     d'échéance n'est pas saisie, elle est calculée automatiquement à

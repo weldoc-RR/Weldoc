@@ -175,6 +175,14 @@ export default async function PersonnelPage() {
                             <> — diamètre {q.diametreMinMm ?? "?"} à {q.diametreMaxMm ?? "?"} mm</>
                           )}
                           {q.organismeExamen && ` — examinée par ${q.organismeExamen}`}
+                          {q.certificatUrl && (
+                            <>
+                              {" — "}
+                              <a href={q.certificatUrl} target="_blank" rel="noopener noreferrer">
+                                voir le certificat
+                              </a>
+                            </>
+                          )}
                           {confirmation.prochaineDateDue && q.statut !== "SUSPENDU" && (
                             <>
                               {" — "}
@@ -210,6 +218,14 @@ export default async function PersonnelPage() {
                           {h.reference && ` (${h.reference})`} —{" "}
                           <span style={{ color: couleurStatut(statutCalcule) }}>{LIBELLE_STATUT[statutCalcule]}</span>
                           {h.dateExpiration && ` (échéance ${h.dateExpiration.toLocaleDateString("fr-FR")})`}
+                          {h.certificatUrl && (
+                            <>
+                              {" — "}
+                              <a href={h.certificatUrl} target="_blank" rel="noopener noreferrer">
+                                voir le certificat
+                              </a>
+                            </>
+                          )}
                           {historique.length > 0 && (
                             <details style={{ fontSize: "0.8rem", color: "#52514e" }}>
                               <summary>Historique ({historique.length})</summary>
@@ -271,6 +287,14 @@ export default async function PersonnelPage() {
                           <span style={{ color: couleurStatut(statutCalcule) }}>{LIBELLE_STATUT[statutCalcule]}</span>
                           {t.dateExpiration && ` (échéance ${t.dateExpiration.toLocaleDateString("fr-FR")})`}
                           {t.organisme && ` — ${t.organisme}`}
+                          {t.certificatUrl && (
+                            <>
+                              {" — "}
+                              <a href={t.certificatUrl} target="_blank" rel="noopener noreferrer">
+                                voir le certificat
+                              </a>
+                            </>
+                          )}
                           {historique.length > 0 && (
                             <details style={{ fontSize: "0.8rem", color: "#52514e" }}>
                               <summary>Historique ({historique.length})</summary>

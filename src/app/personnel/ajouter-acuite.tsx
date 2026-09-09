@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { FileUpload } from "@/components/file-upload";
 
 type Personnel = { id: string; nom: string; prenom: string };
 
@@ -17,6 +18,7 @@ export function AjouterAcuite({ personnel }: { personnel: Personnel[] }) {
   const [dateExpiration, setDateExpiration] = useState("");
   const [apte, setApte] = useState(true);
   const [organisme, setOrganisme] = useState("");
+  const [certificatUrl, setCertificatUrl] = useState("");
   const [erreur, setErreur] = useState<string | null>(null);
   const [enCours, setEnCours] = useState(false);
 
@@ -42,6 +44,7 @@ export function AjouterAcuite({ personnel }: { personnel: Personnel[] }) {
         dateExpiration: dateExpiration ? new Date(dateExpiration).toISOString() : undefined,
         apte,
         organisme: organisme || undefined,
+        certificatUrl: certificatUrl || undefined,
       }),
     });
 
@@ -54,6 +57,7 @@ export function AjouterAcuite({ personnel }: { personnel: Personnel[] }) {
     setDateExpiration("");
     setApte(true);
     setOrganisme("");
+    setCertificatUrl("");
     setOuvert(false);
     router.refresh();
   }
@@ -85,6 +89,11 @@ export function AjouterAcuite({ personnel }: { personnel: Personnel[] }) {
         Organisme (optionnel)
         <input type="text" value={organisme} onChange={(e) => setOrganisme(e.target.value)} style={{ display: "block", width: "100%", padding: "0.4rem" }} />
       </label>
+      <label>
+        Lien vers le certificat (optionnel)
+        <input type="text" value={certificatUrl} onChange={(e) => setCertificatUrl(e.target.value)} style={{ display: "block", width: "100%", padding: "0.4rem" }} />
+      </label>
+      <FileUpload onDepose={setCertificatUrl} />
       <div>
         <button type="submit" disabled={enCours}>
           {enCours ? "Enregistrement..." : "Enregistrer"}

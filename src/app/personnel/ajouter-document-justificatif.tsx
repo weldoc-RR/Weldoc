@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { FileUpload } from "@/components/file-upload";
 
 type Personnel = { id: string; nom: string; prenom: string };
 
@@ -87,6 +88,7 @@ export function AjouterDocumentJustificatif({ personnel }: { personnel: Personne
         Lien vers le document
         <input required type="text" value={documentUrl} onChange={(e) => setDocumentUrl(e.target.value)} style={{ display: "block", width: "100%", padding: "0.4rem" }} />
       </label>
+      <FileUpload onDepose={setDocumentUrl} />
       <label>
         Date du document (optionnel)
         <input type="date" value={dateDocument} onChange={(e) => setDateDocument(e.target.value)} style={{ display: "block", width: "100%", padding: "0.4rem" }} />

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { FileUpload } from "@/components/file-upload";
 
 type Personnel = { id: string; nom: string; prenom: string };
 
@@ -17,6 +18,7 @@ export function AjouterHabilitation({ personnel }: { personnel: Personnel[] }) {
   const [reference, setReference] = useState("");
   const [dateObtention, setDateObtention] = useState("");
   const [dateExpiration, setDateExpiration] = useState("");
+  const [certificatUrl, setCertificatUrl] = useState("");
   const [erreur, setErreur] = useState<string | null>(null);
   const [enCours, setEnCours] = useState(false);
 
@@ -42,6 +44,7 @@ export function AjouterHabilitation({ personnel }: { personnel: Personnel[] }) {
         reference: reference || undefined,
         dateObtention: new Date(dateObtention).toISOString(),
         dateExpiration: dateExpiration ? new Date(dateExpiration).toISOString() : undefined,
+        certificatUrl: certificatUrl || undefined,
       }),
     });
 
@@ -54,6 +57,7 @@ export function AjouterHabilitation({ personnel }: { personnel: Personnel[] }) {
     setReference("");
     setDateObtention("");
     setDateExpiration("");
+    setCertificatUrl("");
     setOuvert(false);
     router.refresh();
   }
@@ -86,6 +90,11 @@ export function AjouterHabilitation({ personnel }: { personnel: Personnel[] }) {
         Date d&apos;expiration (optionnel)
         <input type="date" value={dateExpiration} onChange={(e) => setDateExpiration(e.target.value)} style={{ display: "block", width: "100%", padding: "0.4rem" }} />
       </label>
+      <label>
+        Lien vers le certificat (optionnel)
+        <input type="text" value={certificatUrl} onChange={(e) => setCertificatUrl(e.target.value)} style={{ display: "block", width: "100%", padding: "0.4rem" }} />
+      </label>
+      <FileUpload onDepose={setCertificatUrl} />
       <div>
         <button type="submit" disabled={enCours}>
           {enCours ? "Enregistrement..." : "Enregistrer"}

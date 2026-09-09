@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { FileUpload } from "@/components/file-upload";
 
 type Personnel = { id: string; nom: string; prenom: string };
 type Referentiel = { id: string; code: string; domaine: string };
@@ -27,6 +28,7 @@ export function AjouterQualification({ personnel, referentiels }: { personnel: P
   const [dateObtention, setDateObtention] = useState("");
   const [dateExpiration, setDateExpiration] = useState("");
   const [frequenceConfirmationMois, setFrequenceConfirmationMois] = useState("");
+  const [certificatUrl, setCertificatUrl] = useState("");
   const [erreur, setErreur] = useState<string | null>(null);
   const [enCours, setEnCours] = useState(false);
 
@@ -64,6 +66,7 @@ export function AjouterQualification({ personnel, referentiels }: { personnel: P
         dateObtention: new Date(dateObtention).toISOString(),
         dateExpiration: dateExpiration ? new Date(dateExpiration).toISOString() : undefined,
         frequenceConfirmationMois: frequenceConfirmationMois ? Number(frequenceConfirmationMois) : undefined,
+        certificatUrl: certificatUrl || undefined,
       }),
     });
 
@@ -86,6 +89,7 @@ export function AjouterQualification({ personnel, referentiels }: { personnel: P
     setDateObtention("");
     setDateExpiration("");
     setFrequenceConfirmationMois("");
+    setCertificatUrl("");
     setOuvert(false);
     router.refresh();
   }
@@ -194,6 +198,11 @@ export function AjouterQualification({ personnel, referentiels }: { personnel: P
           style={{ display: "block", width: "100%", padding: "0.4rem" }}
         />
       </label>
+      <label>
+        Lien vers le certificat (optionnel)
+        <input type="text" value={certificatUrl} onChange={(e) => setCertificatUrl(e.target.value)} style={{ display: "block", width: "100%", padding: "0.4rem" }} />
+      </label>
+      <FileUpload onDepose={setCertificatUrl} />
       <div>
         <button type="submit" disabled={enCours}>
           {enCours ? "Enregistrement..." : "Enregistrer"}

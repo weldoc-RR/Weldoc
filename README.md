@@ -639,6 +639,30 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
     `src/lib/auth.ts`). Une personne ne peut pas suspendre son propre
     compte (422), pour éviter un verrouillage accidentel. Les deux
     actions sont tracées par l'audit trail (entités `Personnel`/`Compte`).
+  - **Dépôt de fichiers** ("le drive", voir le cahier des charges,
+    "Stockage : documents, photos, certificats, PV, plans, scans") :
+    jusqu'ici, tous les champs "lien vers un document" (CCPU, PV, book
+    photo, certificats...) exigeaient un fichier déjà hébergé ailleurs.
+    `POST /api/upload` dépose maintenant le fichier directement dans
+    Weldoc (PDF ou image, 20 Mo max), stocké sur Vercel Blob — le
+    stockage de fichiers du même hébergeur que l'application, la
+    solution la plus simple vu que Weldoc est prévu pour tourner sur
+    Vercel (voir `BLOB_READ_WRITE_TOKEN` dans `.env.example` pour
+    l'activer : Storage → Create Database → Blob dans le tableau de bord
+    Vercel du projet). Composant réutilisable `src/components/
+    file-upload.tsx` : un bouton "ou déposer un fichier" à côté de
+    chaque champ lien existant plutôt qu'à sa place — coller un lien
+    déjà hébergé reste toujours possible. Branché sur les certificats de
+    qualification/habilitation/acuité visuelle et sur les documents
+    justificatifs du personnel (voir ci-dessus) : c'est ce qui permet
+    de déposer au fur et à mesure les habilitations/qualifications/
+    acuités visuelles scannées, sans passer par un hébergement externe.
+    **Non testé en conditions réelles** dans cette session : l'environnement
+    de développement n'a pas de jeton Vercel Blob configuré, donc le
+    dépôt effectif d'un fichier (au-delà de l'authentification, du
+    contrôle de type/taille et du message d'erreur "non configuré", qui
+    ont bien été vérifiés) reste à confirmer une fois déployé avec le
+    jeton en place.
 - `src/app/alertes/page.tsx` — alertes centralisées (voir le cahier des
   charges, "ALERTES" : "Qualifications à échéance, habilitations expirées,
   documents obsolètes, FNC ouvertes, blocages, validations niveau 3 en
@@ -911,10 +935,14 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   joints/contrôles qui la concernent au fil de la fabrication n'est pas
   encore modélisé — pour l'instant `Piece` et `Joint` restent deux objets
   indépendants.
-- L'upload réel de photos : `Piece.photosUrls`, `FicheTechniqueSoudage.photosUrls`
-  et maintenant le modèle `Photo` (book photo) attendent tous des URLs déjà
-  hébergées quelque part, il n'y a pas encore de téléversement de fichier
-  intégré à Weldoc.
+- Le dépôt de fichier (voir ci-dessus, `POST /api/upload`) couvre
+  maintenant les certificats de qualification/habilitation/acuité
+  visuelle et les documents justificatifs du personnel. `Piece.
+  photosUrls`, `FicheTechniqueSoudage.photosUrls` et le book photo
+  (`Photo.url`) continuent d'attendre un lien (le dépôt direct n'y est
+  pas encore branché) — le composant `FileUpload` est réutilisable
+  partout où un champ "lien vers un document" existe déjà, il suffit de
+  l'ajouter au formulaire concerné.
 - Quelques modules plus secondaires du cahier des charges restent encore à
   construire (offre documentaire Weldoc, formation/déploiement — plutôt
   des sujets d'offre commerciale que des écrans à construire). Le TQC

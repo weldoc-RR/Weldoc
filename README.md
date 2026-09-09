@@ -110,6 +110,8 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
     (le tout premier compte de l'entreprise s'amorce librement ; les suivants
     exigent d'être créés par une personne de niveau 3)
   - `POST /api/auth/login` — connexion (matricule + mot de passe)
+  - `POST /api/auth/login-qr` — connexion (matricule ou QR + code PIN,
+    voir `src/lib/signature.ts` ci-dessous) — même session que ci-dessus
   - `POST /api/auth/logout` — déconnexion (révoque la session côté serveur)
   - `GET /api/auth/me` — utilisateur actuellement connecté
   - `POST /api/affaires` — créer une affaire (authentification requise) ;
@@ -623,6 +625,17 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   - `POST /api/personnel/[id]/pin` — définir/changer son code PIN
     (soi-même, ou niveau 3 pour un premier réglage/oubli) ; bouton
     "Définir le code PIN" sur `/personnel`.
+  - **Connexion à l'application par QR + PIN** — jusqu'ici, ce PIN ne
+    servait qu'à signer un document une fois déjà connecté ; il n'existait
+    aucun moyen de se connecter à Weldoc lui-même autrement que matricule
+    + mot de passe. `POST /api/auth/login-qr` réutilise ce même PIN
+    (`Personnel.pinHash`) pour se connecter directement par identification
+    QR ou matricule + code PIN — pas de nouveau secret à créer ou à
+    retenir, pensé pour une connexion rapide sur chantier (douchette QR ou
+    saisie manuelle). Ouvre exactement la même session que la connexion
+    par mot de passe (`creerSession`, même cookie). `/login` propose
+    maintenant les deux méthodes, avec un bouton pour basculer de l'une à
+    l'autre.
   - `GET`/`POST /api/chartes`, `POST /api/chartes/[id]/acceptation` —
     bibliothèque des versions de la charte (page `/charte`) : une
     nouvelle version ne remplace jamais la précédente, et il faut la

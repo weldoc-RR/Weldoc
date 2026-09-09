@@ -48,6 +48,7 @@ model Personnel {
   evenementsPointsReglementaires PointReglementaireEvenement[]
   pvExternesImportes PVExterne[]       @relation("ImporteurPVExterne")
   pvExternesRevises  PVExterne[]       @relation("ReviseurPVExterne")
+  etatsDesLieuxRediges EtatDesLieux[]
 
   @@index([societe])
 }
@@ -314,6 +315,7 @@ model Affaire {
   bilanDosimetrique BilanDosimetrique?
   portiquesRadioprotection PortiqueRadioprotection[]
   pvExternes        PVExterne[]
+  etatsDesLieux     EtatDesLieux[]
 }
 
 // ============================================================================
@@ -1000,6 +1002,8 @@ model Photo {
   jointId     String?
   fnc         FNC?      @relation(fields: [fncId], references: [id])
   fncId       String?
+  etatDesLieux   EtatDesLieux? @relation(fields: [etatDesLieuxId], references: [id])
+  etatDesLieuxId String?
   url         String
   commentaire String?
   auteur      Personnel @relation("AuteurPhoto", fields: [auteurId], references: [id])
@@ -1008,6 +1012,7 @@ model Photo {
 
   @@index([affaireId])
   @@index([jointId])
+  @@index([etatDesLieuxId])
 }
 
 // Dossier réglementaire (voir le cahier des charges, "DOSSIER
@@ -1113,6 +1118,60 @@ model PVExterne {
 
   @@index([affaireId])
   @@index([jointId])
+}
+
+// Prise en charge / restitution du chantier (voir le cahier des charges,
+// "PRISE EN CHARGE ET RESTITUTION DU CHANTIER") : un état des lieux en
+// début d'intervention, un autre en fin — jamais le même enregistrement
+// modifié en place (un nouveau constat, même type, reste un nouvel
+// EtatDesLieux ; le plus récent de chaque type fait foi). La comparaison
+// avant/après (photos, observations) se fait à la lecture en
+// rapprochant le dernier PRISE_EN_CHARGE et le dernier RESTITUTION d'une
+// affaire — rien à stocker en plus pour ça.
+enum TypeEtatDesLieux {
+  PRISE_EN_CHARGE
+  RESTITUTION
+}
+
+model EtatDesLieux {
+  id            String           @id @default(cuid())
+  affaire       Affaire          @relation(fields: [affaireId], references: [id])
+  affaireId     String
+  type          TypeEtatDesLieux
+  zone          String?
+  redacteur     Personnel        @relation(fields: [redacteurId], references: [id])
+  redacteurId   String
+  dateConstat   DateTime         @default(now())
+
+  observations           String?
+  degradationsConstatees String?
+  documentsEntree        String?
+
+  // Modifiable (constat + réserves) tant que non signé ; une fois
+  // signatureId renseigné, plus aucune modification n'est acceptée — même
+  // principe que la fiche technique de suivi de soudage.
+  signatureId   String?
+
+  photos        Photo[]
+  reserves      ReserveConstat[]
+
+  @@index([affaireId])
+}
+
+// Une réserve, une fiche d'aléa ou une FNC (cahier des charges : "en cas
+// de problème") : ici, la réserve simple, transmissible au client. Un
+// problème plus grave se déclare comme FNC via le module FNC déjà
+// existant (en la reliant à la même affaire) plutôt que de dupliquer ce
+// workflow ici.
+model ReserveConstat {
+  id                String       @id @default(cuid())
+  etatDesLieux      EtatDesLieux @relation(fields: [etatDesLieuxId], references: [id])
+  etatDesLieuxId    String
+  description       String
+  transmiseAuClient Boolean      @default(false)
+  dateAjout         DateTime     @default(now())
+
+  @@index([etatDesLieuxId])
 }
 
 // Actions possibles de remise en conformité, comme listées au cahier des

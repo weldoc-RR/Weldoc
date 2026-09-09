@@ -47,7 +47,8 @@ export default async function DossierPage({ params }: { params: { id: string } }
         <Link href={`/affaires/${dossier.affaire.id}/reglementaire`}>
           Dossier réglementaire ({dossier.pointsReglementairesCount}) →
         </Link>{" "}
-        · <Link href={`/affaires/${dossier.affaire.id}/pv-externes`}>PV externes ({dossier.pvExternesCount}) →</Link>
+        · <Link href={`/affaires/${dossier.affaire.id}/pv-externes`}>PV externes ({dossier.pvExternesCount}) →</Link>{" "}
+        · <Link href={`/affaires/${dossier.affaire.id}/etat-des-lieux`}>État des lieux ({dossier.etatsDesLieuxCount}) →</Link>
       </p>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start" }}>
         <h1>Rapport de fin de fabrication (RFI)</h1>
@@ -317,8 +318,8 @@ export default async function DossierPage({ params }: { params: { id: string } }
 
       <p style={{ fontSize: "0.8rem", color: "#898781" }}>
         Les annexes (organigrammes détaillés, dossier de réalisation de travaux, documents divers) ne sont pas
-        encore toutes gérées dans Weldoc — voir le book photo, le dossier réglementaire et les PV externes
-        ci-dessus en attendant.
+        encore toutes gérées dans Weldoc — voir le book photo, le dossier réglementaire, les PV externes et
+        l&apos;état des lieux ci-dessus en attendant.
       </p>
 
       {/* ————— Détails techniques Weldoc (au-delà du modèle RFI) ————— */}

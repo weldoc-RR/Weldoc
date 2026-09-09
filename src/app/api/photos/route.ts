@@ -8,13 +8,14 @@ const CreatePhotoSchema = z.object({
   phaseId: z.string().optional(),
   jointId: z.string().optional(),
   fncId: z.string().optional(),
+  etatDesLieuxId: z.string().optional(),
   url: z.string().min(1),
   commentaire: z.string().optional(),
 });
 
-// GET /api/photos?affaireId=...&jointId=...&phaseId=...&fncId=... — book
-// photo (voir le cahier des charges) : les photos les plus récentes en
-// premier. Filtrable sur n'importe laquelle des quatre attaches.
+// GET /api/photos?affaireId=...&jointId=...&phaseId=...&fncId=...&etatDesLieuxId=...
+// — book photo (voir le cahier des charges) : les photos les plus récentes
+// en premier. Filtrable sur n'importe laquelle des cinq attaches.
 export async function GET(req: NextRequest) {
   const auth = await requireAuth(req);
   if ("erreur" in auth) return auth.erreur;
@@ -23,6 +24,7 @@ export async function GET(req: NextRequest) {
   const jointId = req.nextUrl.searchParams.get("jointId");
   const phaseId = req.nextUrl.searchParams.get("phaseId");
   const fncId = req.nextUrl.searchParams.get("fncId");
+  const etatDesLieuxId = req.nextUrl.searchParams.get("etatDesLieuxId");
 
   const photos = await prisma.photo.findMany({
     where: {
@@ -30,6 +32,7 @@ export async function GET(req: NextRequest) {
       jointId: jointId ?? undefined,
       phaseId: phaseId ?? undefined,
       fncId: fncId ?? undefined,
+      etatDesLieuxId: etatDesLieuxId ?? undefined,
     },
     include: { auteur: { select: { nom: true, prenom: true } }, joint: { select: { numero: true } } },
     orderBy: { dateAjout: "desc" },

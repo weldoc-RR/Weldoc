@@ -288,6 +288,31 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
     d'une affaire (statut de revue en couleur) et formulaires d'import/
     revue. Lien depuis la page d'accueil et le rapport de fin de
     fabrication (qui affiche aussi le nombre de documents).
+- **Prise en charge / restitution du chantier** (voir le cahier des
+  charges) — un état des lieux en début d'intervention, un autre en fin :
+  zone concernée, observations, dégradations constatées, documents
+  d'entrée reçus, réserves (transmissibles au client), photos. Modèle
+  `EtatDesLieux` (type `PRISE_EN_CHARGE`/`RESTITUTION`) + `ReserveConstat` ;
+  les photos réutilisent le modèle `Photo` du book photo (nouveau lien
+  optionnel `etatDesLieuxId`), rien n'est dupliqué. Un nouveau constat,
+  même type, ne remplace jamais le précédent (rien n'est jamais écrasé) :
+  c'est le plus récent de chaque type qui fait foi, les anciens restant
+  consultables en historique repliable. Modifiable (constat, réserves,
+  photos) tant qu'il n'est pas signé (QR/matricule + PIN, comme la fiche
+  technique de suivi de soudage) ; une fois signé, plus aucune
+  modification n'est acceptée. Un problème plus grave qu'une simple
+  réserve se déclare comme FNC via le module FNC déjà existant, en la
+  reliant à la même affaire — pas de "fiche d'aléa" séparée pour l'instant,
+  pour ne pas dupliquer ce workflow.
+  - `GET`/`POST /api/etats-des-lieux`, `PATCH /api/etats-des-lieux/[id]`,
+    `POST /api/etats-des-lieux/[id]/reserves`.
+  - `src/app/affaires/[id]/etat-des-lieux/page.tsx` — les deux constats
+    (prise en charge / restitution) côte à côte, avec une section
+    "Comparaison avant / après" qui rapproche automatiquement les
+    dégradations constatées aux deux moments (rien de stocké en plus pour
+    ça) — utile pour justifier qu'une dégradation était déjà présente
+    avant l'intervention. Lien depuis la page d'accueil et le rapport de
+    fin de fabrication (qui affiche aussi le nombre de constats).
 - **Dossier réglementaire** (voir le cahier des charges, "DOSSIER
   RÉGLEMENTAIRE" / "Blocage réglementaire") — distinct du rapport de fin
   de fabrication : ici, chaque exigence réglementaire (ex. "Attestation de

@@ -674,6 +674,20 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   vérifie seulement sa présence sur chaque joint d'origine, jamais son
   contenu ni sa conformité. Additif comme les modules du même genre :
   une affaire n'ayant rien déclaré n'apparaît jamais dans cette alerte.
+- `src/lib/documentsObsoletes.ts` — alerte "documents obsolètes" (dernière
+  catégorie de la liste "ALERTES" du cahier des charges à être couverte).
+  Contrairement aux deux fonctions ci-dessus, rien à déclarer : elle
+  réutilise directement `annoterStatutProcedures` (déjà en place pour
+  WPS/QMOS/procédures internes/produits dimensionnels — "en vigueur" =
+  la révision la plus récente pour une référence donnée, sans révision
+  retirée) et signale les révisions qui ne sont plus "en vigueur" mais
+  qui restent référencées quelque part : un joint sur un ancien WPS/QMOS
+  (`Joint.wpsId`/`qmosId`), une phase reliée à une ancienne procédure
+  interne (`Phase.procedureInterneId`), un contrôle dimensionnel réalisé
+  avec un ancien produit de la bibliothèque
+  (`ControleDimensionnel.produitDimensionnelId`). Purement indicatif :
+  Weldoc ne retire ni ne remplace rien tout seul, la mise à jour reste
+  humaine.
 - `src/lib/confirmationQualification.ts` — certains référentiels exigent,
   en plus de l'échéance finale d'une qualification, des confirmations
   périodiques (ex. tous les 6 mois) pour qu'elle reste valable — distinct
@@ -840,7 +854,7 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   documents obsolètes, FNC ouvertes, blocages, validations niveau 3 en
   attente, dossiers réglementaires incomplets, contrôles manquants, outils
   métrologiques expirés, documents manquants") : un seul écran plutôt que
-  d'aller chercher chaque signal sur sa page d'origine. Douze catégories :
+  d'aller chercher chaque signal sur sa page d'origine. Treize catégories :
   qualifications et habilitations à échéance ou expirées (`calculerStatut`,
   même calcul que sur la fiche personnel), confirmations de validité de
   qualification et reconductions proposées (déjà existantes), FNC ouvertes
@@ -848,6 +862,7 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   (`pointBloque`, même calcul que `/systeme-qualite`), contrôles manquants
   (voir `src/lib/controlesManquants.ts` ci-dessous), documents manquants
   (voir `src/lib/documentsManquants.ts` ci-dessous, même principe),
+  documents obsolètes (voir `src/lib/documentsObsoletes.ts` ci-dessous),
   vérifications d'outillage, et **validations niveau 3 en attente** :
   reconductions de qualification, documents externes non validés
   (`DocumentExterne.valideConclusion` null), PV externes non revus
@@ -858,10 +873,9 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   simplement pas remontés ici jusque-là. Chaque catégorie réutilise un
   calcul déjà en place ailleurs dans l'application — rien n'est recalculé
   différemment ici, tout reste recalculé à la lecture, jamais stocké.
-  "Documents obsolètes" (une révision périmée dans la bibliothèque
-  documentaire) reste distinct de "documents manquants" et n'est pas
-  repris ici. Bibliothèque des destinataires du récapitulatif hebdomadaire
-  par email, inchangée.
+  Toutes les catégories de la liste "ALERTES" du cahier des charges sont
+  maintenant couvertes. Bibliothèque des destinataires du récapitulatif
+  hebdomadaire par email, inchangée.
 - `src/app/pieces/page.tsx` — prise en charge de pièces (atelier) et suivi
   de leur statut. "Photos des repères présents sur la pièce" accepte
   toujours des adresses collées à la main (une par ligne), et propose
@@ -1126,9 +1140,11 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   genre (`MatierePrevue`, `AutorisationSignature`) : une affaire n'ayant
   rien déclaré n'apparaît jamais dans cette alerte. "Documents manquants"
   fonctionne maintenant sur le même principe (`Affaire.documentsRequis`,
-  voir `src/lib/documentsManquants.ts`) — seuls les "documents obsolètes"
-  (une révision périmée dans la bibliothèque documentaire) restent hors
-  de `/alertes`. "Validations niveau 3 en attente" couvre maintenant les
+  voir `src/lib/documentsManquants.ts`), et "documents obsolètes" est
+  couvert aussi (`src/lib/documentsObsoletes.ts`, sans rien à déclarer —
+  réutilise directement `annoterStatutProcedures`). Toutes les catégories
+  de la liste "ALERTES" du cahier des charges sont désormais couvertes
+  sur `/alertes`. "Validations niveau 3 en attente" couvre maintenant les
   reconductions de qualification proposées, les documents externes non
   validés (`DocumentExterne.valideConclusion`), les PV externes non
   revus (`PVExterne.revueConclusion`) et les demandes de modification de

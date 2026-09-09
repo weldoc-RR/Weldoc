@@ -8,6 +8,7 @@ import { calculerProchaineConfirmation } from "@/lib/confirmationQualification";
 import { pointBloque } from "@/lib/dossierReglementaire";
 import { controlesManquants } from "@/lib/controlesManquants";
 import { documentsManquants, LIBELLES_DOCUMENT } from "@/lib/documentsManquants";
+import { documentsObsoletes, LIBELLE_TYPE } from "@/lib/documentsObsoletes";
 import { Destinataires } from "./destinataires";
 
 export const dynamic = "force-dynamic";
@@ -38,9 +39,13 @@ export const dynamic = "force-dynamic";
 // Affaire.documentsRequis (voir src/lib/documentsManquants.ts) déclare
 // une fois quels documents sont exigés par joint (fiche de soudage,
 // CCPU/certificat matière, TQC), comparés à ce qui est réellement
-// renseigné — additif, même principe. "Documents obsolètes" (une
-// révision périmée dans la bibliothèque documentaire) reste hors de
-// cette page : distinct de "documents manquants", pas encore couvert.
+// renseigné — additif, même principe. "Documents obsolètes" couvre
+// maintenant le dernier point de la liste "ALERTES" du cahier des
+// charges (voir src/lib/documentsObsoletes.ts) : une révision de WPS/
+// QMOS/procédure interne/produit dimensionnel qui n'est plus "en
+// vigueur" (annoterStatutProcedures) mais qui reste référencée par un
+// joint, une phase ou un contrôle — jamais recalculé après coup, jamais
+// remplacé automatiquement, seulement signalé.
 export default async function AlertesPage() {
   const utilisateur = await getUtilisateurConnecteServeur();
   if (!utilisateur) {
@@ -60,6 +65,7 @@ export default async function AlertesPage() {
     documentsExternesEnAttente,
     pvExternesEnAttente,
     demandesSequencementEnAttente,
+    documentsObsoletesUtilises,
   ] = await Promise.all([
       prisma.outil.findMany({ where: { statut: { not: "HORS_SERVICE" } } }),
       prisma.qualification.findMany({
@@ -98,6 +104,7 @@ export default async function AlertesPage() {
         include: { affaire: { select: { numero: true } } },
         orderBy: { dateDemande: "asc" },
       }),
+      documentsObsoletes(),
     ]);
 
   const alertesQualification = qualificationsToutes
@@ -224,6 +231,20 @@ export default async function AlertesPage() {
             <li key={j.jointId} style={{ color: "darkorange" }}>
               Joint <strong>{j.numero}</strong> — affaire {j.affaireNumero} — document(s) manquant(s) :{" "}
               {j.manquants.map((sigle) => LIBELLES_DOCUMENT[sigle]).join(", ")} (<Link href="/joints">voir les joints</Link>)
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <h2>Documents obsolètes</h2>
+      {documentsObsoletesUtilises.length === 0 ? (
+        <p>Aucune alerte pour l&apos;instant.</p>
+      ) : (
+        <ul>
+          {documentsObsoletesUtilises.map((d, i) => (
+            <li key={i} style={{ color: "darkorange" }}>
+              {LIBELLE_TYPE[d.type]} <strong>{d.reference}</strong> ({d.version}) — plus en vigueur, encore utilisé
+              sur {d.utiliseSur} (<Link href={d.lienHref}>voir</Link>)
             </li>
           ))}
         </ul>

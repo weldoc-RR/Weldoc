@@ -443,6 +443,19 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
     lui-même : les données déjà portées par le joint (type de joint,
     diamètre, épaisseur, matière) ne sont volontairement pas ressaisies
     ici, conformément au principe "une donnée saisie une seule fois".
+  - Bouton "+ FTS" : la fiche technique de suivi de soudage (voir le
+    cahier des charges, qui précise qu'"un exemple réel sera intégré
+    ultérieurement pour finaliser tous les champs" — première version
+    donc). `GET`/`PATCH /api/joints/[id]/fiche-soudage` : procédé,
+    préchauffage, température interpasses, postchauffage, tension,
+    intensité, vitesse, énergie, nombre de passes, temps, observations.
+    L'identification (joint/soudeur/QS/WPS/QMOS/consommable/diamètre/
+    épaisseur) n'est jamais redemandée : elle vient déjà de `Joint`.
+    Modifiable/complétable au fil du soudage tant qu'elle n'est pas
+    signée ; une fois signée (QR/matricule + PIN), plus aucune
+    modification n'est acceptée — la signature atteste des valeurs comme
+    définitives, le bouton devient "Fiche soudage" et l'affichage passe
+    en lecture seule.
 - `src/lib/procedures.ts` — bibliothèque des WPS/DMOS et des QMOS
   (`GET`/`POST`/`PATCH /api/wps` et `/api/qmos`, page `/procedures`) :
   une nouvelle révision (Rev 0, Rev 1...) n'écrase jamais la précédente,
@@ -509,10 +522,8 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   vérifie pas encore qu'elle a le droit de signer ce document précis
   au-delà du niveau requis pour l'action elle-même.
 - La signature QR + PIN couvre maintenant la validation d'une reconduction,
-  la confirmation de validité de qualification et les six types de
-  contrôle (voir ci-dessus). Il reste la fiche technique de soudage
-  (`FicheTechniqueSoudage`, qui a bien un champ `signatureId` dans le
-  modèle) : pas encore d'API ni d'écran de saisie du tout pour elle.
+  la confirmation de validité de qualification, les six types de
+  contrôle et la fiche technique de suivi de soudage (voir ci-dessus).
 - La proposition automatique d'affectation adaptée en cas d'alerte
   (le cahier des charges évoque "peut proposer une affectation adaptée") :
   pour l'instant Weldoc détecte et signale, mais ne suggère pas encore

@@ -68,6 +68,7 @@ export default async function JointsPage() {
         controlesRadiographie: { select: { dateControle: true, resultat: true } },
         controlesUltrasons: { select: { dateControle: true, resultat: true } },
         fncs: { select: { id: true, reference: true, statut: true } },
+        ficheSoudage: true,
       },
       orderBy: [{ affaireId: "asc" }, { numero: "asc" }, { indiceReparation: "asc" }],
     }),
@@ -204,6 +205,7 @@ export default async function JointsPage() {
                       }))}
                       consommables={consommablesList}
                       outils={outilsUtilisables}
+                      ficheSoudage={j.ficheSoudage}
                     />
                   </li>
                 );

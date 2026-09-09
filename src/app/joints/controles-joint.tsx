@@ -5,12 +5,13 @@ import { ControleGeneriqueForm } from "./controle-generique-form";
 import { ControleRessuageForm } from "./controle-ressuage-form";
 import { ControleCndConsommablesForm } from "./controle-cnd-consommables-form";
 import { ControleDimensionnelForm } from "./controle-dimensionnel-form";
+import { FicheSoudageForm, type FicheSoudage } from "./fiche-soudage-form";
 
 type ControleVisuel = { id: string; procedureRef: string; dateControle: string };
 type Consommable = { id: string; type: string; fabricant: string; reference: string; lot: string };
 type Outil = { id: string; reference: string; type: string };
 
-type TypeFormulaireOuvert = "DIM" | "VT" | "PT" | "MT" | "RT" | "UT" | null;
+type TypeFormulaireOuvert = "DIM" | "VT" | "PT" | "MT" | "RT" | "UT" | "FTS" | null;
 
 // Chaque méthode ne propose que les types de consommables qui la
 // concernent (voir TypeConsommableCND) — "AUTRE" reste toujours proposé.
@@ -29,11 +30,13 @@ export function ControlesJoint({
   controlesVisuels,
   consommables,
   outils,
+  ficheSoudage,
 }: {
   jointId: string;
   controlesVisuels: ControleVisuel[];
   consommables: Consommable[];
   outils: Outil[];
+  ficheSoudage: FicheSoudage;
 }) {
   const [ouvert, setOuvert] = useState<TypeFormulaireOuvert>(null);
 
@@ -47,6 +50,10 @@ export function ControlesJoint({
           + {type}
         </button>
       ))}
+      <button onClick={() => setOuvert("FTS")} style={{ fontSize: "0.8rem", marginRight: "0.2rem" }}>
+        {ficheSoudage ? "Fiche soudage" : "+ FTS"}
+      </button>
+      {ouvert === "FTS" && <FicheSoudageForm jointId={jointId} fiche={ficheSoudage} onFermer={fermer} />}
       {ouvert === "DIM" && <ControleDimensionnelForm jointId={jointId} outils={outils} onCree={fermer} onAnnuler={fermer} />}
       {ouvert === "VT" && (
         <ControleGeneriqueForm endpoint="/api/controles-visuels" jointId={jointId} onCree={fermer} onAnnuler={fermer} />

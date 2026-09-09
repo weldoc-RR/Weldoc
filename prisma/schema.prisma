@@ -580,6 +580,14 @@ model Joint {
   @@index([affaireId])
 }
 
+// Fiche de suivi de soudage (voir le cahier des charges, "FICHE TECHNIQUE
+// DE SUIVI DE SOUDAGE" : "un exemple réel sera intégré ultérieurement pour
+// finaliser tous les champs" — les champs ci-dessous restent donc une
+// première version). L'identification du joint/soudeur/QS/WPS/QMOS/
+// consommable/diamètre/épaisseur n'est jamais redemandée ici : elle vient
+// déjà de Joint. Modifiable tant qu'elle n'est pas signée
+// (POST /api/joints/[id]/fiche-soudage) ; une fois signée, plus aucune
+// modification n'est acceptée — la signature atteste des valeurs finales.
 model FicheTechniqueSoudage {
   id                    String   @id @default(cuid())
   joint                 Joint    @relation(fields: [jointId], references: [id])
@@ -591,6 +599,7 @@ model FicheTechniqueSoudage {
   tensionV              Float?
   intensiteA            Float?
   vitesseMmMin          Float?
+  energieKJMm           Float?
   nombrePasses          Int?
   tempsMin              Float?
   observations          String?

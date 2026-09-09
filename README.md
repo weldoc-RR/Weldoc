@@ -284,7 +284,11 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
     vérifié n'est simplement pas exploitable, c'est un fait métrologique.
   - `POST /api/indisponibilites` — déclarer une période d'indisponibilité
     (congé, maladie, formation, autre), utilisée pour détecter les
-    conflits de planning (niveau 2 minimum)
+    conflits de planning (niveau 2 minimum). **Interface** (jusqu'ici API
+    seule, sans aucun écran) : bouton "+ Déclarer une indisponibilité"
+    sur `/personnel`, avec l'historique complet affiché sous chaque
+    personne (badge "en cours" pour une période qui couvre la date du
+    jour).
   - `POST /api/affectations` — affecter une personne à une affaire (et
     éventuellement un joint précis), avec ses codes d'habilitation/accès
     site (`Affectation.codes` — texte libre, ex. "CODES GTA" chez

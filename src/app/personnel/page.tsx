@@ -9,6 +9,7 @@ import { AjouterHabilitation } from "./ajouter-habilitation";
 import { AjouterFormation } from "./ajouter-formation";
 import { AjouterAcuite } from "./ajouter-acuite";
 import { AjouterDocumentJustificatif } from "./ajouter-document-justificatif";
+import { AjouterIndisponibilite } from "./ajouter-indisponibilite";
 import { ConfirmerValidite } from "./confirmer-validite";
 import { ValiderReconduction } from "./valider-reconduction";
 import { DefinirPin } from "./definir-pin";
@@ -72,6 +73,7 @@ export default async function PersonnelPage() {
           include: { ajoutePar: { select: { nom: true, prenom: true } } },
           orderBy: { createdAt: "desc" },
         },
+        indisponibilites: { orderBy: { dateDebut: "desc" } },
         compte: { select: { id: true, statut: true } },
         autorisationsSignature: {
           where: { active: true },
@@ -103,6 +105,7 @@ export default async function PersonnelPage() {
           <AjouterFormation personnel={personnel.map((p) => ({ id: p.id, nom: p.nom, prenom: p.prenom }))} />
           <AjouterAcuite personnel={personnel.map((p) => ({ id: p.id, nom: p.nom, prenom: p.prenom }))} />
           <AjouterDocumentJustificatif personnel={personnel.map((p) => ({ id: p.id, nom: p.nom, prenom: p.prenom }))} />
+          <AjouterIndisponibilite personnel={personnel.map((p) => ({ id: p.id, nom: p.nom, prenom: p.prenom }))} />
         </div>
       )}
 
@@ -354,6 +357,27 @@ export default async function PersonnelPage() {
                               </ul>
                             </details>
                           )}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </>
+              )}
+
+              {p.indisponibilites.length > 0 && (
+                <>
+                  <div style={{ fontSize: "0.8rem", color: "#52514e", marginTop: "0.4rem" }}>
+                    Indisponibilités (historique complet)
+                  </div>
+                  <ul>
+                    {p.indisponibilites.map((i) => {
+                      const maintenant = Date.now();
+                      const enCours = i.dateDebut.getTime() <= maintenant && maintenant <= i.dateFin.getTime();
+                      return (
+                        <li key={i.id}>
+                          {i.motif} — du {i.dateDebut.toLocaleDateString("fr-FR")} au{" "}
+                          {i.dateFin.toLocaleDateString("fr-FR")}
+                          {enCours && <span style={{ color: "darkorange" }}> — en cours</span>}
                         </li>
                       );
                     })}

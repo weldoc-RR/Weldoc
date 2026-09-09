@@ -15,6 +15,9 @@ const CreateAffectationSchema = z.object({
   codes: z.string().optional(),
   dateDebut: z.string().datetime(),
   dateFin: z.string().datetime(),
+  // Temps prévu (voir le cahier des charges, "TEMPS ET PRODUCTIVITÉ"), en
+  // minutes — n'a de sens que si jointId est renseigné.
+  dureeEstimeeMin: z.number().optional(),
 });
 
 // GET /api/affectations?personnelId=...&affaireId=...

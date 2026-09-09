@@ -33,6 +33,7 @@ export function AjouterWps({ qmosDisponibles }: { qmosDisponibles: Qmos[] }) {
   const [qmosId, setQmosId] = useState("");
   const [documentUrl, setDocumentUrl] = useState("");
   const [dateEmission, setDateEmission] = useState("");
+  const [tempsTheoriqueMin, setTempsTheoriqueMin] = useState("");
   const [passes, setPasses] = useState<PasseWpsFormulaire[]>([]);
   const [erreur, setErreur] = useState<string | null>(null);
   const [enCours, setEnCours] = useState(false);
@@ -72,6 +73,7 @@ export function AjouterWps({ qmosDisponibles }: { qmosDisponibles: Qmos[] }) {
         qmosId: qmosId || undefined,
         documentUrl: documentUrl || undefined,
         dateEmission: new Date(dateEmission).toISOString(),
+        tempsTheoriqueMin: tempsTheoriqueMin ? Number(tempsTheoriqueMin) : undefined,
         passes: passes.map(passeVersJson),
       }),
     });
@@ -97,6 +99,7 @@ export function AjouterWps({ qmosDisponibles }: { qmosDisponibles: Qmos[] }) {
     setQmosId("");
     setDocumentUrl("");
     setDateEmission("");
+    setTempsTheoriqueMin("");
     setPasses([]);
     router.refresh();
   }
@@ -184,6 +187,10 @@ export function AjouterWps({ qmosDisponibles }: { qmosDisponibles: Qmos[] }) {
       <label>
         Date d&apos;émission
         <input required type="date" value={dateEmission} onChange={(e) => setDateEmission(e.target.value)} style={{ display: "block", width: "100%", padding: "0.4rem" }} />
+      </label>
+      <label>
+        Temps théorique de référence (minutes, optionnel — voir "Temps et productivité")
+        <input type="number" step="1" value={tempsTheoriqueMin} onChange={(e) => setTempsTheoriqueMin(e.target.value)} style={{ display: "block", width: "100%", padding: "0.4rem" }} />
       </label>
       <div>
         <p style={{ margin: "0.5rem 0 0.3rem 0", fontWeight: "bold" }}>

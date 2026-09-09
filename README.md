@@ -686,6 +686,24 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   comme alerte sur `/joints` (créer un joint, ou consulter un joint
   existant, avec soudeur ET WPS renseignés) et exposé en API via
   `GET /api/qualifications/verification-qs?personnelId=...&wpsId=...`.
+- **Temps et productivité** (voir le cahier des charges) — distingue temps
+  théorique (`Wps.tempsTheoriqueMin`, un barème saisi une fois par WPS),
+  temps prévu (`Affectation.dureeEstimeeMin`, quand l'affectation
+  concerne un joint précis) et temps réel
+  (`FicheTechniqueSoudage.tempsMin`, déjà existant). `src/lib/productivite.ts`
+  calcule médiane et quartiles (25ᵉ/75ᵉ percentile, méthode par
+  interpolation linéaire) **par WPS** — la "configuration comparable"
+  retenue (même procédé, même domaine) — et jamais par soudeur : le
+  cahier des charges demande explicitement d'éviter tout classement de
+  vitesse individuelle, donc aucune vue par personne n'existe dans ce
+  module.
+  - `src/app/productivite/page.tsx` — tableau théorique/prévu/réel par
+    WPS, avec le nombre de joints ayant un temps réel renseigné. Lien
+    depuis la page d'accueil.
+  - Champs ajoutés aux formulaires existants : "Temps théorique" sur
+    "+ Créer le WPS/DMOS" (`/procedures`), "Temps prévu" sur
+    "Affecter" (`/affaires/[id]/planning`, visible seulement quand un
+    joint est choisi).
 - `prisma.config.ts` — configuration Prisma (schéma, migrations) : utilise
   `DATABASE_URL` en connexion PostgreSQL classique, utilisée par la CLI
   (`prisma migrate`, etc.).
@@ -775,7 +793,7 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   suppose de connaître à l'avance le nombre de joints prévus sur l'affaire,
   ce qui n'est pas encore saisi dans Weldoc.
 - Une bonne partie des ~50 modules du cahier des charges reste encore à
-  construire (temps et productivité, système qualité...). Le TQC
+  construire (système qualité, entre autres). Le TQC
   ("tel que construit") a une première version textuelle (voir ci-dessus,
   bouton "+ TQC" sur `/joints`), mais deux des trois méthodes prévues au
   cahier des charges restent à construire : l'ISO manuel au stylet sur

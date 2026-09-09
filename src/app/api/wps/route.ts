@@ -44,6 +44,9 @@ const CreateWpsSchema = z.object({
   qmosId: z.string().optional(),
   documentUrl: z.string().optional(),
   dateEmission: z.string().datetime(),
+  // Temps théorique de référence (voir le cahier des charges, "TEMPS ET
+  // PRODUCTIVITÉ"), en minutes — barème propre à l'entreprise.
+  tempsTheoriqueMin: z.number().optional(),
   // Détail passe par passe, créé avec le WPS (voir la remarque sur les
   // transactions dans src/lib/prisma.ts : écritures séquentielles, jamais
   // imbriquées).

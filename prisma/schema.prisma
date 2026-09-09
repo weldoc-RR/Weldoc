@@ -1416,6 +1416,11 @@ model Affectation {
   codes       String?
   dateDebut   DateTime
   dateFin     DateTime
+  // Temps prévu (voir le cahier des charges, "TEMPS ET PRODUCTIVITÉ"), en
+  // minutes, quand cette affectation concerne un joint précis (jointId
+  // renseigné) — distinct du temps théorique (Wps.tempsTheoriqueMin) et
+  // du temps réel (FicheTechniqueSoudage.tempsMin).
+  dureeEstimeeMin Float?
   statut      StatutAffectation @default(PLANIFIEE)
   creeParId   String
   createdAt   DateTime          @default(now())
@@ -1571,6 +1576,11 @@ model Wps {
   dateEmission   DateTime
   retiree        Boolean   @default(false)
   createdAt      DateTime  @default(now())
+  // Temps théorique de référence (voir le cahier des charges, "TEMPS ET
+  // PRODUCTIVITÉ" : distinguer temps théorique/prévu/réel) — un barème
+  // fixé par l'entreprise pour ce WPS, en minutes. Optionnel : reste vide
+  // tant que l'entreprise n'a pas défini ce barème.
+  tempsTheoriqueMin Float?
 
   joints         Joint[]
   passes         WpsPasse[]

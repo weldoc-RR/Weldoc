@@ -19,6 +19,7 @@ export function AjouterAffectation({ affaireId, personnel, joints }: { affaireId
   const [codes, setCodes] = useState("");
   const [dateDebut, setDateDebut] = useState("");
   const [dateFin, setDateFin] = useState("");
+  const [dureeEstimeeMin, setDureeEstimeeMin] = useState("");
   const [alertes, setAlertes] = useState<string[]>([]);
   const [erreur, setErreur] = useState<string | null>(null);
   const [enCours, setEnCours] = useState(false);
@@ -40,6 +41,7 @@ export function AjouterAffectation({ affaireId, personnel, joints }: { affaireId
         codes: codes || undefined,
         dateDebut: new Date(dateDebut).toISOString(),
         dateFin: new Date(dateFin).toISOString(),
+        dureeEstimeeMin: dureeEstimeeMin ? Number(dureeEstimeeMin) : undefined,
       }),
     });
     setEnCours(false);
@@ -55,6 +57,7 @@ export function AjouterAffectation({ affaireId, personnel, joints }: { affaireId
     setCodes("");
     setDateDebut("");
     setDateFin("");
+    setDureeEstimeeMin("");
     router.refresh();
   }
 
@@ -91,6 +94,12 @@ export function AjouterAffectation({ affaireId, personnel, joints }: { affaireId
         Codes d&apos;habilitation/accès site (optionnel, ex. SN2, M2, CT, RP2...)
         <input type="text" value={codes} onChange={(e) => setCodes(e.target.value)} style={{ display: "block", width: "100%", padding: "0.4rem" }} />
       </label>
+      {jointId && (
+        <label>
+          Temps prévu (minutes, optionnel — voir "Temps et productivité")
+          <input type="number" step="1" value={dureeEstimeeMin} onChange={(e) => setDureeEstimeeMin(e.target.value)} style={{ display: "block", width: "100%", padding: "0.4rem" }} />
+        </label>
+      )}
       <div style={{ display: "flex", gap: "0.5rem" }}>
         <label style={{ flex: 1 }}>
           Date de début

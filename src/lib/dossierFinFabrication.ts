@@ -84,6 +84,7 @@ export interface DossierFinFabrication {
   elementsManquants: ElementManquant[];
   photosCount: number;
   pointsReglementairesCount: number;
+  pvExternesCount: number;
   // Points réglementaires actuellement BLOQUANT (voir
   // src/lib/dossierReglementaire.ts) : tant que cette liste n'est pas
   // vide, POST /api/affaires/[id]/rapport-fin-fabrication refuse la
@@ -149,6 +150,7 @@ export async function compilerDossierFinFabrication(affaireId: string): Promise<
     validation,
     photosCount,
     pointsReglementairesCount,
+    pvExternesCount,
     bloquants,
     bilanIntervention,
     diffusions,
@@ -208,6 +210,7 @@ export async function compilerDossierFinFabrication(affaireId: string): Promise<
     }),
     prisma.photo.count({ where: { affaireId } }),
     prisma.pointReglementaire.count({ where: { affaireId } }),
+    prisma.pVExterne.count({ where: { affaireId } }),
     pointsBloquants(affaireId),
     prisma.bilanIntervention.findUnique({ where: { affaireId } }),
     prisma.diffusionRFI.findMany({ where: { affaireId }, orderBy: { nom: "asc" } }),
@@ -410,6 +413,7 @@ export async function compilerDossierFinFabrication(affaireId: string): Promise<
     elementsManquants,
     photosCount,
     pointsReglementairesCount,
+    pvExternesCount,
     pointsReglementairesBloquants: bloquants,
     rfi: {
       bilanIntervention,

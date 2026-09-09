@@ -46,6 +46,8 @@ model Personnel {
   compte          Compte?
   photosAjoutees  Photo[]              @relation("AuteurPhoto")
   evenementsPointsReglementaires PointReglementaireEvenement[]
+  pvExternesImportes PVExterne[]       @relation("ImporteurPVExterne")
+  pvExternesRevises  PVExterne[]       @relation("ReviseurPVExterne")
 
   @@index([societe])
 }
@@ -311,6 +313,7 @@ model Affaire {
   chronologie       EvenementChronologie[]
   bilanDosimetrique BilanDosimetrique?
   portiquesRadioprotection PortiqueRadioprotection[]
+  pvExternes        PVExterne[]
 }
 
 // ============================================================================
@@ -499,6 +502,7 @@ model Phase {
   justificationNA String?
   photos       Photo[]
   pointsReglementaires PointReglementaire[]
+  pvExternes   PVExterne[]
 }
 
 model Matiere {
@@ -575,6 +579,7 @@ model Joint {
   affectations    Affectation[]
   photos          Photo[]
   pointsReglementaires PointReglementaire[]
+  pvExternes      PVExterne[]
 
   @@unique([affaireId, numero, indiceReparation])
   @@index([affaireId])
@@ -1064,6 +1069,50 @@ model PointReglementaireEvenement {
   date                 DateTime                 @default(now())
 
   @@index([pointReglementaireId])
+}
+
+// PV externes (voir le cahier des charges, "PV EXTERNES") : documents
+// produits par un prestataire externe (rapport de CND sous-traité,
+// certificat d'étalonnage, PV d'ouverture/fermeture de chantier...),
+// importés et liés à une affaire et, optionnellement, à un joint ou une
+// phase précis. `url` reste du texte libre pour l'instant, comme les
+// autres pièces jointes de l'application — pas de téléversement de
+// fichier intégré à Weldoc (voir Photo). La revue (qui, quand, conforme
+// ou non) n'est jamais modifiée une fois faite : un document corrigé se
+// réimporte comme un nouveau PVExterne, jamais en écrasant l'ancien.
+enum ConclusionRevuePVExterne {
+  CONFORME
+  NON_CONFORME
+}
+
+model PVExterne {
+  id           String    @id @default(cuid())
+  affaire      Affaire   @relation(fields: [affaireId], references: [id])
+  affaireId    String
+  joint        Joint?    @relation(fields: [jointId], references: [id])
+  jointId      String?
+  phase        Phase?    @relation(fields: [phaseId], references: [id])
+  phaseId      String?
+  intitule     String
+  prestataire  String?
+  url          String
+  dateDocument DateTime?
+  importePar   Personnel @relation("ImporteurPVExterne", fields: [importeParId], references: [id])
+  importeParId String
+  dateImport   DateTime  @default(now())
+
+  // Revue tracée par une personne habilitée (cahier des charges : "niveau
+  // 3 si requis" — Weldoc l'exige systématiquement, pour rester simple et
+  // sûr par défaut). Les trois champs se remplissent ensemble, une seule
+  // fois.
+  revueConclusion  ConclusionRevuePVExterne?
+  revueCommentaire String?
+  revuePar         Personnel? @relation("ReviseurPVExterne", fields: [revueParId], references: [id])
+  revueParId       String?
+  dateRevue        DateTime?
+
+  @@index([affaireId])
+  @@index([jointId])
 }
 
 // Actions possibles de remise en conformité, comme listées au cahier des

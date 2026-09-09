@@ -238,7 +238,7 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   vient du dossier réglementaire, voir plus bas). Les annexes du modèle
   réel (organigrammes détaillés, dossier de réalisation de travaux,
   documents divers) restent hors périmètre pour l'instant — voir le book
-  photo et le dossier réglementaire en attendant.
+  photo, le dossier réglementaire et les PV externes en attendant.
   - `GET`/`PATCH /api/affaires/[id]/bilan-intervention` — contenu
     narratif du RFI (définition, conformité, bilans radioprotection/REX...).
   - `GET`/`POST /api/diffusions-rfi`, `/api/revisions-rfi`,
@@ -269,6 +269,25 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
     d'accueil, à côté de chaque affaire. N'offre de signer que si aucun
     point réglementaire bloquant ne subsiste (sinon un message renvoie
     vers le dossier réglementaire pour les lever).
+- **PV externes** (voir le cahier des charges, "PV EXTERNES") — documents
+  produits par un prestataire externe (PV de contrôle sous-traité,
+  certificat matière...), importés et rattachés à une affaire et,
+  optionnellement, à un joint ou une phase précis. Modèle `PVExterne` :
+  intitulé, prestataire, date du document, `url` (texte libre pour
+  l'instant — même limite que `Photo`, voir plus haut). Import réservé au
+  niveau 2 (l'importeur est toujours la personne connectée) ; revue
+  réservée au niveau 3 (conforme/non conforme + commentaire), et
+  **jamais modifiable une fois faite** — un document corrigé se réimporte
+  comme un nouveau `PVExterne` plutôt que d'écraser la revue existante,
+  conformément au principe "rien n'est jamais écrasé".
+  - `GET`/`POST /api/pv-externes` — liste (filtrable par affaire/joint/
+    phase) et import.
+  - `POST /api/pv-externes/[id]/revue` — enregistre la revue ; refuse
+    (422) si le document a déjà été revu.
+  - `src/app/affaires/[id]/pv-externes/page.tsx` — liste des documents
+    d'une affaire (statut de revue en couleur) et formulaires d'import/
+    revue. Lien depuis la page d'accueil et le rapport de fin de
+    fabrication (qui affiche aussi le nombre de documents).
 - **Dossier réglementaire** (voir le cahier des charges, "DOSSIER
   RÉGLEMENTAIRE" / "Blocage réglementaire") — distinct du rapport de fin
   de fabrication : ici, chaque exigence réglementaire (ex. "Attestation de

@@ -9,6 +9,7 @@ import { calculerStatutOutil, outilUtilisable } from "@/lib/statutOutil";
 import { AjouterJoint } from "./ajouter-joint";
 import { AjouterMatiere } from "./ajouter-matiere";
 import { AjouterScanTqc } from "./ajouter-scan-tqc";
+import { SaisieGroupeeFicheSoudage } from "./saisie-groupee-fiche-soudage";
 import { DeclarerReparation } from "./declarer-reparation";
 import { BadgeControle } from "./badge-controle";
 import { ControlesJoint } from "./controles-joint";
@@ -164,6 +165,17 @@ export default async function JointsPage() {
       <AjouterScanTqc
         affaires={affaires}
         joints={joints.map((j) => ({ id: j.id, numero: j.numero, indiceReparation: j.indiceReparation, affaireId: j.affaireId }))}
+      />
+
+      <SaisieGroupeeFicheSoudage
+        affaires={affaires}
+        joints={joints.map((j) => ({
+          id: j.id,
+          numero: j.numero,
+          indiceReparation: j.indiceReparation,
+          affaireId: j.affaireId,
+          dejaSignee: Boolean(j.ficheSoudage?.signatureId),
+        }))}
       />
 
       <h2>Créer un joint</h2>

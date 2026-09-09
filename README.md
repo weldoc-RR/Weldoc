@@ -676,6 +676,22 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
     modification n'est acceptée — la signature atteste des valeurs comme
     définitives, le bouton devient "Fiche soudage" et l'affichage passe
     en lecture seule.
+  - **Saisie groupée** de la fiche technique de suivi de soudage (voir le
+    cahier des charges, PRINCIPE CENTRAL : "une donnée saisie une seule
+    fois") : quand un même soudeur a réalisé plusieurs joints avec les
+    mêmes paramètres (même procédé, même tension...) dans la même
+    période, bouton "+ Saisie groupée (fiche technique de soudage)" sur
+    `/joints` — remplit les paramètres une seule fois, coche les joints
+    concernés (fiche pas encore signée uniquement), signe une seule fois
+    (`POST /api/fiches-soudage/lot`). Chaque joint garde sa propre fiche
+    et sa propre signature, tracées individuellement (`creerSignature()`
+    est appelée pour chaque joint du lot, avec les mêmes vérifications
+    PIN/charte/autorisation de signature qu'une signature à part) :
+    exactement comme si chaque joint avait été signé un par un, avec un
+    seul geste côté écran. Un joint déjà signé dans le lot refuse le lot
+    entier (rien n'est jamais écrasé) ; un PIN incorrect laisse les
+    paramètres déjà enregistrés (non signés, à corriger ou re-signer),
+    plutôt que de perdre la saisie.
   - Bouton "+ TQC" : le "tel que construit" (voir le cahier des charges,
     "TQC (TEL QUE CONSTRUIT)") — localisation de la soudure, équipement,
     support, écarts par rapport au prévu, observations.

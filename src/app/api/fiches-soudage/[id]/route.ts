@@ -31,6 +31,7 @@ const UpdateSchema = z.object({
   nombrePasses: z.number().int().optional(),
   tempsMin: z.number().optional(),
   observations: z.string().optional(),
+  photosUrls: z.array(z.string()).optional(),
   // Remplace l'ensemble des joints couverts par la fiche (ajouts et
   // retraits en une fois) — omis, la liste des joints ne change pas.
   jointIds: z.array(z.string().min(1)).min(1).optional(),

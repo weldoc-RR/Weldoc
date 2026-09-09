@@ -16,6 +16,7 @@ const CreateSchema = z.object({
   nombrePasses: z.number().int().optional(),
   tempsMin: z.number().optional(),
   observations: z.string().optional(),
+  photosUrls: z.array(z.string()).optional(),
 });
 
 // POST /api/fiches-soudage — crée une fiche technique de suivi de

@@ -792,7 +792,10 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   comparer à l'existant (voir plus bas dans ce README). Bibliothèque des
   destinataires du récapitulatif hebdomadaire par email, inchangée.
 - `src/app/pieces/page.tsx` — prise en charge de pièces (atelier) et suivi
-  de leur statut.
+  de leur statut. "Photos des repères présents sur la pièce" accepte
+  toujours des adresses collées à la main (une par ligne), et propose
+  maintenant aussi `FileUpload` pour déposer directement une photo (son
+  adresse s'ajoute à la liste).
 - `src/app/joints/page.tsx` — création de joints, consultation groupée par
   affaire avec la chaîne de réparation affichée en clair (M800 → M800 R1 →
   M800 R2...), un badge par type de contrôle (résultat le plus récent) et
@@ -849,7 +852,12 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
     déjà couvert par une fiche ne peut pas être ajouté à une autre — il
     faut d'abord le retirer de la sienne. Le bouton devient "Fiche
     soudage" (au lieu de "+ FTS") pour chacun des joints déjà couverts, et
-    l'affichage passe en lecture seule une fois signée.
+    l'affichage passe en lecture seule une fois signée. **Photos de la
+    soudure** : `FicheTechniqueSoudage.photosUrls` (book photo de la
+    fiche) est maintenant exposé dans le formulaire, avec `FileUpload`
+    pour déposer directement plusieurs photos (ajout/retrait avant
+    signature, lecture seule une fois signée) — jusqu'ici le champ
+    existait en base sans aucune interface.
   - Bouton "+ TQC" : le "tel que construit" (voir le cahier des charges,
     "TQC (TEL QUE CONSTRUIT)") — localisation de la soudure, équipement,
     support, écarts par rapport au prévu, observations.
@@ -1047,12 +1055,10 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   indépendants.
 - Le dépôt de fichier (voir ci-dessus, `POST /api/upload`) couvre
   maintenant les certificats de qualification/habilitation/acuité
-  visuelle et les documents justificatifs du personnel. `Piece.
-  photosUrls`, `FicheTechniqueSoudage.photosUrls` et le book photo
-  (`Photo.url`) continuent d'attendre un lien (le dépôt direct n'y est
-  pas encore branché) — le composant `FileUpload` est réutilisable
-  partout où un champ "lien vers un document" existe déjà, il suffit de
-  l'ajouter au formulaire concerné.
+  visuelle, les documents justificatifs du personnel, le book photo
+  général, les photos de pièce et les photos de fiche de suivi de
+  soudage (voir plus bas) — le composant `FileUpload` reste réutilisable
+  partout où un champ "lien vers un document" existe déjà.
 - Quelques modules plus secondaires du cahier des charges restent encore à
   construire (offre documentaire Weldoc, formation/déploiement — plutôt
   des sujets d'offre commerciale que des écrans à construire). Le TQC

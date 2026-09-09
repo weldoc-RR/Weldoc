@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { FileUpload } from "@/components/file-upload";
 
 type Affaire = { id: string; numero: string; client: string };
 
@@ -95,6 +96,7 @@ export function AjouterPiece({ affaires }: { affaires: Affaire[] }) {
           style={{ display: "block", width: "100%", padding: "0.4rem" }}
         />
       </label>
+      <FileUpload onDepose={(url) => setPhotosUrls((precedent) => (precedent ? `${precedent}\n${url}` : url))} />
       <button type="submit" disabled={enCours}>
         {enCours ? "Enregistrement..." : "Prendre en charge"}
       </button>

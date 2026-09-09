@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { SignerQrPin } from "@/components/signer-qr-pin";
+import { FileUpload } from "@/components/file-upload";
 
 export type FicheSoudage = {
   id: string;
@@ -17,6 +18,7 @@ export type FicheSoudage = {
   nombrePasses: number | null;
   tempsMin: number | null;
   observations: string | null;
+  photosUrls: string[];
   signatureId: string | null;
   joints: { id: string; numero: string; indiceReparation: number }[];
 } | null;
@@ -70,6 +72,7 @@ export function FicheSoudageForm({
     Object.fromEntries(CHAMPS_NUMERIQUES.map((c) => [c.cle, fiche?.[c.cle]?.toString() ?? ""]))
   );
   const [observations, setObservations] = useState(fiche?.observations ?? "");
+  const [photosUrls, setPhotosUrls] = useState<string[]>(fiche?.photosUrls ?? []);
   const [signatureId, setSignatureId] = useState<string | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
   const [enCours, setEnCours] = useState(false);
@@ -90,6 +93,10 @@ export function FicheSoudageForm({
     setJointIds((liste) => (coche ? [...liste, id] : liste.filter((i) => i !== id)));
   }
 
+  function retirerPhoto(index: number) {
+    setPhotosUrls((liste) => liste.filter((_, i) => i !== index));
+  }
+
   async function enregistrer(e: React.FormEvent) {
     e.preventDefault();
     setErreur(null);
@@ -97,6 +104,7 @@ export function FicheSoudageForm({
     const corps: Record<string, unknown> = {
       procede: procede || undefined,
       observations: observations || undefined,
+      photosUrls,
       jointIds,
     };
     for (const c of CHAMPS_NUMERIQUES) {
@@ -133,6 +141,15 @@ export function FicheSoudageForm({
           {fiche?.postchauffageC ?? "—"}°C · Passes : {fiche?.nombrePasses ?? "—"}
         </p>
         {fiche?.observations && <p style={{ fontSize: "0.85rem" }}>{fiche.observations}</p>}
+        {fiche && fiche.photosUrls.length > 0 && (
+          <p style={{ fontSize: "0.85rem" }}>
+            {fiche.photosUrls.map((url) => (
+              <a key={url} href={url} target="_blank" rel="noreferrer" style={{ marginRight: "0.5rem" }}>
+                photo
+              </a>
+            ))}
+          </p>
+        )}
         <button type="button" onClick={onFermer}>
           Fermer
         </button>
@@ -183,6 +200,25 @@ export function FicheSoudageForm({
         Observations (interruptions, reprises...)
         <textarea value={observations} onChange={(e) => setObservations(e.target.value)} rows={2} style={{ display: "block", width: "100%", padding: "0.3rem", fontFamily: "inherit" }} />
       </label>
+
+      <div style={{ fontSize: "0.85rem", marginTop: "0.4rem" }}>
+        Photos (book photo de la soudure, optionnel)
+        {photosUrls.length > 0 && (
+          <ul style={{ margin: "0.2rem 0", padding: 0, listStyle: "none" }}>
+            {photosUrls.map((url, i) => (
+              <li key={url}>
+                <a href={url} target="_blank" rel="noreferrer">
+                  {url.length > 50 ? `${url.slice(0, 50)}…` : url}
+                </a>{" "}
+                <button type="button" onClick={() => retirerPhoto(i)} style={{ fontSize: "0.75rem" }}>
+                  Retirer
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+        <FileUpload onDepose={(url) => setPhotosUrls((liste) => [...liste, url])} />
+      </div>
 
       <div style={{ marginTop: "0.5rem" }}>
         <button type="submit" disabled={enCours}>

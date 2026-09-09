@@ -49,6 +49,9 @@ model Personnel {
   pvExternesImportes PVExterne[]       @relation("ImporteurPVExterne")
   pvExternesRevises  PVExterne[]       @relation("ReviseurPVExterne")
   etatsDesLieuxRediges EtatDesLieux[]
+  documentsExternesImportes DocumentExterne[] @relation("ImporteurDocumentExterne")
+  documentsExternesValides  DocumentExterne[] @relation("ValidateurDocumentExterne")
+  documentsExternesConcerne DocumentExterne[] @relation("PersonnelConcerneDocumentExterne")
 
   @@index([societe])
 }
@@ -316,6 +319,7 @@ model Affaire {
   portiquesRadioprotection PortiqueRadioprotection[]
   pvExternes        PVExterne[]
   etatsDesLieux     EtatDesLieux[]
+  documentsExternes DocumentExterne[]
 }
 
 // ============================================================================
@@ -514,6 +518,7 @@ model Phase {
   photos       Photo[]
   pointsReglementaires PointReglementaire[]
   pvExternes   PVExterne[]
+  documentsExternes DocumentExterne[]
 }
 
 model Matiere {
@@ -592,6 +597,7 @@ model Joint {
   photos          Photo[]
   pointsReglementaires PointReglementaire[]
   pvExternes      PVExterne[]
+  documentsExternes DocumentExterne[]
 
   @@unique([affaireId, numero, indiceReparation])
   @@index([affaireId])
@@ -668,6 +674,7 @@ model Outil {
   controlesMagnetoscopie ControleMagnetoscopie[]
   controlesRadiographie  ControleRadiographie[]
   controlesUltrasons     ControleUltrasons[]
+  documentsExternes DocumentExterne[]
 }
 
 enum ResultatConformite {
@@ -1013,6 +1020,7 @@ model FNC {
   dateCloture       DateTime?
   valideeParId      String?
   photos            Photo[]
+  documentsExternes DocumentExterne[]
 }
 
 // Book photo (voir le cahier des charges) : photos horodatées rattachées à
@@ -1150,6 +1158,49 @@ model PVExterne {
 
   @@index([affaireId])
   @@index([jointId])
+}
+
+// Documents externes et bibliothèque documentaire (voir le cahier des
+// charges, "DOCUMENTS EXTERNES ET BIBLIOTHÈQUE DOCUMENTAIRE") : documents
+// de fournisseurs/sous-traitants/prestataires CND ou traitement
+// thermique/organismes externes. Distinct de PVExterne (toujours rattaché
+// à UNE affaire) : ici un même document peut se relier à plusieurs
+// affaires/joints/phases/FNC/personnel/équipements à la fois — "un
+// document n'est jamais téléchargé plusieurs fois pour plusieurs usages".
+// Même principe de versionnage que WPS/QMOS/ProcedureInterne
+// (`annoterStatutProcedures`, réutilisée telle quelle) : une nouvelle
+// révision est un nouvel enregistrement, jamais une modification de la
+// précédente. La validation réutilise `ConclusionRevuePVExterne` (même
+// forme conforme/non conforme) plutôt qu'un nouvel enum équivalent.
+model DocumentExterne {
+  id           String    @id @default(cuid())
+  reference    String
+  version      String    @default("Rev 0")
+  titre        String
+  categorie    String?
+  url          String
+  dateDocument DateTime?
+  importePar   Personnel @relation("ImporteurDocumentExterne", fields: [importeParId], references: [id])
+  importeParId String
+  dateImport   DateTime  @default(now())
+
+  valideConclusion  ConclusionRevuePVExterne?
+  valideCommentaire String?
+  validePar         Personnel? @relation("ValidateurDocumentExterne", fields: [valideParId], references: [id])
+  valideParId       String?
+  dateValidation    DateTime?
+
+  retiree      Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+
+  affaires     Affaire[]
+  joints       Joint[]
+  phases       Phase[]
+  fncs         FNC[]
+  personnel    Personnel[] @relation("PersonnelConcerneDocumentExterne")
+  outils       Outil[]
+
+  @@index([reference])
 }
 
 // Prise en charge / restitution du chantier (voir le cahier des charges,

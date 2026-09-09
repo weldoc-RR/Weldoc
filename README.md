@@ -288,6 +288,36 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
     d'une affaire (statut de revue en couleur) et formulaires d'import/
     revue. Lien depuis la page d'accueil et le rapport de fin de
     fabrication (qui affiche aussi le nombre de documents).
+- **Documents externes et bibliothèque documentaire** (voir le cahier des
+  charges, "DOCUMENTS EXTERNES ET BIBLIOTHÈQUE DOCUMENTAIRE") — distinct
+  des PV externes ci-dessus : un `DocumentExterne` (fournisseur,
+  sous-traitant, prestataire CND ou traitement thermique, organisme
+  externe...) peut se relier à la fois à plusieurs affaires, joints,
+  phases, FNC, personnes et équipements, plutôt que d'être réimporté pour
+  chaque usage ("un document n'est jamais téléchargé plusieurs fois pour
+  plusieurs usages"). Même principe de versionnage que WPS/QMOS/
+  ProcedureInterne (`annoterStatutProcedures` réutilisée telle quelle) :
+  une nouvelle révision est un nouvel enregistrement. La validation
+  (conforme/non conforme + commentaire, niveau 3, jamais modifiable une
+  fois faite) réutilise l'enum `ConclusionRevuePVExterne` plutôt que d'en
+  recréer un équivalent.
+  - **Remarque technique** : les six relations (`affaires`/`joints`/
+    `phases`/`fncs`/`personnel`/`outils`) sont des relations Prisma
+    plusieurs-à-plusieurs implicites. Même un seul `connect` sur une
+    relation de ce type ouvre une transaction côté pilote Prisma — or
+    celui utilisé (voir `src/lib/prisma.ts`) ne les supporte pas. Le lien
+    se fait donc par une requête SQL directe (`$executeRaw`) sur la table
+    de jointure implicite générée par Prisma, une par élément relié,
+    après la création du document seul.
+  - `GET`/`POST`/`PATCH /api/documents-externes` — liste (filtrable par
+    affaire/joint/phase/FNC/personnel/équipement), import (niveau 2), et
+    retrait/réactivation.
+  - `POST /api/documents-externes/[id]/validation` — réservé au niveau 3 ;
+    refuse (422) si déjà validé.
+  - `src/app/documents/page.tsx` — bibliothèque globale (pas rattachée à
+    une affaire en particulier) : import avec sélection multiple des
+    éléments concernés, statut de version, validation. Lien depuis la
+    page d'accueil.
 - **Prise en charge / restitution du chantier** (voir le cahier des
   charges) — un état des lieux en début d'intervention, un autre en fin :
   zone concernée, observations, dégradations constatées, documents

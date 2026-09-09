@@ -42,6 +42,7 @@ export default async function HomePage() {
         <Link href="/consommables">Consommables CND →</Link>{" "}
         <Link href="/alertes">Alertes →</Link> <Link href="/pieces">Pièces (atelier) →</Link>{" "}
         <Link href="/avancement">Avancement →</Link> <Link href="/charte">Charte →</Link>{" "}
+        <Link href="/documents">Documents externes →</Link>{" "}
         {aNiveauMinimum(utilisateur.niveau, "NIVEAU_3") && <Link href="/audit">Audit trail →</Link>}
       </p>
       <ul style={{ listStyle: "none", padding: 0 }}>

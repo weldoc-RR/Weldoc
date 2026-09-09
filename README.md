@@ -657,10 +657,23 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
     dimensionnel du joint) et les photos (déjà sur le book photo, via
     `Photo.jointId`) ne sont jamais ressaisies ici. Sur les trois méthodes
     prévues au cahier des charges (ISO manuel sur tablette, scan 3D
-    externe, book photo), seule la version texte + book photo est
-    construite pour l'instant : la saisie graphique au stylet et
-    l'import de scan 3D (fonction déjà signalée "complémentaire, non
-    obligatoire" par le cahier des charges) restent à construire.
+    externe, book photo), la version texte + book photo et le scan 3D
+    sont construits ; seule la saisie graphique au stylet sur tablette
+    reste à construire.
+  - Scan 3D (deuxième méthode du TQC, "voir le cahier des charges,
+    'TQC (TEL QUE CONSTRUIT)' > 'Scan 3D'", signalée "fonction
+    complémentaire, non obligatoire") : `GET`/`POST /api/scans-tqc`,
+    modèle `ScanTqc`, section "Scan 3D (TQC)" sur `/joints`. Ne conserve
+    que la trace d'un scan externe déjà réalisé — fichier source, date,
+    opérateur (toujours la personne connectée), zone couverte,
+    logiciel/version, fichier généré, ISO/TQC résultant — même principe
+    que les CCPU et documents externes : un lien vers un fichier déjà
+    hébergé, pas de téléversement direct dans Weldoc. Une zone peut
+    couvrir plusieurs joints à la fois (`ScanTqc.joints`), sans jamais
+    redemander leurs dimensions ou leurs photos. Comme un état des
+    lieux ou un document externe, un nouveau scan de la même zone est un
+    nouvel enregistrement, jamais une modification du précédent — pas de
+    `PATCH` sur ce modèle.
 - `src/lib/procedures.ts` — bibliothèque des WPS/DMOS et des QMOS
   (`GET`/`POST`/`PATCH /api/wps` et `/api/qmos`, page `/procedures`) :
   une nouvelle révision (Rev 0, Rev 1...) n'écrase jamais la précédente,
@@ -810,13 +823,12 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
 - Quelques modules plus secondaires du cahier des charges restent encore à
   construire (offre documentaire Weldoc, formation/déploiement — plutôt
   des sujets d'offre commerciale que des écrans à construire). Le TQC
-  ("tel que construit") a une première version textuelle (voir ci-dessus,
-  bouton "+ TQC" sur `/joints`), mais deux des trois méthodes prévues au
-  cahier des charges restent à construire : l'ISO manuel au stylet sur
-  tablette (annotation graphique) et l'ISO issu d'un scan 3D externe —
-  des chantiers UI/technique nettement plus lourds que ce qui a été fait
-  jusqu'ici (le cahier des charges signale d'ailleurs le scan 3D comme une
-  fonction complémentaire, non obligatoire).
+  ("tel que construit") a maintenant deux de ses trois méthodes : la
+  version texte + book photo (bouton "+ TQC" sur `/joints`) et le scan 3D
+  (section "Scan 3D (TQC)" sur `/joints`, voir ci-dessus). Seule l'ISO
+  manuel au stylet sur tablette (annotation graphique directement à
+  l'écran) reste à construire — un chantier UI/technique nettement plus
+  lourd que ce qui a été fait jusqu'ici.
 - Une vraie interface tablette soignée (ici, des pages HTML minimales).
 - Les vraies valeurs de tolérances normatives, sauf l'EN 10216-2 (Tableaux
   7, 9, 11 — voir ci-dessus) : toute autre norme reste à intégrer au fil de

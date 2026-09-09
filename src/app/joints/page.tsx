@@ -8,6 +8,7 @@ import { verifierQS } from "@/lib/verificationQS";
 import { calculerStatutOutil, outilUtilisable } from "@/lib/statutOutil";
 import { AjouterJoint } from "./ajouter-joint";
 import { AjouterMatiere } from "./ajouter-matiere";
+import { AjouterScanTqc } from "./ajouter-scan-tqc";
 import { DeclarerReparation } from "./declarer-reparation";
 import { BadgeControle } from "./badge-controle";
 import { ControlesJoint } from "./controles-joint";
@@ -25,7 +26,7 @@ export default async function JointsPage() {
     redirect("/login");
   }
 
-  const [joints, affaires, soudeurs, matieres, wpsList, consommablesList, outilsList, produitsDimList] = await Promise.all([
+  const [joints, affaires, soudeurs, matieres, wpsList, consommablesList, outilsList, produitsDimList, scansTqc] = await Promise.all([
     prisma.joint.findMany({
       include: {
         affaire: { select: { numero: true, client: true } },
@@ -95,6 +96,13 @@ export default async function JointsPage() {
       select: { id: true, reference: true, version: true, designation: true, normeProduit: true, diametreNominalMm: true, epaisseurNominaleMm: true, createdAt: true, retiree: true },
       orderBy: [{ reference: "asc" }, { createdAt: "desc" }],
     }),
+    prisma.scanTqc.findMany({
+      include: {
+        operateur: { select: { nom: true, prenom: true } },
+        joints: { select: { id: true, numero: true, indiceReparation: true } },
+      },
+      orderBy: { dateScan: "desc" },
+    }),
   ]);
   // Seule la révision la plus récente (non retirée) de chaque référence
   // est proposée au contrôle, même principe que les WPS en vigueur
@@ -124,6 +132,16 @@ export default async function JointsPage() {
     parAffaire.set(j.affaireId, liste);
   }
 
+  // Scans 3D groupés par affaire, même principe d'affichage que les
+  // joints ci-dessus — chaque scan reste un enregistrement indépendant,
+  // jamais remplacé par le suivant sur la même zone.
+  const scansParAffaire = new Map<string, typeof scansTqc>();
+  for (const s of scansTqc) {
+    const liste = scansParAffaire.get(s.affaireId) ?? [];
+    liste.push(s);
+    scansParAffaire.set(s.affaireId, liste);
+  }
+
   return (
     <main style={{ fontFamily: "sans-serif", padding: "2rem" }}>
       <p>
@@ -138,6 +156,16 @@ export default async function JointsPage() {
       <h2>Réceptionner une matière</h2>
       <AjouterMatiere affaires={affaires} />
 
+      <h2>Scan 3D (TQC)</h2>
+      <p style={{ fontSize: "0.85rem", color: "#52514e", maxWidth: 640 }}>
+        Deuxième méthode du TQC (voir le cahier des charges) — complémentaire au TQC texte + book photo de chaque
+        joint (bouton &quot;+ TQC&quot; ci-dessous). Une zone peut couvrir plusieurs joints à la fois.
+      </p>
+      <AjouterScanTqc
+        affaires={affaires}
+        joints={joints.map((j) => ({ id: j.id, numero: j.numero, indiceReparation: j.indiceReparation, affaireId: j.affaireId }))}
+      />
+
       <h2>Créer un joint</h2>
       <AjouterJoint affaires={affaires} soudeurs={soudeurs} matieres={matieres} wpsEnVigueur={wpsEnVigueur} />
 
@@ -150,6 +178,39 @@ export default async function JointsPage() {
             <h3>
               {jointsAffaire[0].affaire.numero} — {jointsAffaire[0].affaire.client}
             </h3>
+            {(scansParAffaire.get(affaireId) ?? []).length > 0 && (
+              <ul style={{ listStyle: "none", padding: 0, marginBottom: "0.8rem" }}>
+                {(scansParAffaire.get(affaireId) ?? []).map((s) => (
+                  <li key={s.id} style={{ fontSize: "0.85rem", color: "#52514e", marginBottom: "0.3rem" }}>
+                    📡 Scan 3D — {s.zone} — {s.dateScan.toLocaleDateString("fr-FR")} — {s.operateur.prenom}{" "}
+                    {s.operateur.nom}
+                    {s.logiciel && ` — ${s.logiciel}${s.versionLogiciel ? ` ${s.versionLogiciel}` : ""}`}
+                    {s.joints.length > 0 &&
+                      ` — joints : ${s.joints.map((j) => (j.indiceReparation > 0 ? `${j.numero} R${j.indiceReparation}` : j.numero)).join(", ")}`}{" "}
+                    —{" "}
+                    <a href={s.fichierSourceUrl} target="_blank" rel="noopener noreferrer">
+                      fichier source
+                    </a>
+                    {s.fichierGenereUrl && (
+                      <>
+                        {" · "}
+                        <a href={s.fichierGenereUrl} target="_blank" rel="noopener noreferrer">
+                          fichier généré
+                        </a>
+                      </>
+                    )}
+                    {s.isoResultantUrl && (
+                      <>
+                        {" · "}
+                        <a href={s.isoResultantUrl} target="_blank" rel="noopener noreferrer">
+                          ISO/TQC résultant
+                        </a>
+                      </>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
             <ul style={{ listStyle: "none", padding: 0 }}>
               {jointsAffaire.map((j) => {
                 const fncsOuvertes = j.fncs.filter((f) => f.statut !== "CLOTUREE");

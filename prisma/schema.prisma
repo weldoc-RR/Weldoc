@@ -53,6 +53,7 @@ model Personnel {
   documentsExternesValides  DocumentExterne[] @relation("ValidateurDocumentExterne")
   documentsExternesConcerne DocumentExterne[] @relation("PersonnelConcerneDocumentExterne")
   fichesRexRedigees FicheREX[]
+  scansTqcRealises  ScanTqc[] @relation("OperateurScanTqc")
 
   @@index([societe])
 }
@@ -321,6 +322,7 @@ model Affaire {
   pvExternes        PVExterne[]
   etatsDesLieux     EtatDesLieux[]
   documentsExternes DocumentExterne[]
+  scansTqc          ScanTqc[]
 }
 
 // ============================================================================
@@ -600,6 +602,7 @@ model Joint {
   pointsReglementaires PointReglementaire[]
   pvExternes      PVExterne[]
   documentsExternes DocumentExterne[]
+  scansTqc        ScanTqc[]
 
   @@unique([affaireId, numero, indiceReparation])
   @@index([affaireId])
@@ -652,6 +655,37 @@ model TQC {
   ecarts       String?
   observations String?
   signatureId  String?
+}
+
+// Scan 3D (voir le cahier des charges, "TQC (TEL QUE CONSTRUIT)" >
+// "Scan 3D") : deuxième des trois méthodes du TQC, complémentaire et non
+// obligatoire. Ne conserve que la trace du scan externe — fichier source,
+// date, opérateur, zone couverte, logiciel/version, fichier généré et
+// document ISO/TQC qui en résulte — même principe que les CCPU et PV
+// externes déjà en place : un lien vers un fichier déjà hébergé, pas un
+// téléversement direct dans Weldoc. Une zone peut couvrir plusieurs joints
+// à la fois (`joints`), sans jamais redemander leurs dimensions ou leurs
+// photos, déjà saisies ailleurs. Comme un état des lieux ou un document
+// externe : un nouveau scan de la même zone est un nouvel enregistrement,
+// jamais une modification du précédent — pas de PATCH sur ce modèle.
+model ScanTqc {
+  id               String    @id @default(cuid())
+  affaire          Affaire   @relation(fields: [affaireId], references: [id])
+  affaireId        String
+  zone             String
+  dateScan         DateTime
+  operateur        Personnel @relation("OperateurScanTqc", fields: [operateurId], references: [id])
+  operateurId      String
+  logiciel         String?
+  versionLogiciel  String?
+  fichierSourceUrl String
+  fichierGenereUrl String?
+  isoResultantUrl  String?
+  createdAt        DateTime  @default(now())
+
+  joints           Joint[]
+
+  @@index([affaireId])
 }
 
 enum StatutOutil {

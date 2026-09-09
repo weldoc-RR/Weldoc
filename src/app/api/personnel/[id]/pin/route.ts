@@ -4,8 +4,11 @@ import { prisma } from "@/lib/prisma";
 import { requireAuth, aNiveauMinimum } from "@/lib/auth";
 import { hashPin } from "@/lib/signature";
 
+// 6 chiffres minimum (voir cahier des charges : le PIN fait office de
+// signature électronique, il doit être plus difficile à deviner/épier
+// qu'un simple code à 4 chiffres) — relevé depuis le minimum initial de 4.
 const DefinirPinSchema = z.object({
-  pin: z.string().min(4, "Le code PIN doit faire au moins 4 chiffres.").max(12).regex(/^\d+$/, "Chiffres uniquement."),
+  pin: z.string().min(6, "Le code PIN doit faire au moins 6 chiffres.").max(12).regex(/^\d+$/, "Chiffres uniquement."),
 });
 
 // POST /api/personnel/[id]/pin — définit ou change le code PIN utilisé pour

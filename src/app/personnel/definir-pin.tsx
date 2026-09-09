@@ -29,7 +29,7 @@ export function DefinirPin({ personnelId }: { personnelId: string }) {
     });
     setEnCours(false);
     if (!res.ok) {
-      setErreur("Impossible d'enregistrer ce PIN (4 à 12 chiffres, droits requis).");
+      setErreur("Impossible d'enregistrer ce PIN (6 à 12 chiffres, droits requis).");
       return;
     }
     setPin("");
@@ -43,7 +43,7 @@ export function DefinirPin({ personnelId }: { personnelId: string }) {
         required
         type="password"
         inputMode="numeric"
-        placeholder="Nouveau PIN (4-12 chiffres)"
+        placeholder="Nouveau PIN (6-12 chiffres)"
         value={pin}
         onChange={(e) => setPin(e.target.value)}
         style={{ fontSize: "0.85rem", width: 160 }}

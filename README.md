@@ -649,7 +649,10 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   sans se reconnecter.
   - `POST /api/personnel/[id]/pin` — définir/changer son code PIN
     (soi-même, ou niveau 3 pour un premier réglage/oubli) ; bouton
-    "Définir le code PIN" sur `/personnel`.
+    "Définir le code PIN" sur `/personnel`. **6 chiffres minimum** (12
+    maximum) — relevé depuis 4, ce PIN faisant office de signature
+    électronique (identification de phase, documents...), il doit être
+    plus difficile à deviner ou à épier qu'un simple code à 4 chiffres.
   - **Connexion à l'application par QR + PIN** — jusqu'ici, ce PIN ne
     servait qu'à signer un document une fois déjà connecté ; il n'existait
     aucun moyen de se connecter à Weldoc lui-même autrement que matricule

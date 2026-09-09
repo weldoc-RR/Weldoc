@@ -346,6 +346,12 @@ model Affaire {
   // défaut = comportement additif, aucune alerte tant que rien n'est
   // déclaré (même principe que MatierePrevue/AutorisationSignature).
   controlesRequis  String[] @default([])
+  // Types de document exigés sur chaque joint d'origine de l'affaire
+  // (FICHE_SOUDAGE, CCPU_MATIERE, CERTIFICAT_MATIERE, TQC — voir
+  // src/lib/documentsManquants.ts), même principe additif que
+  // controlesRequis ci-dessus : vide par défaut, aucune alerte tant que
+  // rien n'est déclaré.
+  documentsRequis  String[] @default([])
   createdAt         DateTime @default(now())
 
   referentiels      AffaireReferentiel[]

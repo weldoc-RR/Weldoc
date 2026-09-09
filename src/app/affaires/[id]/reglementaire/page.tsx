@@ -6,6 +6,7 @@ import { AjouterPoint } from "./ajouter-point";
 import { PointReglementaireCarte } from "./point-reglementaire";
 import { ReferentielsAffaire } from "./referentiels-affaire";
 import { ControlesRequis } from "./controles-requis";
+import { DocumentsRequis } from "./documents-requis";
 
 export const dynamic = "force-dynamic";
 
@@ -70,6 +71,8 @@ export default async function DossierReglementairePage({ params }: { params: { i
       />
 
       <ControlesRequis affaireId={affaire.id} valeurActuelle={affaire.controlesRequis} />
+
+      <DocumentsRequis affaireId={affaire.id} valeurActuelle={affaire.documentsRequis} />
 
       <AjouterPoint
         affaireId={affaire.id}

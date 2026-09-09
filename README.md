@@ -659,6 +659,17 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   purement indicatif sur `/alertes`, jamais bloquant, et additif : une
   affaire qui n'a rien déclaré n'apparaît jamais dans cette alerte (même
   principe que `MatierePrevue`/`AutorisationSignature`).
+- `src/lib/documentsManquants.ts` — alerte "documents manquants", même
+  principe et même structure que `controlesManquants.ts` ci-dessus.
+  `Affaire.documentsRequis` (`String[]`, sigles FICHE_SOUDAGE/
+  CCPU_MATIERE/CERTIFICAT_MATIERE/TQC) se déclare une seule fois par
+  affaire (section "Documents requis sur chaque joint" sur le dossier
+  réglementaire). Chaque sigle correspond à un champ déjà existant
+  ailleurs dans le modèle (`Joint.ficheSoudageId`,
+  `Matiere.ccpuDocumentUrl`/`certificatUrl`, `Joint.tqc`) — la fonction
+  vérifie seulement sa présence sur chaque joint d'origine, jamais son
+  contenu ni sa conformité. Additif comme les modules du même genre :
+  une affaire n'ayant rien déclaré n'apparaît jamais dans cette alerte.
 - `src/lib/confirmationQualification.ts` — certains référentiels exigent,
   en plus de l'échéance finale d'une qualification, des confirmations
   périodiques (ex. tous les 6 mois) pour qu'elle reste valable — distinct
@@ -825,15 +836,16 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   documents obsolètes, FNC ouvertes, blocages, validations niveau 3 en
   attente, dossiers réglementaires incomplets, contrôles manquants, outils
   métrologiques expirés, documents manquants") : un seul écran plutôt que
-  d'aller chercher chaque signal sur sa page d'origine. Onze catégories :
+  d'aller chercher chaque signal sur sa page d'origine. Douze catégories :
   qualifications et habilitations à échéance ou expirées (`calculerStatut`,
   même calcul que sur la fiche personnel), confirmations de validité de
   qualification et reconductions proposées (déjà existantes), FNC ouvertes
   (bloquantes mises en évidence), points bloquants du dossier réglementaire
   (`pointBloque`, même calcul que `/systeme-qualite`), contrôles manquants
-  (voir `src/lib/controlesManquants.ts` ci-dessous), vérifications
-  d'outillage, et **validations niveau 3 en attente** : reconductions de
-  qualification, documents externes non validés
+  (voir `src/lib/controlesManquants.ts` ci-dessous), documents manquants
+  (voir `src/lib/documentsManquants.ts` ci-dessous, même principe),
+  vérifications d'outillage, et **validations niveau 3 en attente** :
+  reconductions de qualification, documents externes non validés
   (`DocumentExterne.valideConclusion` null), PV externes non revus
   (`PVExterne.revueConclusion` null) et demandes de modification de
   séquencement non tranchées (`DemandeModificationSequencement.statut`
@@ -842,9 +854,9 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   simplement pas remontés ici jusque-là. Chaque catégorie réutilise un
   calcul déjà en place ailleurs dans l'application — rien n'est recalculé
   différemment ici, tout reste recalculé à la lecture, jamais stocké.
-  "Documents obsolètes/manquants" n'est pas repris : Weldoc n'a pas encore
-  de notion de "documents attendus" pour une affaire à comparer à
-  l'existant. Bibliothèque des destinataires du récapitulatif hebdomadaire
+  "Documents obsolètes" (une révision périmée dans la bibliothèque
+  documentaire) reste distinct de "documents manquants" et n'est pas
+  repris ici. Bibliothèque des destinataires du récapitulatif hebdomadaire
   par email, inchangée.
 - `src/app/pieces/page.tsx` — prise en charge de pièces (atelier) et suivi
   de leur statut. "Photos des repères présents sur la pièce" accepte
@@ -1099,10 +1111,11 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   `src/lib/controlesManquants.ts` compare cette liste aux contrôles
   réellement enregistrés — additif comme les autres modules du même
   genre (`MatierePrevue`, `AutorisationSignature`) : une affaire n'ayant
-  rien déclaré n'apparaît jamais dans cette alerte. "Documents
-  obsolètes/manquants" reste hors de `/alertes` — Weldoc n'a pas encore
-  de notion de "documents attendus" pour une affaire à comparer à
-  l'existant. "Validations niveau 3 en attente" couvre maintenant les
+  rien déclaré n'apparaît jamais dans cette alerte. "Documents manquants"
+  fonctionne maintenant sur le même principe (`Affaire.documentsRequis`,
+  voir `src/lib/documentsManquants.ts`) — seuls les "documents obsolètes"
+  (une révision périmée dans la bibliothèque documentaire) restent hors
+  de `/alertes`. "Validations niveau 3 en attente" couvre maintenant les
   reconductions de qualification proposées, les documents externes non
   validés (`DocumentExterne.valideConclusion`), les PV externes non
   revus (`PVExterne.revueConclusion`) et les demandes de modification de

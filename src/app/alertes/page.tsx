@@ -7,6 +7,7 @@ import { calculerStatut } from "@/lib/statutValidite";
 import { calculerProchaineConfirmation } from "@/lib/confirmationQualification";
 import { pointBloque } from "@/lib/dossierReglementaire";
 import { controlesManquants } from "@/lib/controlesManquants";
+import { documentsManquants, LIBELLES_DOCUMENT } from "@/lib/documentsManquants";
 import { Destinataires } from "./destinataires";
 
 export const dynamic = "force-dynamic";
@@ -33,9 +34,13 @@ export const dynamic = "force-dynamic";
 // Elle couvre aussi les demandes de modification de séquencement en
 // attente (voir /avancement/[id], "Demandes de modification de
 // séquencement" — jusqu'ici sans aucune interface). "Documents
-// obsolètes/manquants" reste hors de cette page : Weldoc n'a pas encore
-// de notion de "documents attendus" pour une affaire à comparer à
-// l'existant.
+// manquants" fonctionne maintenant comme "contrôles manquants" :
+// Affaire.documentsRequis (voir src/lib/documentsManquants.ts) déclare
+// une fois quels documents sont exigés par joint (fiche de soudage,
+// CCPU/certificat matière, TQC), comparés à ce qui est réellement
+// renseigné — additif, même principe. "Documents obsolètes" (une
+// révision périmée dans la bibliothèque documentaire) reste hors de
+// cette page : distinct de "documents manquants", pas encore couvert.
 export default async function AlertesPage() {
   const utilisateur = await getUtilisateurConnecteServeur();
   if (!utilisateur) {
@@ -51,6 +56,7 @@ export default async function AlertesPage() {
     pointsReglementaires,
     destinataires,
     jointsControlesManquants,
+    jointsDocumentsManquants,
     documentsExternesEnAttente,
     pvExternesEnAttente,
     demandesSequencementEnAttente,
@@ -77,6 +83,7 @@ export default async function AlertesPage() {
       }),
       prisma.destinataireAlerte.findMany({ orderBy: { email: "asc" } }),
       controlesManquants(),
+      documentsManquants(),
       prisma.documentExterne.findMany({
         where: { valideConclusion: null, retiree: false },
         orderBy: { dateImport: "asc" },
@@ -203,6 +210,20 @@ export default async function AlertesPage() {
             <li key={j.jointId} style={{ color: "darkorange" }}>
               Joint <strong>{j.numero}</strong> — affaire {j.affaireNumero} — contrôle(s) manquant(s) :{" "}
               {j.manquants.join(", ")} (<Link href="/joints">voir les joints</Link>)
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <h2>Documents manquants</h2>
+      {jointsDocumentsManquants.length === 0 ? (
+        <p>Aucune alerte pour l&apos;instant.</p>
+      ) : (
+        <ul>
+          {jointsDocumentsManquants.map((j) => (
+            <li key={j.jointId} style={{ color: "darkorange" }}>
+              Joint <strong>{j.numero}</strong> — affaire {j.affaireNumero} — document(s) manquant(s) :{" "}
+              {j.manquants.map((sigle) => LIBELLES_DOCUMENT[sigle]).join(", ")} (<Link href="/joints">voir les joints</Link>)
             </li>
           ))}
         </ul>

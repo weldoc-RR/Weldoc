@@ -15,6 +15,9 @@ const CreateJointSchema = z.object({
   diametre: z.number().optional(),
   epaisseur: z.number().optional(),
   matiereId: z.string().optional(),
+  // Pièce d'atelier que ce joint concerne (voir Piece dans schema.prisma),
+  // optionnel — n'a de sens que pour une affaire de type ATELIER.
+  pieceId: z.string().optional(),
   // wpsReference/qmosReference restent utilisables en texte libre quand la
   // procédure n'est pas (encore) dans la bibliothèque ; wpsId/qmosId
   // pointent vers une fiche réutilisable (voir /api/wps, /api/qmos).
@@ -75,6 +78,12 @@ export async function POST(req: NextRequest) {
   }
   if (parsed.data.qmosId && !(await prisma.qmos.findUnique({ where: { id: parsed.data.qmosId } }))) {
     return NextResponse.json({ error: "QMOS introuvable." }, { status: 422 });
+  }
+  if (parsed.data.pieceId) {
+    const piece = await prisma.piece.findUnique({ where: { id: parsed.data.pieceId } });
+    if (!piece || piece.affaireId !== parsed.data.affaireId) {
+      return NextResponse.json({ error: "Pièce introuvable pour cette affaire." }, { status: 422 });
+    }
   }
 
   const numero = await prochainNumeroJoint(parsed.data.affaireId);

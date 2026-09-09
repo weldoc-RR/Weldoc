@@ -8,17 +8,20 @@ type Affaire = { id: string; numero: string; client: string };
 type Personnel = { id: string; nom: string; prenom: string };
 type Matiere = { id: string; affaireId: string; designation: string; nuance: string };
 type Wps = { id: string; reference: string; version: string };
+type Piece = { id: string; affaireId: string; reference: string };
 
 export function AjouterJoint({
   affaires,
   soudeurs,
   matieres,
   wpsEnVigueur,
+  pieces,
 }: {
   affaires: Affaire[];
   soudeurs: Personnel[];
   matieres: Matiere[];
   wpsEnVigueur: Wps[];
+  pieces: Piece[];
 }) {
   const router = useRouter();
   const [affaireId, setAffaireId] = useState(affaires[0]?.id ?? "");
@@ -26,6 +29,7 @@ export function AjouterJoint({
   const [typeJoint, setTypeJoint] = useState("");
   const [dn, setDn] = useState("");
   const [matiereId, setMatiereId] = useState("");
+  const [pieceId, setPieceId] = useState("");
   const [soudeurId, setSoudeurId] = useState("");
   const [wpsId, setWpsId] = useState("");
   const [wpsReference, setWpsReference] = useState("");
@@ -33,6 +37,7 @@ export function AjouterJoint({
   const [enCours, setEnCours] = useState(false);
 
   const matieresAffaire = matieres.filter((m) => m.affaireId === affaireId);
+  const piecesAffaire = pieces.filter((p) => p.affaireId === affaireId);
 
   async function ajouter(e: React.FormEvent) {
     e.preventDefault();
@@ -48,6 +53,7 @@ export function AjouterJoint({
         typeJoint: typeJoint || undefined,
         dn: dn || undefined,
         matiereId: matiereId || undefined,
+        pieceId: pieceId || undefined,
         soudeurId: soudeurId || undefined,
         wpsId: wpsId || undefined,
         wpsReference: wpsId ? undefined : wpsReference || undefined,
@@ -63,6 +69,7 @@ export function AjouterJoint({
     setTypeJoint("");
     setDn("");
     setMatiereId("");
+    setPieceId("");
     setSoudeurId("");
     setWpsId("");
     setWpsReference("");
@@ -82,6 +89,7 @@ export function AjouterJoint({
           onChange={(e) => {
             setAffaireId(e.target.value);
             setMatiereId("");
+            setPieceId("");
           }}
           style={{ display: "block", width: "100%", padding: "0.4rem" }}
         >
@@ -119,6 +127,19 @@ export function AjouterJoint({
           ))}
         </select>
       </label>
+      {piecesAffaire.length > 0 && (
+        <label>
+          Pièce concernée (atelier, optionnel)
+          <select value={pieceId} onChange={(e) => setPieceId(e.target.value)} style={{ display: "block", width: "100%", padding: "0.4rem" }}>
+            <option value="">— non précisée —</option>
+            {piecesAffaire.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.reference}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
       <label>
         Soudeur (optionnel)
         <select value={soudeurId} onChange={(e) => setSoudeurId(e.target.value)} style={{ display: "block", width: "100%", padding: "0.4rem" }}>

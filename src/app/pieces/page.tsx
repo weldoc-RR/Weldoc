@@ -2,10 +2,21 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getUtilisateurConnecteServeur } from "@/lib/auth";
-import { AjouterPiece, LIBELLE_STATUT } from "./ajouter-piece";
+import { AjouterPiece } from "./ajouter-piece";
+import { LIBELLE_STATUT } from "./libelle-statut";
 import { ChangerStatut } from "./changer-statut";
+import { BadgeControle } from "../joints/badge-controle";
 
 export const dynamic = "force-dynamic";
+
+function dernierResultat(controles: { dateControle: Date; resultat: string }[]): string | null {
+  if (controles.length === 0) return null;
+  return [...controles].sort((a, b) => b.dateControle.getTime() - a.dateControle.getTime())[0].resultat;
+}
+
+function numeroAffiche(j: { numero: string; indiceReparation: number }) {
+  return j.indiceReparation > 0 ? `${j.numero} R${j.indiceReparation}` : j.numero;
+}
 
 export default async function PiecesPage() {
   const utilisateur = await getUtilisateurConnecteServeur();
@@ -15,7 +26,23 @@ export default async function PiecesPage() {
 
   const [pieces, affaires] = await Promise.all([
     prisma.piece.findMany({
-      include: { affaire: { select: { numero: true, client: true } } },
+      include: {
+        affaire: { select: { numero: true, client: true } },
+        joints: {
+          select: {
+            id: true,
+            numero: true,
+            indiceReparation: true,
+            controlesDim: { select: { dateControle: true, resultat: true } },
+            controlesVisuels: { select: { dateControle: true, resultat: true } },
+            controlesRessuage: { select: { dateControle: true, resultat: true } },
+            controlesMagnetoscopie: { select: { dateControle: true, resultat: true } },
+            controlesRadiographie: { select: { dateControle: true, resultat: true } },
+            controlesUltrasons: { select: { dateControle: true, resultat: true } },
+          },
+          orderBy: { numero: "asc" },
+        },
+      },
       orderBy: { datePriseEnCharge: "desc" },
     }),
     prisma.affaire.findMany({ orderBy: { numero: "asc" }, select: { id: true, numero: true, client: true } }),
@@ -52,6 +79,24 @@ export default async function PiecesPage() {
                       photo
                     </a>
                   ))}
+                </div>
+              )}
+              {p.joints.length > 0 && (
+                <div style={{ marginTop: "0.4rem", fontSize: "0.85rem" }}>
+                  Joints concernés :
+                  <ul style={{ margin: "0.2rem 0 0 0", padding: 0, listStyle: "none" }}>
+                    {p.joints.map((j) => (
+                      <li key={j.id} style={{ display: "flex", alignItems: "center", gap: "0.3rem", marginBottom: "0.15rem" }}>
+                        <Link href="/joints">{numeroAffiche(j)}</Link>
+                        <BadgeControle sigle="DIM" dernierResultat={dernierResultat(j.controlesDim)} />
+                        <BadgeControle sigle="VT" dernierResultat={dernierResultat(j.controlesVisuels)} />
+                        <BadgeControle sigle="PT" dernierResultat={dernierResultat(j.controlesRessuage)} />
+                        <BadgeControle sigle="MT" dernierResultat={dernierResultat(j.controlesMagnetoscopie)} />
+                        <BadgeControle sigle="RT" dernierResultat={dernierResultat(j.controlesRadiographie)} />
+                        <BadgeControle sigle="UT" dernierResultat={dernierResultat(j.controlesUltrasons)} />
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               )}
             </li>

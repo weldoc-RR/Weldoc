@@ -634,6 +634,13 @@ model Joint {
   epaisseur       Float?
   matiere         Matiere? @relation(fields: [matiereId], references: [id])
   matiereId       String?
+  // Pièce d'atelier que ce joint concerne (voir le cahier des charges,
+  // fabrication en atelier), optionnel — une affaire "chantier" n'a
+  // jamais de pièce à lier. Permet à une pièce prise en charge de suivre
+  // les joints/contrôles qui la concernent au fil de la fabrication,
+  // plutôt que de rester un objet indépendant sans lien.
+  piece           Piece?   @relation(fields: [pieceId], references: [id])
+  pieceId         String?
   // wpsReference/qmosReference restent en texte libre pour les cas non
   // encore couverts par la bibliothèque (voir Wps/Qmos ci-dessous) ; wpsId/
   // qmosId sont le lien structuré vers une fiche réutilisable quand elle
@@ -1657,6 +1664,11 @@ model Piece {
   priseEnChargeParId String
   datePriseEnCharge  DateTime    @default(now())
   statut             StatutPiece @default(PRISE_EN_CHARGE)
+  // Joints/contrôles qui concernent cette pièce au fil de la fabrication
+  // en atelier (voir Joint.pieceId ci-dessous) — la pièce reste l'objet
+  // suivi (prise en charge → fabrication → terminée → expédiée), les
+  // joints restent les soudures elles-mêmes, jamais dupliquées.
+  joints             Joint[]
 
   @@unique([affaireId, reference])
   @@index([affaireId])

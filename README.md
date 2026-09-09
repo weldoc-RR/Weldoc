@@ -850,7 +850,15 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   de leur statut. "Photos des repères présents sur la pièce" accepte
   toujours des adresses collées à la main (une par ligne), et propose
   maintenant aussi `FileUpload` pour déposer directement une photo (son
-  adresse s'ajoute à la liste).
+  adresse s'ajoute à la liste). **Suivi des joints d'une pièce** (voir le
+  cahier des charges, fabrication en atelier) — jusqu'ici `Piece` et
+  `Joint` restaient deux objets indépendants ; `Joint.pieceId` (optionnel,
+  n'a de sens que pour une affaire `ATELIER`) relie maintenant un joint à
+  la pièce qu'il concerne. "Créer un joint" (`/joints`) propose "Pièce
+  concernée" dès qu'au moins une pièce existe pour l'affaire choisie ; la
+  page Pièces affiche sous chaque pièce ses joints liés avec leurs badges
+  de contrôle (`BadgeControle`, réutilisé tel quel), pour suivre l'avancement
+  d'une pièce sans dupliquer aucune donnée du joint.
 - `src/app/joints/page.tsx` — création de joints, consultation groupée par
   affaire avec la chaîne de réparation affichée en clair (M800 → M800 R1 →
   M800 R2...), un badge par type de contrôle (résultat le plus récent) et
@@ -1103,14 +1111,6 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   n'y figure volontairement pas : rien ne permet aujourd'hui de
   distinguer une affaire réellement prête à valider d'une affaire encore
   en cours, et Weldoc ne devine jamais ce genre de seuil.
-- L'adaptation complète à la fabrication en atelier : le cahier des
-  charges est écrit en vocabulaire "chantier" (organigramme chantier,
-  prise en charge du chantier...). `Affaire.typeRealisation`
-  (`CHANTIER`/`ATELIER`), `chantier`/`site` facultatifs, et la prise en
-  charge de pièces (`Piece`) existent, mais le lien entre une pièce et les
-  joints/contrôles qui la concernent au fil de la fabrication n'est pas
-  encore modélisé — pour l'instant `Piece` et `Joint` restent deux objets
-  indépendants.
 - Le dépôt de fichier (voir ci-dessus, `POST /api/upload`) couvre
   maintenant les certificats de qualification/habilitation/acuité
   visuelle, les documents justificatifs du personnel, le book photo

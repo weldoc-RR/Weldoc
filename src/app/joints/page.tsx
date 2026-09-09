@@ -27,7 +27,7 @@ export default async function JointsPage() {
     redirect("/login");
   }
 
-  const [joints, affaires, soudeurs, matieres, wpsList, consommablesList, outilsList, produitsDimList, scansTqc, matieresPrevues] = await Promise.all([
+  const [joints, affaires, soudeurs, matieres, wpsList, consommablesList, outilsList, produitsDimList, scansTqc, matieresPrevues, pieces] = await Promise.all([
     prisma.joint.findMany({
       include: {
         affaire: { select: { numero: true, client: true } },
@@ -52,6 +52,7 @@ export default async function JointsPage() {
           },
         },
         matiere: { select: { designation: true, nuance: true, normeProduit: true, diametre: true, epaisseur: true } },
+        piece: { select: { reference: true } },
         wps: {
           select: {
             reference: true,
@@ -110,6 +111,7 @@ export default async function JointsPage() {
       include: { affaire: { select: { numero: true } } },
       orderBy: { createdAt: "desc" },
     }),
+    prisma.piece.findMany({ select: { id: true, affaireId: true, reference: true }, orderBy: { reference: "asc" } }),
   ]);
   // Seule la révision la plus récente (non retirée) de chaque référence
   // est proposée au contrôle, même principe que les WPS en vigueur
@@ -194,7 +196,7 @@ export default async function JointsPage() {
       />
 
       <h2>Créer un joint</h2>
-      <AjouterJoint affaires={affaires} soudeurs={soudeurs} matieres={matieres} wpsEnVigueur={wpsEnVigueur} />
+      <AjouterJoint affaires={affaires} soudeurs={soudeurs} matieres={matieres} wpsEnVigueur={wpsEnVigueur} pieces={pieces} />
 
       <h2 style={{ marginTop: "2rem" }}>Joints enregistrés</h2>
       {joints.length === 0 ? (
@@ -280,6 +282,7 @@ export default async function JointsPage() {
                     {j.typeAction && ` (${j.typeAction.toLowerCase()})`}
                     {j.soudeur && ` — ${j.soudeur.prenom} ${j.soudeur.nom}`}
                     {j.matiere && ` — ${j.matiere.designation} (${j.matiere.nuance})`}
+                    {j.piece && ` — pièce ${j.piece.reference}`}
                     {j.wps && ` — WPS ${j.wps.reference} (${j.wps.version})`}
                     <span style={{ marginLeft: "0.6rem", display: "inline-flex", gap: "0.25rem" }}>
                       <BadgeControle sigle="DIM" dernierResultat={dernierResultat(j.controlesDim)} />

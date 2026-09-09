@@ -6,13 +6,6 @@ import { FileUpload } from "@/components/file-upload";
 
 type Affaire = { id: string; numero: string; client: string };
 
-const LIBELLE_STATUT: Record<string, string> = {
-  PRISE_EN_CHARGE: "prise en charge",
-  EN_FABRICATION: "en fabrication",
-  TERMINEE: "terminée",
-  EXPEDIEE: "expédiée",
-};
-
 export function AjouterPiece({ affaires }: { affaires: Affaire[] }) {
   const router = useRouter();
   const [affaireId, setAffaireId] = useState(affaires[0]?.id ?? "");
@@ -104,5 +97,3 @@ export function AjouterPiece({ affaires }: { affaires: Affaire[] }) {
     </form>
   );
 }
-
-export { LIBELLE_STATUT };

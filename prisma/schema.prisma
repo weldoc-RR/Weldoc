@@ -56,6 +56,8 @@ model Personnel {
   scansTqcRealises  ScanTqc[] @relation("OperateurScanTqc")
   autorisationsSignature AutorisationSignature[]
   autorisationsSignatureAccordees AutorisationSignature[] @relation("AccordeParAutorisationSignature")
+  documentsJustificatifs DocumentJustificatifPersonnel[]
+  documentsJustificatifsAjoutes DocumentJustificatifPersonnel[] @relation("AjouteParDocumentJustificatif")
 
   @@index([societe])
 }
@@ -249,6 +251,33 @@ model AcuiteVisuelle {
   organisme      String?
   certificatUrl  String?
   statut         StatutValidite @default(VALIDE)
+  createdAt      DateTime       @default(now())
+
+  @@index([personnelId])
+}
+
+// Documents justificatifs du personnel (voir le cahier des charges,
+// fiche personne : "..., documents justificatifs, ..."), au-delà des
+// qualifications/habilitations/formations/acuités visuelles déjà
+// modélisées : tout document libre attaché à une personne (pièce
+// d'identité, permis, CACES, autorisation spécifique...). Même principe
+// que les CCPU/documents externes : un lien vers un fichier déjà
+// hébergé, pas de téléversement direct dans Weldoc. Un renouvellement
+// (nouvelle pièce, nouvelle échéance) est un nouvel enregistrement,
+// jamais une modification du précédent (même regroupement "actuel +
+// historique" que les habilitations sur /personnel).
+model DocumentJustificatifPersonnel {
+  id             String         @id @default(cuid())
+  personnel      Personnel      @relation(fields: [personnelId], references: [id])
+  personnelId    String
+  intitule       String
+  reference      String?
+  documentUrl    String
+  dateDocument   DateTime?
+  dateExpiration DateTime?
+  statut         StatutValidite @default(VALIDE)
+  ajoutePar      Personnel      @relation("AjouteParDocumentJustificatif", fields: [ajouteParId], references: [id])
+  ajouteParId    String
   createdAt      DateTime       @default(now())
 
   @@index([personnelId])

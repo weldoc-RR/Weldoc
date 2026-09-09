@@ -616,6 +616,20 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   n'en avaient pas encore (`POST /api/habilitations`,
   `POST /api/formations`, `POST /api/acuites-visuelles`, tous existants
   depuis un module précédent).
+  - **Documents justificatifs du personnel** (voir le cahier des charges,
+    fiche personne : "..., documents justificatifs, ..."), au-delà des
+    qualifications/habilitations/formations/acuités visuelles déjà
+    modélisées : tout document libre attaché à une personne (pièce
+    d'identité, permis, CACES, autorisation spécifique...). Nouveau
+    modèle `DocumentJustificatifPersonnel`, `GET`/`POST /api/documents-
+    justificatifs-personnel` (réservé au niveau 2 minimum pour l'ajout,
+    comme les habilitations), bouton "+ Ajouter un document
+    justificatif" sur `/personnel`. Même principe que les CCPU/documents
+    externes : un lien vers un fichier déjà hébergé, pas de
+    téléversement direct. Un renouvellement (nouvelle pièce, nouvelle
+    échéance) est un nouvel enregistrement, jamais une modification du
+    précédent — même affichage "actuel + historique repliable" que les
+    habilitations, regroupé par intitulé.
   - **Droits et modifications** (voir le cahier des charges) : réservé au
     niveau 3, un bouton "Changer le niveau" par personne
     (`PATCH /api/personnel/[id]`) et, si un compte de connexion existe,
@@ -839,10 +853,6 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   existe et peut être lié à une affaire ou une qualification, mais pour
   l'instant seule une personne ayant accès à la base peut y ajouter une
   ligne.
-- Les documents justificatifs génériques attachés au personnel (mentionnés
-  au cahier des charges à côté des qualifications/habilitations/
-  formations/autorisations de signature — ces quatre-là sont modélisés,
-  un document justificatif "libre" ne l'est pas encore).
 - Les droits contextuels fins évoqués au cahier des charges ("selon le
   contexte de l'affaire") : pour l'instant, les droits ne dépendent que du
   niveau (1/2/3) de la personne, pas encore de son rôle ni de l'affaire

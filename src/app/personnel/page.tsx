@@ -8,6 +8,7 @@ import { AjouterQualification } from "./ajouter-qualification";
 import { AjouterHabilitation } from "./ajouter-habilitation";
 import { AjouterFormation } from "./ajouter-formation";
 import { AjouterAcuite } from "./ajouter-acuite";
+import { AjouterDocumentJustificatif } from "./ajouter-document-justificatif";
 import { ConfirmerValidite } from "./confirmer-validite";
 import { ValiderReconduction } from "./valider-reconduction";
 import { DefinirPin } from "./definir-pin";
@@ -67,6 +68,10 @@ export default async function PersonnelPage() {
         habilitations: { orderBy: { dateObtention: "desc" } },
         formations: { orderBy: { dateRealisation: "desc" } },
         acuitesVisuelles: { orderBy: { dateTest: "desc" } },
+        documentsJustificatifs: {
+          include: { ajoutePar: { select: { nom: true, prenom: true } } },
+          orderBy: { createdAt: "desc" },
+        },
         compte: { select: { id: true, statut: true } },
         autorisationsSignature: {
           where: { active: true },
@@ -97,6 +102,7 @@ export default async function PersonnelPage() {
           <AjouterHabilitation personnel={personnel.map((p) => ({ id: p.id, nom: p.nom, prenom: p.prenom }))} />
           <AjouterFormation personnel={personnel.map((p) => ({ id: p.id, nom: p.nom, prenom: p.prenom }))} />
           <AjouterAcuite personnel={personnel.map((p) => ({ id: p.id, nom: p.nom, prenom: p.prenom }))} />
+          <AjouterDocumentJustificatif personnel={personnel.map((p) => ({ id: p.id, nom: p.nom, prenom: p.prenom }))} />
         </div>
       )}
 
@@ -104,6 +110,7 @@ export default async function PersonnelPage() {
         {personnel.map((p) => {
           const habilitationsGroupees = grouperActuelEtHistorique(p.habilitations, (h) => h.intitule);
           const acuitesGroupees = grouperActuelEtHistorique(p.acuitesVisuelles, () => "acuite");
+          const documentsGroupes = grouperActuelEtHistorique(p.documentsJustificatifs, (d) => d.intitule);
 
           return (
             <li key={p.id} style={{ marginBottom: "1.5rem", borderBottom: "1px solid #ddd", paddingBottom: "1rem" }}>
@@ -271,6 +278,53 @@ export default async function PersonnelPage() {
                                 {historique.map((anc) => (
                                   <li key={anc.id}>
                                     {anc.dateTest.toLocaleDateString("fr-FR")} — {anc.apte ? "apte" : "inapte"}
+                                  </li>
+                                ))}
+                              </ul>
+                            </details>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </>
+              )}
+
+              {documentsGroupes.length > 0 && (
+                <>
+                  <div style={{ fontSize: "0.8rem", color: "#52514e", marginTop: "0.4rem" }}>
+                    Documents justificatifs
+                  </div>
+                  <ul>
+                    {documentsGroupes.map(({ actuel: d, historique }) => {
+                      const statutCalcule = calculerStatut(d.dateExpiration, { suspendu: d.statut === "SUSPENDU" });
+                      return (
+                        <li key={d.id}>
+                          {d.intitule}
+                          {d.reference && ` (${d.reference})`} —{" "}
+                          <span style={{ color: couleurStatut(statutCalcule) }}>{LIBELLE_STATUT[statutCalcule]}</span>
+                          {d.dateExpiration && ` (échéance ${d.dateExpiration.toLocaleDateString("fr-FR")})`} —{" "}
+                          <a href={d.documentUrl} target="_blank" rel="noopener noreferrer">
+                            voir le document
+                          </a>{" "}
+                          <span style={{ fontSize: "0.8rem", color: "#898781" }}>
+                            (ajouté par {d.ajoutePar.prenom} {d.ajoutePar.nom} le{" "}
+                            {d.createdAt.toLocaleDateString("fr-FR")})
+                          </span>
+                          {historique.length > 0 && (
+                            <details style={{ fontSize: "0.8rem", color: "#52514e" }}>
+                              <summary>Historique ({historique.length})</summary>
+                              <ul>
+                                {historique.map((anc) => (
+                                  <li key={anc.id}>
+                                    {anc.dateDocument
+                                      ? anc.dateDocument.toLocaleDateString("fr-FR")
+                                      : anc.createdAt.toLocaleDateString("fr-FR")}
+                                    {anc.dateExpiration && `, expiré le ${anc.dateExpiration.toLocaleDateString("fr-FR")}`}
+                                    {" — "}
+                                    <a href={anc.documentUrl} target="_blank" rel="noopener noreferrer">
+                                      voir
+                                    </a>
                                   </li>
                                 ))}
                               </ul>

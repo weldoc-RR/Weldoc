@@ -362,6 +362,23 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
     MODIFICATIONS"), lien visible uniquement pour ce niveau depuis la page
     d'accueil. Filtrable par entité en cliquant sur son nom dans le
     tableau.
+- **Retour d'expérience (REX)** (voir le cahier des charges) — une fiche
+  REX par FNC documentée (`FicheREX`, `fncId` unique) : type de problème,
+  origine, cause, solution, résultat. Le classement par matériau/procédé/
+  fournisseur/type de joint/chantier, prévu au cahier des charges, n'est
+  jamais ressaisi : il se lit à la lecture sur le joint et l'affaire de
+  la FNC (`Joint.matiere`, `Joint.wps`, `Affaire.chantier`...).
+  "Identification de problématiques similaires" reste explicitement "à
+  terme" au cahier des charges — pas construit ici (pas d'assistance IA
+  sur la recherche) : seul un filtre manuel par type de problème aide à
+  repérer des cas proches.
+  - `GET`/`POST /api/rex` — liste et rédaction (n'importe quelle personne
+    connectée : ce n'est pas une décision réglementaire, une FNC n'a
+    qu'une seule fiche REX).
+  - `src/app/rex/page.tsx` — les FNC sans fiche REX encore (avec le
+    formulaire de rédaction), la base REX filtrable par type de problème,
+    et le contexte du joint/de l'affaire affiché sous chaque fiche. Lien
+    depuis la page d'accueil.
 - **Dossier réglementaire** (voir le cahier des charges, "DOSSIER
   RÉGLEMENTAIRE" / "Blocage réglementaire") — distinct du rapport de fin
   de fabrication : ici, chaque exigence réglementaire (ex. "Attestation de
@@ -718,7 +735,9 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   pas encore joint par joint (ex. "38 joints soudés sur 120 prévus") : ça
   suppose de connaître à l'avance le nombre de joints prévus sur l'affaire,
   ce qui n'est pas encore saisi dans Weldoc.
-- L'essentiel des ~50 modules du cahier des charges (REX, etc.). Le TQC
+- Une bonne partie des ~50 modules du cahier des charges reste encore à
+  construire (temps et productivité, système qualité, bibliothèque
+  dimensionnelle...). Le TQC
   ("tel que construit") a une première version textuelle (voir ci-dessus,
   bouton "+ TQC" sur `/joints`), mais deux des trois méthodes prévues au
   cahier des charges restent à construire : l'ISO manuel au stylet sur

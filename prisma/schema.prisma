@@ -52,6 +52,7 @@ model Personnel {
   documentsExternesImportes DocumentExterne[] @relation("ImporteurDocumentExterne")
   documentsExternesValides  DocumentExterne[] @relation("ValidateurDocumentExterne")
   documentsExternesConcerne DocumentExterne[] @relation("PersonnelConcerneDocumentExterne")
+  fichesRexRedigees FicheREX[]
 
   @@index([societe])
 }
@@ -1021,6 +1022,33 @@ model FNC {
   valideeParId      String?
   photos            Photo[]
   documentsExternes DocumentExterne[]
+  rex               FicheREX?
+}
+
+// Retour d'expérience (voir le cahier des charges, "RETOUR D'EXPÉRIENCE
+// (REX)") : une fiche de synthèse par FNC, rédigée une fois la cause
+// comprise et une solution mise en œuvre. Le classement par matériau/
+// procédé/fournisseur/type de joint/chantier n'est jamais dupliqué ici :
+// il se lit déjà sur le joint et l'affaire de la FNC (Joint.matiere,
+// Joint.wps, Affaire.chantier...), consultés à la lecture sur
+// /rex. "Identification de problématiques similaires" reste explicitement
+// "à terme" au cahier des charges — pas construit ici : l'IA n'assiste
+// pas encore cette recherche, seul le classement manuel par type de
+// problème permet de repérer des cas proches.
+model FicheREX {
+  id            String    @id @default(cuid())
+  fnc           FNC       @relation(fields: [fncId], references: [id])
+  fncId         String    @unique
+  typeProbleme  String
+  origine       String?
+  cause         String
+  solution      String
+  resultat      String?
+  redacteur     Personnel @relation(fields: [redacteurId], references: [id])
+  redacteurId   String
+  dateRedaction DateTime  @default(now())
+
+  @@index([typeProbleme])
 }
 
 // Book photo (voir le cahier des charges) : photos horodatées rattachées à

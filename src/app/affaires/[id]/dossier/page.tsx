@@ -156,6 +156,32 @@ export default async function DossierPage({ params }: { params: { id: string } }
             : "— non désigné —"}
         </li>
       </ul>
+      <p className="no-print" style={{ fontSize: "0.85rem" }}>
+        <Link href={`/affaires/${dossier.affaire.id}/planning`}>Voir/modifier le planning →</Link>
+      </p>
+      {dossier.organigramme.equipeParFonction.length === 0 ? (
+        <p>Aucune affectation active pour l&apos;instant (voir le planning).</p>
+      ) : (
+        dossier.organigramme.equipeParFonction.map((groupe) => (
+          <div key={groupe.fonction}>
+            <p style={{ margin: "0.4rem 0 0.1rem 0" }}>
+              <strong>{groupe.fonction}</strong>
+            </p>
+            <ul>
+              {groupe.personnes.map((p, i) => (
+                <li key={i}>
+                  {p.prenom} {p.nom}
+                  {p.present && <span style={{ color: "#0ca30c" }}> (présent)</span>}
+                  {p.codes && ` — codes : ${p.codes}`}
+                  {p.habilitationsExpirees > 0 && (
+                    <span style={{ color: "crimson" }}> — {p.habilitationsExpirees} habilitation(s) expirée(s)</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))
+      )}
 
       {/* ————— 6. Bilan technique de la prestation ————— */}
       <h3>6. Bilan technique de la prestation</h3>

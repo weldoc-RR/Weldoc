@@ -9,6 +9,9 @@ const CreateAffectationSchema = z.object({
   affaireId: z.string().min(1),
   jointId: z.string().optional(),
   fonction: z.string().min(1),
+  // Codes d'habilitation/accès site (ex. "CODES GTA" chez certains
+  // clients), en texte libre — jamais interprétés par Weldoc.
+  codes: z.string().optional(),
   dateDebut: z.string().datetime(),
   dateFin: z.string().datetime(),
 });
@@ -77,4 +80,30 @@ export async function POST(req: NextRequest) {
   }
 
   return NextResponse.json({ affectation, alertes }, { status: 201 });
+}
+
+const UpdateAffectationSchema = z.object({
+  id: z.string().min(1),
+  statut: z.enum(["PLANIFIEE", "EN_COURS", "TERMINEE", "ANNULEE"]),
+});
+
+// PATCH /api/affectations — fait avancer le statut d'une affectation
+// (notamment EN_COURS = présence effective sur le chantier). N'écrase
+// jamais les autres champs (dates, fonction, codes) : un changement de
+// périmètre se fait via une nouvelle affectation.
+export async function PATCH(req: NextRequest) {
+  const droits = await requireNiveau(req, "NIVEAU_2");
+  if ("erreur" in droits) return droits.erreur;
+
+  const body = await req.json();
+  const parsed = UpdateAffectationSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+  }
+
+  const affectation = await prisma.affectation.update({
+    where: { id: parsed.data.id },
+    data: { statut: parsed.data.statut },
+  });
+  return NextResponse.json(affectation);
 }

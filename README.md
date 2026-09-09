@@ -173,15 +173,29 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
     (congé, maladie, formation, autre), utilisée pour détecter les
     conflits de planning (niveau 2 minimum)
   - `POST /api/affectations` — affecter une personne à une affaire (et
-    éventuellement un joint précis). Vérifie compétence, qualification,
-    habilitation et disponibilité, mais **ne bloque jamais** la création :
-    les alertes sont renvoyées dans la réponse (et tracées dans l'audit
-    trail s'il y en a), la décision de passer outre reste humaine, comme
-    demandé au cahier des charges ("signale... peut proposer")
+    éventuellement un joint précis), avec ses codes d'habilitation/accès
+    site (`Affectation.codes` — texte libre, ex. "CODES GTA" chez
+    certains clients, jamais interprétés par Weldoc). Vérifie compétence,
+    qualification, habilitation et disponibilité, mais **ne bloque
+    jamais** la création : les alertes sont renvoyées dans la réponse (et
+    tracées dans l'audit trail s'il y en a), la décision de passer outre
+    reste humaine, comme demandé au cahier des charges ("signale... peut
+    proposer"). `PATCH /api/affectations` fait avancer son statut
+    (notamment `EN_COURS` = présence effective sur le chantier).
+  - `src/app/affaires/[id]/planning/page.tsx` — la page qui manquait pour
+    piloter tout ça (jusqu'ici seule l'API existait) : affectations
+    groupées par fonction, formulaire d'ajout (avec alertes affichées),
+    boutons "Marquer présent"/"Terminer"/"Annuler".
   - `GET /api/affaires/[id]/organigramme` — généré automatiquement à
     partir des rôles de l'affaire et des affectations actuellement
     actives ; rien n'est stocké séparément, donc toujours à jour par
-    construction
+    construction. Pour chaque personne de l'équipe : ses codes, si elle
+    est actuellement présente (statut `EN_COURS`), et le nombre de ses
+    habilitations expirées — de quoi alimenter à la fois l'annexe
+    organigramme et l'annexe habilitations du rapport de fin de
+    fabrication (section "4. Organigramme de l'intervention" de
+    `/affaires/[id]/dossier`, qui affiche maintenant toute l'équipe du
+    planning et plus seulement les 3 rôles fixes de l'affaire).
 - `src/lib/sequencement.ts` — crée les 5 séquences par défaut, et vérifie
   qu'une phase peut démarrer (séquences précédentes terminées, ou
   dérogation acceptée par le niveau 3).

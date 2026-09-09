@@ -43,6 +43,19 @@ export interface DossierFinFabrication {
     responsable: { nom: string; prenom: string } | null;
     chargeAffaires: { nom: string; prenom: string } | null;
     coordinateurSoudage: { nom: string; prenom: string } | null;
+    // Équipe issue du planning (voir /affaires/[id]/planning et
+    // POST /api/affectations) : alimente l'annexe organigramme ET
+    // l'annexe habilitations sans rien ressaisir.
+    equipeParFonction: {
+      fonction: string;
+      personnes: {
+        nom: string;
+        prenom: string;
+        codes: string | null;
+        present: boolean;
+        habilitationsExpirees: number;
+      }[];
+    }[];
   };
   avancement: AvancementAffaire;
   joints: {
@@ -145,6 +158,7 @@ export async function compilerDossierFinFabrication(affaireId: string): Promise<
     matieres,
     bilanDosimetrique,
     portiquesRadioprotection,
+    affectationsActives,
   ] = await Promise.all([
     prisma.personnel.findMany({ where: { id: { in: idsRoles } }, select: { id: true, nom: true, prenom: true } }),
     prisma.joint.findMany({
@@ -203,11 +217,35 @@ export async function compilerDossierFinFabrication(affaireId: string): Promise<
     prisma.matiere.findMany({ where: { affaireId }, select: { designation: true, nuance: true, fournisseur: true } }),
     prisma.bilanDosimetrique.findUnique({ where: { affaireId } }),
     prisma.portiqueRadioprotection.findMany({ where: { affaireId }, orderBy: { categorie: "asc" } }),
+    prisma.affectation.findMany({
+      where: { affaireId, statut: { in: ["PLANIFIEE", "EN_COURS"] } },
+      include: { personnel: { include: { habilitations: true } } },
+      orderBy: { fonction: "asc" },
+    }),
   ]);
 
   const avancement = await calculerAvancementAffaire(affaireId);
 
   const trouverRole = (id: string | null) => personnesRoles.find((p) => p.id === id) ?? null;
+
+  const equipeParFonctionMap = new Map<string, typeof affectationsActives>();
+  for (const a of affectationsActives) {
+    const liste = equipeParFonctionMap.get(a.fonction) ?? [];
+    liste.push(a);
+    equipeParFonctionMap.set(a.fonction, liste);
+  }
+  const equipeParFonction = [...equipeParFonctionMap.entries()].map(([fonction, liste]) => ({
+    fonction,
+    personnes: liste.map((a) => ({
+      nom: a.personnel.nom,
+      prenom: a.personnel.prenom,
+      codes: a.codes,
+      present: a.statut === "EN_COURS",
+      habilitationsExpirees: a.personnel.habilitations.filter(
+        (h) => calculerStatut(h.dateExpiration, { suspendu: h.statut === "SUSPENDU" }) === "EXPIRE"
+      ).length,
+    })),
+  }));
 
   // Personnel intervenant : soudeurs (joints.soudeurId) + contrôleurs (tous
   // types de contrôle confondus), avec le nombre de leurs qualifications
@@ -347,6 +385,7 @@ export async function compilerDossierFinFabrication(affaireId: string): Promise<
       responsable: trouverRole(affaire.responsableId),
       chargeAffaires: trouverRole(affaire.chargeAffairesId),
       coordinateurSoudage: trouverRole(affaire.coordinateurSoudageId),
+      equipeParFonction,
     },
     avancement,
     joints: jointsCompiles.map(({ _indiceReparation, _aucunControleVisuel, ...j }) => j),

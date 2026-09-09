@@ -1148,6 +1148,10 @@ model Affectation {
   joint       Joint?            @relation(fields: [jointId], references: [id])
   jointId     String?
   fonction    String
+  // Codes d'habilitation/accès site (ex. "CODES GTA" chez certains
+  // clients) en texte libre : leur nomenclature est propre à
+  // l'entreprise/au site, jamais interprétée par Weldoc.
+  codes       String?
   dateDebut   DateTime
   dateFin     DateTime
   statut      StatutAffectation @default(PLANIFIEE)

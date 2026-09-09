@@ -504,6 +504,17 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   règle configurable par l'entreprise ; et on ne sait pas quelle
   habilitation précise est requise pour quelle fonction, donc on se
   contente de signaler les habilitations déjà expirées.
+  - **Proposition d'affectation adaptée** (voir le cahier des charges,
+    "PLANNING" : "peut proposer une affectation adaptée") :
+    `proposerAffectation()` réutilise exactement `evaluerAffectation()`
+    ci-dessus sur toutes les personnes ayant la fonction demandée,
+    classées par nombre d'alertes croissant — les personnes disponibles
+    et qualifiées en tête, sans jamais décider à la place de l'humain
+    (`GET /api/affectations/proposition?fonction=...&dateDebut=...&
+    dateFin=...&jointId=...`). Bouton "Voir les personnes adaptées" sur
+    le formulaire d'affectation (`/affaires/[id]/planning`) : affiche
+    chaque candidat avec ses éventuelles alertes, cliquer un nom
+    pré-remplit le champ "Personne" du formulaire.
 - `src/lib/qualifications.ts` — quand un soudeur réalise un joint, Weldoc
   vérifie si l'une de ses qualifications soudage arrive à échéance et, le
   cas échéant, propose automatiquement une reconduction (avec le joint
@@ -859,10 +870,6 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
 - La signature QR + PIN couvre maintenant la validation d'une reconduction,
   la confirmation de validité de qualification, les six types de
   contrôle et la fiche technique de suivi de soudage (voir ci-dessus).
-- La proposition automatique d'affectation adaptée en cas d'alerte
-  (le cahier des charges évoque "peut proposer une affectation adaptée") :
-  pour l'instant Weldoc détecte et signale, mais ne suggère pas encore
-  d'alternative.
 - L'import du CCPU et la reconnaissance de caractères sur étiquette
   (consommables comme matières) : pour l'instant les URLs de documents se
   renseignent à la main.

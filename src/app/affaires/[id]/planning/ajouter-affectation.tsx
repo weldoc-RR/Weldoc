@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 type Personnel = { id: string; nom: string; prenom: string };
 type Joint = { id: string; numeroAffiche: string };
+type Candidat = { personnelId: string; nom: string; prenom: string; alertes: string[] };
 
 // Affecte une personne à une fonction/activité (et éventuellement un joint
 // précis) pour une période donnée, avec ses codes d'habilitation/accès
@@ -23,6 +24,26 @@ export function AjouterAffectation({ affaireId, personnel, joints }: { affaireId
   const [alertes, setAlertes] = useState<string[]>([]);
   const [erreur, setErreur] = useState<string | null>(null);
   const [enCours, setEnCours] = useState(false);
+  const [candidats, setCandidats] = useState<Candidat[] | null>(null);
+  const [rechercheEnCours, setRechercheEnCours] = useState(false);
+
+  async function chercherCandidats() {
+    setRechercheEnCours(true);
+    setErreur(null);
+    const params = new URLSearchParams({
+      fonction,
+      dateDebut: new Date(dateDebut).toISOString(),
+      dateFin: new Date(dateFin).toISOString(),
+    });
+    if (jointId) params.set("jointId", jointId);
+    const res = await fetch(`/api/affectations/proposition?${params}`);
+    setRechercheEnCours(false);
+    if (!res.ok) {
+      setErreur("Impossible de proposer des personnes.");
+      return;
+    }
+    setCandidats(await res.json());
+  }
 
   async function ajouter(e: React.FormEvent) {
     e.preventDefault();
@@ -110,6 +131,51 @@ export function AjouterAffectation({ affaireId, personnel, joints }: { affaireId
           <input required type="date" value={dateFin} onChange={(e) => setDateFin(e.target.value)} style={{ display: "block", width: "100%", padding: "0.4rem" }} />
         </label>
       </div>
+      <div>
+        <button
+          type="button"
+          disabled={rechercheEnCours || !fonction || !dateDebut || !dateFin}
+          onClick={chercherCandidats}
+        >
+          {rechercheEnCours ? "Recherche..." : "Voir les personnes adaptées"}
+        </button>
+      </div>
+      {candidats && (
+        <div style={{ fontSize: "0.85rem", border: "1px solid #eee", padding: "0.5rem" }}>
+          {candidats.length === 0 ? (
+            <p style={{ margin: 0, color: "#898781" }}>Personne n&apos;a la fonction &quot;{fonction}&quot;.</p>
+          ) : (
+            <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
+              {candidats.map((c) => (
+                <li key={c.personnelId} style={{ marginBottom: "0.3rem" }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPersonnelId(c.personnelId);
+                      setCandidats(null);
+                    }}
+                    style={{
+                      fontWeight: c.alertes.length === 0 ? "bold" : "normal",
+                      color: c.alertes.length === 0 ? "#0ca30c" : "inherit",
+                    }}
+                  >
+                    {c.prenom} {c.nom} {c.alertes.length === 0 ? "— disponible et qualifié(e)" : `— ${c.alertes.length} alerte(s)`}
+                  </button>
+                  {c.alertes.length > 0 && (
+                    <ul style={{ margin: "0.1rem 0 0 1rem", padding: 0 }}>
+                      {c.alertes.map((a, i) => (
+                        <li key={i} style={{ color: "darkorange", fontSize: "0.8rem" }}>
+                          {a}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
       <div>
         <button type="submit" disabled={enCours}>
           {enCours ? "Enregistrement..." : "Affecter"}

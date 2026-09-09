@@ -123,3 +123,49 @@ export async function evaluerAffectation(params: EvaluationAffectation): Promise
 
   return alertes;
 }
+
+export interface CandidatAffectation {
+  personnelId: string;
+  nom: string;
+  prenom: string;
+  alertes: string[];
+}
+
+// Proposition d'affectation adaptée (voir le cahier des charges,
+// "PLANNING" : "peut proposer une affectation adaptée") : reprend
+// exactement les mêmes vérifications que evaluerAffectation ci-dessus,
+// mais sur toutes les personnes ayant la fonction demandée, classées par
+// nombre d'alertes croissant — les personnes sans aucune alerte
+// (compétence/qualification/habilitation/disponibilité) apparaissent en
+// premier. Une proposition, jamais une décision : la personne choisie
+// reste un choix humain, comme toute affectation (voir POST
+// /api/affectations).
+export async function proposerAffectation(params: {
+  fonction: string;
+  dateDebut: Date;
+  dateFin: Date;
+  jointId?: string | null;
+}): Promise<CandidatAffectation[]> {
+  const candidats = await prisma.personnel.findMany({
+    where: { fonctions: { some: { fonction: { equals: params.fonction, mode: "insensitive" } } } },
+    select: { id: true, nom: true, prenom: true },
+    orderBy: { nom: "asc" },
+  });
+
+  const resultats = await Promise.all(
+    candidats.map(async (p) => ({
+      personnelId: p.id,
+      nom: p.nom,
+      prenom: p.prenom,
+      alertes: await evaluerAffectation({
+        personnelId: p.id,
+        fonction: params.fonction,
+        dateDebut: params.dateDebut,
+        dateFin: params.dateFin,
+        jointId: params.jointId,
+      }),
+    }))
+  );
+
+  return resultats.sort((a, b) => a.alertes.length - b.alertes.length);
+}

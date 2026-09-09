@@ -248,7 +248,16 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
     plus un type "autre" pour ce qui ne rentre dans aucune case. Page
     `/consommables` : liste + petit formulaire d'ajout (le seul endroit de
     l'application où un consommable se crée — ensuite il est seulement
-    choisi, jamais ressaisi).
+    choisi, jamais ressaisi). **Certificat de conformité** : le champ
+    `certificatUrl` existait en base sans interface, il est maintenant
+    exposé dans le formulaire (lien manuel ou `FileUpload`, colonne
+    "Certificat" dans le tableau) avec `LectureAutomatique`
+    (`type="CONSOMMABLE"`) qui propose fabricant/référence/lot/péremption
+    à partir du certificat déposé — voir "Lecture automatique des
+    documents déposés" ci-dessous, qui couvre maintenant aussi les
+    consommables CND en plus des qualifications/habilitations/matières
+    (voir le cahier des charges, "CONSOMMABLES" : "reconnaissance de
+    caractères pour proposer automatiquement... le contrôleur valide").
   - `POST /api/controles-magnetoscopie`, `POST /api/controles-radiographie`,
     `POST /api/controles-ultrasons` — MT/RT/UT, même principe que le
     contrôle visuel (résultat déduit des indications, FNC automatique si
@@ -1027,9 +1036,6 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
 - La signature QR + PIN couvre maintenant la validation d'une reconduction,
   la confirmation de validité de qualification, les six types de
   contrôle et la fiche technique de suivi de soudage (voir ci-dessus).
-- L'import du CCPU et la reconnaissance de caractères sur étiquette
-  (consommables comme matières) : pour l'instant les URLs de documents se
-  renseignent à la main.
 - L'envoi à plusieurs destinataires réels : `RESEND_API_KEY` est
   configurée et l'envoi fonctionne (testé), mais `ALERTES_EMAIL_FROM`
   utilise encore l'adresse de test de Resend (`onboarding@resend.dev`),

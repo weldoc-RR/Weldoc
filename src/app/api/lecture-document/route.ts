@@ -5,7 +5,7 @@ import { lireDocument } from "@/lib/lectureDocument";
 
 const LectureSchema = z.object({
   documentUrl: z.string().min(1),
-  type: z.enum(["QUALIFICATION", "HABILITATION", "MATIERE"]),
+  type: z.enum(["QUALIFICATION", "HABILITATION", "MATIERE", "CONSOMMABLE"]),
 });
 
 // POST /api/lecture-document — lit automatiquement un document déjà

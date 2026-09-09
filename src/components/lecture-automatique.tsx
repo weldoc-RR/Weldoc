@@ -30,7 +30,7 @@ export function LectureAutomatique({
   onLu,
 }: {
   documentUrl: string;
-  type: "QUALIFICATION" | "HABILITATION" | "MATIERE";
+  type: "QUALIFICATION" | "HABILITATION" | "MATIERE" | "CONSOMMABLE";
   onLu: (champs: ChampsLus) => void;
 }) {
   const [enCours, setEnCours] = useState(false);

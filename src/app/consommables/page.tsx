@@ -33,7 +33,7 @@ export default async function ConsommablesPage() {
         <table style={{ borderCollapse: "collapse", marginTop: "1rem" }}>
           <thead>
             <tr>
-              {["Type", "Fabricant", "Référence", "Lot", "Péremption"].map((h) => (
+              {["Type", "Fabricant", "Référence", "Lot", "Péremption", "Certificat"].map((h) => (
                 <th key={h} style={{ textAlign: "left", borderBottom: "1px solid #ccc", padding: "0.3rem 0.6rem" }}>
                   {h}
                 </th>
@@ -49,6 +49,15 @@ export default async function ConsommablesPage() {
                 <td style={{ padding: "0.3rem 0.6rem" }}>{c.lot}</td>
                 <td style={{ padding: "0.3rem 0.6rem" }}>
                   {c.peremption ? c.peremption.toLocaleDateString("fr-FR") : "—"}
+                </td>
+                <td style={{ padding: "0.3rem 0.6rem" }}>
+                  {c.certificatUrl ? (
+                    <a href={c.certificatUrl} target="_blank" rel="noreferrer">
+                      certificat
+                    </a>
+                  ) : (
+                    "—"
+                  )}
                 </td>
               </tr>
             ))}

@@ -4,13 +4,14 @@ import Anthropic from "@anthropic-ai/sdk";
 // "CONSOMMABLES" : "reconnaissance de caractères pour proposer
 // automatiquement... le contrôleur valide, la photo originale est
 // conservée comme preuve" — même principe appliqué ici aux
-// qualifications/habilitations et aux matières/CCPU).
+// qualifications/habilitations, aux matières/CCPU et aux consommables
+// CND).
 // L'IA ne décide jamais seule (PRINCIPE DE CONCEPTION) : cette fonction ne
 // fait que PROPOSER des valeurs à relire et corriger avant enregistrement,
 // via le même formulaire et la même route API que la saisie manuelle —
 // aucune écriture en base ne se fait ici.
 
-export type TypeDocumentLisible = "QUALIFICATION" | "HABILITATION" | "MATIERE";
+export type TypeDocumentLisible = "QUALIFICATION" | "HABILITATION" | "MATIERE" | "CONSOMMABLE";
 
 export interface ChampsExtraits {
   reference: string | null;
@@ -36,6 +37,11 @@ const CHAMPS_PAR_TYPE: Record<TypeDocumentLisible, (keyof ChampsExtraits)[]> = {
   QUALIFICATION: ["reference", "norme", "dateObtention", "dateExpiration", "organisme"],
   HABILITATION: ["intitule", "reference", "dateObtention", "dateExpiration"],
   MATIERE: ["fournisseur", "designation", "normeProduit", "nuance", "diametre", "epaisseur", "numeroCoulee", "numeroLot"],
+  // Réutilise les mêmes champs que MATIERE/QUALIFICATION plutôt que d'en
+  // ajouter de nouveaux : "fournisseur" pour le fabricant, "reference"
+  // pour la référence produit, "numeroLot" pour le lot, "dateExpiration"
+  // pour la péremption — mêmes noms, même sens.
+  CONSOMMABLE: ["fournisseur", "reference", "numeroLot", "dateExpiration"],
 };
 
 const CONSIGNE_PAR_TYPE: Record<TypeDocumentLisible, string> = {
@@ -54,6 +60,11 @@ const CONSIGNE_PAR_TYPE: Record<TypeDocumentLisible, string> = {
     "la désignation du produit (ex. \"Tube acier carbone\"), la norme produit (ex. \"EN 10216-2\"), la nuance " +
     "d'acier (ex. \"P235GH\"), le diamètre et l'épaisseur nominaux en mm si indiqués, le numéro de coulée " +
     "(heat/cast number) et le numéro de lot si distinct de la coulée.",
+  CONSOMMABLE:
+    "Ce document est un certificat de conformité ou une fiche technique accompagnant un consommable de " +
+    "contrôle non destructif (pénétrant, révélateur, nettoyant, poudre magnétique, produit de contraste, " +
+    "démagnétisant, film radiographique, produit de développement, couplant). Identifie : le fabricant, la " +
+    "référence du produit, le numéro de lot, et la date de péremption si indiquée.",
 };
 
 const LIBELLES_CHAMPS: Record<keyof ChampsExtraits, string> = {

@@ -1072,7 +1072,16 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
 - Les droits contextuels fins évoqués au cahier des charges ("selon le
   contexte de l'affaire") : pour l'instant, les droits ne dépendent que du
   niveau (1/2/3) de la personne, pas encore de son rôle ni de l'affaire
-  concernée.
+  concernée. Chantier volontairement mis en pause : il touche qui a le
+  droit de faire quoi, donc mieux vaut le cadrer précisément avant de
+  coder plutôt que de deviner.
+  - **Intitulés des niveaux** (`src/lib/niveaux.ts`, `LIBELLE_NIVEAU`) :
+    Niveau 1 = "Exécutant", Niveau 2 = "Contrôleur technique", Niveau 3 =
+    "Responsable" — affichés partout où le niveau apparaît (page
+    Personnel, page d'accueil, sélecteur "Changer le niveau"). Purement
+    une question de présentation : les droits eux-mêmes restent
+    déterminés par `NIVEAU_1`/`NIVEAU_2`/`NIVEAU_3` partout ailleurs
+    (`aNiveauMinimum`, `requireNiveau`), rien n'a changé côté accès.
 - Autorisations de signature (voir le cahier des charges, fiche personne :
   "autorisations de signature" ; et "IDENTIFICATION ET SIGNATURE" :
   "contrôle des droits" fait partie du parcours de signature) : nouveau

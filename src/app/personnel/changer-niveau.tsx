@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { LIBELLE_NIVEAU } from "@/lib/niveaux";
 
 // Change le niveau de décision d'une personne (voir PATCH
 // /api/personnel/[id], réservé au niveau 3, tracé par l'audit trail).
@@ -41,9 +42,9 @@ export function ChangerNiveau({ personnelId, niveauActuel }: { personnelId: stri
   return (
     <form onSubmit={enregistrer} style={{ display: "inline-flex", gap: "0.3rem", alignItems: "center", marginLeft: "0.5rem" }}>
       <select value={niveau} onChange={(e) => setNiveau(e.target.value)} style={{ fontSize: "0.85rem" }}>
-        <option value="NIVEAU_1">NIVEAU_1</option>
-        <option value="NIVEAU_2">NIVEAU_2</option>
-        <option value="NIVEAU_3">NIVEAU_3</option>
+        <option value="NIVEAU_1">Niveau 1 — {LIBELLE_NIVEAU.NIVEAU_1}</option>
+        <option value="NIVEAU_2">Niveau 2 — {LIBELLE_NIVEAU.NIVEAU_2}</option>
+        <option value="NIVEAU_3">Niveau 3 — {LIBELLE_NIVEAU.NIVEAU_3}</option>
       </select>
       <button type="submit" disabled={enCours}>
         {enCours ? "..." : "Enregistrer"}

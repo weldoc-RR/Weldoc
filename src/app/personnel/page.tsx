@@ -10,6 +10,7 @@ import { AjouterFormation } from "./ajouter-formation";
 import { AjouterAcuite } from "./ajouter-acuite";
 import { AjouterDocumentJustificatif } from "./ajouter-document-justificatif";
 import { AjouterIndisponibilite } from "./ajouter-indisponibilite";
+import { LIBELLE_NIVEAU } from "@/lib/niveaux";
 import { ConfirmerValidite } from "./confirmer-validite";
 import { ValiderReconduction } from "./valider-reconduction";
 import { DefinirPin } from "./definir-pin";
@@ -120,7 +121,7 @@ export default async function PersonnelPage() {
               <strong>
                 {p.prenom} {p.nom}
               </strong>{" "}
-              — {p.matricule} — {p.societe} — {p.niveau}
+              — {p.matricule} — {p.societe} — {LIBELLE_NIVEAU[p.niveau]}
               {aNiveauMinimum(utilisateur.niveau, "NIVEAU_3") && (
                 <>
                   <ChangerNiveau personnelId={p.id} niveauActuel={p.niveau} />

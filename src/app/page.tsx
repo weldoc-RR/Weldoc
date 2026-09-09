@@ -3,6 +3,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getUtilisateurConnecteServeur, aNiveauMinimum } from "@/lib/auth";
 import { calculerAvancementAffaire } from "@/lib/avancement";
+import { LIBELLE_NIVEAU } from "@/lib/niveaux";
 import { LogoutButton } from "./logout-button";
 
 export const dynamic = "force-dynamic";
@@ -31,7 +32,7 @@ export default async function HomePage() {
         <h1>Weldoc — Affaires</h1>
         <div style={{ textAlign: "right" }}>
           <p>
-            Connecté : {utilisateur.prenom} {utilisateur.nom} ({utilisateur.niveau})
+            Connecté : {utilisateur.prenom} {utilisateur.nom} ({LIBELLE_NIVEAU[utilisateur.niveau]})
           </p>
           <LogoutButton />
         </div>

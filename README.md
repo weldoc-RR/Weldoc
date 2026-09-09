@@ -517,6 +517,15 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   n'en avaient pas encore (`POST /api/habilitations`,
   `POST /api/formations`, `POST /api/acuites-visuelles`, tous existants
   depuis un module précédent).
+  - **Droits et modifications** (voir le cahier des charges) : réservé au
+    niveau 3, un bouton "Changer le niveau" par personne
+    (`PATCH /api/personnel/[id]`) et, si un compte de connexion existe,
+    "Suspendre/Réactiver le compte" (`PATCH /api/auth/comptes/[id]`).
+    Un compte suspendu perd l'accès immédiatement — pas seulement à la
+    prochaine connexion — car chaque requête revérifie son statut (voir
+    `src/lib/auth.ts`). Une personne ne peut pas suspendre son propre
+    compte (422), pour éviter un verrouillage accidentel. Les deux
+    actions sont tracées par l'audit trail (entités `Personnel`/`Compte`).
 - `src/app/alertes/page.tsx` — outils bientôt à échéance ou expirés, et
   bibliothèque des destinataires du récapitulatif hebdomadaire par email.
 - `src/app/pieces/page.tsx` — prise en charge de pièces (atelier) et suivi

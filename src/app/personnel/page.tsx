@@ -11,6 +11,8 @@ import { AjouterAcuite } from "./ajouter-acuite";
 import { ConfirmerValidite } from "./confirmer-validite";
 import { ValiderReconduction } from "./valider-reconduction";
 import { DefinirPin } from "./definir-pin";
+import { ChangerNiveau } from "./changer-niveau";
+import { BasculerCompte } from "./basculer-compte";
 import { aNiveauMinimum } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
@@ -63,6 +65,7 @@ export default async function PersonnelPage() {
         habilitations: { orderBy: { dateObtention: "desc" } },
         formations: { orderBy: { dateRealisation: "desc" } },
         acuitesVisuelles: { orderBy: { dateTest: "desc" } },
+        compte: { select: { id: true, statut: true } },
       },
     }),
     prisma.referentiel.findMany({ select: { id: true, code: true, domaine: true }, orderBy: { code: "asc" } }),
@@ -101,6 +104,20 @@ export default async function PersonnelPage() {
                 {p.prenom} {p.nom}
               </strong>{" "}
               — {p.matricule} — {p.societe} — {p.niveau}
+              {aNiveauMinimum(utilisateur.niveau, "NIVEAU_3") && (
+                <>
+                  <ChangerNiveau personnelId={p.id} niveauActuel={p.niveau} />
+                  {p.compte && (
+                    <>
+                      {" — "}
+                      <span style={{ fontSize: "0.8rem", color: p.compte.statut === "SUSPENDU" ? "crimson" : "#898781" }}>
+                        Compte {p.compte.statut === "SUSPENDU" ? "suspendu" : "actif"}
+                      </span>
+                      <BasculerCompte compteId={p.compte.id} statut={p.compte.statut} />
+                    </>
+                  )}
+                </>
+              )}
               {(p.id === utilisateur.personnelId || aNiveauMinimum(utilisateur.niveau, "NIVEAU_3")) && (
                 <>
                   {" — "}

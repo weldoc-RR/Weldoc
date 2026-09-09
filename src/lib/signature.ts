@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import type { Signature } from "@prisma/client";
+import { personneAutoriseeASigner } from "@/lib/autorisationsSignature";
 
 // Un code PIN se hache exactement comme un mot de passe (voir
 // src/lib/auth.ts) — jamais stocké en clair.
@@ -58,6 +59,18 @@ export async function creerSignature(donnees: {
         erreur: `${personnel.prenom} ${personnel.nom} doit d'abord accepter la charte d'utilisation en vigueur (version ${derniereCharte.version}).`,
       };
     }
+  }
+
+  // "Contrôle des droits" (voir le cahier des charges, "IDENTIFICATION ET
+  // SIGNATURE") : au-delà du niveau déjà vérifié par la route appelante,
+  // si des autorisations de signature nominatives existent pour ce type
+  // de document, seules les personnes autorisées peuvent signer.
+  if (!(await personneAutoriseeASigner(personnel.id, donnees.documentType))) {
+    return {
+      ok: false,
+      statut: 403,
+      erreur: `${personnel.prenom} ${personnel.nom} n'est pas autorisé(e) à signer ce type de document (${donnees.documentType}).`,
+    };
   }
 
   const signature = await prisma.signature.create({

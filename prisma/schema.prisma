@@ -54,6 +54,8 @@ model Personnel {
   documentsExternesConcerne DocumentExterne[] @relation("PersonnelConcerneDocumentExterne")
   fichesRexRedigees FicheREX[]
   scansTqcRealises  ScanTqc[] @relation("OperateurScanTqc")
+  autorisationsSignature AutorisationSignature[]
+  autorisationsSignatureAccordees AutorisationSignature[] @relation("AccordeParAutorisationSignature")
 
   @@index([societe])
 }
@@ -1403,6 +1405,34 @@ model Signature {
   versionDocument String
 
   @@index([documentType, documentId])
+}
+
+// Autorisations de signature (voir le cahier des charges, fiche personne :
+// "autorisations, ... autorisations de signature" ; et "IDENTIFICATION ET
+// SIGNATURE" : "contrôle des droits" fait partie du parcours de signature,
+// après l'identification et le PIN, avant la signature elle-même). Permet
+// de nommer explicitement qui a le droit de signer un type de document
+// donné (`documentType`, la même valeur que Signature.documentType),
+// au-delà du simple niveau. N'agit que si au moins une autorisation
+// existe pour ce documentType : tant qu'aucune n'est configurée, le
+// contrôle d'accès déjà en place (niveau, sur chaque route) continue de
+// s'appliquer sans changement — voir src/lib/autorisationsSignature.ts.
+// Révoquer une autorisation ne supprime jamais la ligne : `active`
+// repasse à false et le changement est tracé par l'audit trail, comme le
+// niveau d'une personne ou le statut d'un compte.
+model AutorisationSignature {
+  id            String    @id @default(cuid())
+  personnel     Personnel @relation(fields: [personnelId], references: [id])
+  personnelId   String
+  documentType  String
+  active        Boolean   @default(true)
+  accordeePar   Personnel @relation("AccordeParAutorisationSignature", fields: [accordeeParId], references: [id])
+  accordeeParId String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@unique([personnelId, documentType])
+  @@index([documentType])
 }
 
 model AuditTrail {

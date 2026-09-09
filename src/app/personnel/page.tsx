@@ -13,6 +13,8 @@ import { ValiderReconduction } from "./valider-reconduction";
 import { DefinirPin } from "./definir-pin";
 import { ChangerNiveau } from "./changer-niveau";
 import { BasculerCompte } from "./basculer-compte";
+import { AutoriserSignature } from "./autoriser-signature";
+import { RevoquerAutorisation } from "./revoquer-autorisation";
 import { aNiveauMinimum } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
@@ -66,6 +68,11 @@ export default async function PersonnelPage() {
         formations: { orderBy: { dateRealisation: "desc" } },
         acuitesVisuelles: { orderBy: { dateTest: "desc" } },
         compte: { select: { id: true, statut: true } },
+        autorisationsSignature: {
+          where: { active: true },
+          include: { accordeePar: { select: { nom: true, prenom: true } } },
+          orderBy: { documentType: "asc" },
+        },
       },
     }),
     prisma.referentiel.findMany({ select: { id: true, code: true, domaine: true }, orderBy: { code: "asc" } }),
@@ -273,6 +280,26 @@ export default async function PersonnelPage() {
                       );
                     })}
                   </ul>
+                </>
+              )}
+
+              {(p.autorisationsSignature.length > 0 || aNiveauMinimum(utilisateur.niveau, "NIVEAU_3")) && (
+                <>
+                  <div style={{ fontSize: "0.8rem", color: "#52514e", marginTop: "0.4rem" }}>
+                    Autorisations de signature
+                    {aNiveauMinimum(utilisateur.niveau, "NIVEAU_3") && <AutoriserSignature personnelId={p.id} />}
+                  </div>
+                  {p.autorisationsSignature.length > 0 && (
+                    <ul>
+                      {p.autorisationsSignature.map((a) => (
+                        <li key={a.id}>
+                          {a.documentType} — accordée par {a.accordeePar.prenom} {a.accordeePar.nom} le{" "}
+                          {a.createdAt.toLocaleDateString("fr-FR")}
+                          {aNiveauMinimum(utilisateur.niveau, "NIVEAU_3") && <RevoquerAutorisation id={a.id} />}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </>
               )}
             </li>

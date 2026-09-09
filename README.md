@@ -795,17 +795,34 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   existe et peut être lié à une affaire ou une qualification, mais pour
   l'instant seule une personne ayant accès à la base peut y ajouter une
   ligne.
-- Les autorisations de signature et les documents justificatifs attachés
-  au personnel (mentionnés au cahier des charges, pas encore modélisés).
+- Les documents justificatifs génériques attachés au personnel (mentionnés
+  au cahier des charges à côté des qualifications/habilitations/
+  formations/autorisations de signature — ces quatre-là sont modélisés,
+  un document justificatif "libre" ne l'est pas encore).
 - Les droits contextuels fins évoqués au cahier des charges ("selon le
   contexte de l'affaire") : pour l'instant, les droits ne dépendent que du
   niveau (1/2/3) de la personne, pas encore de son rôle ni de l'affaire
   concernée.
-- Les autorisations de signature (qui a le droit de signer quel type de
-  document) restent implicites : le parcours QR/matricule + PIN + charte
-  (voir ci-dessus) identifie et authentifie la personne, mais Weldoc ne
-  vérifie pas encore qu'elle a le droit de signer ce document précis
-  au-delà du niveau requis pour l'action elle-même.
+- Autorisations de signature (voir le cahier des charges, fiche personne :
+  "autorisations de signature" ; et "IDENTIFICATION ET SIGNATURE" :
+  "contrôle des droits" fait partie du parcours de signature) : nouveau
+  modèle `AutorisationSignature`, `GET`/`POST`/`PATCH
+  /api/autorisations-signature`, section "Autorisations de signature" sur
+  `/personnel` (accorder/révoquer réservé au niveau 3). Le contrôle est
+  intégré dans `creerSignature()` (`src/lib/signature.ts`), le point de
+  passage unique de toute signature, juste après le PIN et la charte —
+  exactement l'ordre du cahier des charges ("identification → PIN →
+  contrôle des droits → signature"). Comportement volontairement additif
+  et non bloquant par défaut : tant qu'aucune autorisation n'a été
+  configurée pour un type de document donné, le contrôle par niveau déjà
+  en place sur chaque route continue de s'appliquer sans changement (voir
+  `src/lib/autorisationsSignature.ts`) — accorder une première
+  autorisation sur un type restreint alors ce type aux seules personnes
+  nommées. Révoquer ne supprime jamais la ligne (`active` repasse à
+  false, tracé par l'audit trail), et si plus aucune autorisation active
+  n'existe pour un type après une révocation, ce type redevient ouvert à
+  tous (comportement documenté, pas un bug) plutôt que de verrouiller
+  l'entreprise hors de ses propres documents.
 - La signature QR + PIN couvre maintenant la validation d'une reconduction,
   la confirmation de validité de qualification, les six types de
   contrôle et la fiche technique de suivi de soudage (voir ci-dessus).

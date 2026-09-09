@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAuth, requireNiveau } from "@/lib/auth";
 import { verifierSequencementAutorise } from "@/lib/sequencement";
 import { pointsBloquants } from "@/lib/dossierReglementaire";
+import { tracerModification } from "@/lib/auditTrail";
 
 const CreatePhaseSchema = z.object({
   sequenceId: z.string().min(1),
@@ -73,26 +74,28 @@ export async function PATCH(req: NextRequest) {
     );
   }
 
+  const phaseAvant = await prisma.phase.findUnique({
+    where: { id },
+    include: { sequence: { select: { affaireId: true } } },
+  });
+  if (!phaseAvant) {
+    return NextResponse.json({ error: "Phase introuvable." }, { status: 404 });
+  }
+
   if (statut === "EN_COURS" || statut === "TERMINEE") {
     const { autorise, motif } = await verifierSequencementAutorise(id);
     if (!autorise) {
       return NextResponse.json({ error: motif }, { status: 422 });
     }
 
-    const phaseAvecAffaire = await prisma.phase.findUnique({
-      where: { id },
-      include: { sequence: { select: { affaireId: true } } },
-    });
-    if (phaseAvecAffaire) {
-      const bloquants = await pointsBloquants(phaseAvecAffaire.sequence.affaireId, { phaseId: id });
-      if (bloquants.length > 0) {
-        return NextResponse.json(
-          {
-            error: `Point(s) réglementaire(s) bloquant(s) : ${bloquants.map((p) => p.intitule).join(", ")}.`,
-          },
-          { status: 422 }
-        );
-      }
+    const bloquants = await pointsBloquants(phaseAvant.sequence.affaireId, { phaseId: id });
+    if (bloquants.length > 0) {
+      return NextResponse.json(
+        {
+          error: `Point(s) réglementaire(s) bloquant(s) : ${bloquants.map((p) => p.intitule).join(", ")}.`,
+        },
+        { status: 422 }
+      );
     }
   }
 
@@ -100,6 +103,20 @@ export async function PATCH(req: NextRequest) {
     where: { id },
     data: { statut, justificationNA: statut === "NON_APPLICABLE" ? justificationNA : undefined },
   });
+
+  // Une phase n'a pas d'historique dédié (contrairement aux qualifications
+  // ou au dossier réglementaire, événementiels) : c'est l'audit trail qui
+  // trace son avancement, une "modification sensible" au sens du cahier
+  // des charges.
+  if (phaseAvant.statut !== phase.statut) {
+    await tracerModification({
+      utilisateurId: auth.utilisateur.personnelId,
+      entite: "Phase",
+      entiteId: phase.id,
+      ancienneValeur: { statut: phaseAvant.statut },
+      nouvelleValeur: { statut: phase.statut, justificationNA: phase.justificationNA },
+    });
+  }
 
   return NextResponse.json(phase);
 }

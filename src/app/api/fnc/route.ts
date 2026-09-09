@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAuth, requireNiveau } from "@/lib/auth";
+import { tracerModification } from "@/lib/auditTrail";
 
 // GET /api/fnc?affaireId=... — liste les FNC (optionnellement filtrées par affaire)
 export async function GET(req: NextRequest) {
@@ -59,14 +60,12 @@ export async function PATCH(req: NextRequest) {
   });
 
   if (estValidation) {
-    await prisma.auditTrail.create({
-      data: {
-        utilisateurId: utilisateur.personnelId,
-        entite: "FNC",
-        entiteId: fnc.id,
-        ancienneValeur: { statut: fncAvant.statut, valideeParId: fncAvant.valideeParId },
-        nouvelleValeur: { statut: fnc.statut, valideeParId: fnc.valideeParId },
-      },
+    await tracerModification({
+      utilisateurId: utilisateur.personnelId,
+      entite: "FNC",
+      entiteId: fnc.id,
+      ancienneValeur: { statut: fncAvant.statut, valideeParId: fncAvant.valideeParId },
+      nouvelleValeur: { statut: fnc.statut, valideeParId: fnc.valideeParId },
     });
   }
 

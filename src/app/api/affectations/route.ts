@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAuth, requireNiveau } from "@/lib/auth";
 import { evaluerAffectation } from "@/lib/planning";
+import { tracerModification } from "@/lib/auditTrail";
 
 const CreateAffectationSchema = z.object({
   personnelId: z.string().min(1),
@@ -68,14 +69,12 @@ export async function POST(req: NextRequest) {
   });
 
   if (alertes.length > 0) {
-    await prisma.auditTrail.create({
-      data: {
-        utilisateurId: droits.utilisateur.personnelId,
-        entite: "Affectation",
-        entiteId: affectation.id,
-        nouvelleValeur: { alertes },
-        motif: "Affectation créée malgré des alertes.",
-      },
+    await tracerModification({
+      utilisateurId: droits.utilisateur.personnelId,
+      entite: "Affectation",
+      entiteId: affectation.id,
+      nouvelleValeur: { alertes },
+      motif: "Affectation créée malgré des alertes.",
     });
   }
 

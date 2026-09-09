@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { getUtilisateurConnecteServeur } from "@/lib/auth";
+import { getUtilisateurConnecteServeur, aNiveauMinimum } from "@/lib/auth";
 import { calculerAvancementAffaire } from "@/lib/avancement";
 import { LogoutButton } from "./logout-button";
 
@@ -41,7 +41,8 @@ export default async function HomePage() {
         <Link href="/joints">Joints →</Link> <Link href="/procedures">WPS/QMOS →</Link>{" "}
         <Link href="/consommables">Consommables CND →</Link>{" "}
         <Link href="/alertes">Alertes →</Link> <Link href="/pieces">Pièces (atelier) →</Link>{" "}
-        <Link href="/avancement">Avancement →</Link> <Link href="/charte">Charte →</Link>
+        <Link href="/avancement">Avancement →</Link> <Link href="/charte">Charte →</Link>{" "}
+        {aNiveauMinimum(utilisateur.niveau, "NIVEAU_3") && <Link href="/audit">Audit trail →</Link>}
       </p>
       <ul style={{ listStyle: "none", padding: 0 }}>
         {affaires.map((a) => {

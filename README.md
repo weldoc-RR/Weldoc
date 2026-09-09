@@ -313,6 +313,25 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
     ça) — utile pour justifier qu'une dégradation était déjà présente
     avant l'intervention. Lien depuis la page d'accueil et le rapport de
     fin de fabrication (qui affiche aussi le nombre de constats).
+- **Audit trail** (voir le cahier des charges) — `src/lib/auditTrail.ts`,
+  fonction `tracerModification` : historique des modifications sensibles
+  (qui, quand, entité concernée, ancienne/nouvelle valeur, motif),
+  jamais supprimé (aucune route de suppression sur `AuditTrail`). Ne
+  duplique pas ce que des modèles déjà événementiels tracent eux-mêmes
+  (`QualificationEvenement`, `PointReglementaireEvenement`, `RevisionRFI`...
+  — chacun est déjà, dans son domaine, un historique complet) : sert les
+  actions qui n'ont pas encore leur propre historique dédié.
+  - Branché sur : la création d'une affectation malgré des alertes,
+    la validation/clôture d'une FNC, la décision sur une demande de
+    modification de séquencement (trois branchements déjà existants,
+    désormais centralisés sur le même helper), et l'avancement d'une
+    phase (`PATCH /api/phases` — nouveau : une phase n'a pas d'historique
+    propre, contrairement aux qualifications ou au dossier réglementaire).
+  - `GET /api/audit-trail?entite=...&entiteId=...`, page `/audit` —
+    réservés au niveau 3 (outil de contrôle interne, voir "DROITS ET
+    MODIFICATIONS"), lien visible uniquement pour ce niveau depuis la page
+    d'accueil. Filtrable par entité en cliquant sur son nom dans le
+    tableau.
 - **Dossier réglementaire** (voir le cahier des charges, "DOSSIER
   RÉGLEMENTAIRE" / "Blocage réglementaire") — distinct du rapport de fin
   de fabrication : ici, chaque exigence réglementaire (ex. "Attestation de

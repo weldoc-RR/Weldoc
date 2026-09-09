@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireNiveau } from "@/lib/auth";
+import { tracerModification } from "@/lib/auditTrail";
 
 const DecisionSchema = z.object({
   statut: z.enum(["ACCEPTEE", "REFUSEE", "MODIFICATION_DEMANDEE"]),
@@ -39,14 +40,12 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     },
   });
 
-  await prisma.auditTrail.create({
-    data: {
-      utilisateurId: droits.utilisateur.personnelId,
-      entite: "DemandeModificationSequencement",
-      entiteId: demande.id,
-      ancienneValeur: { statut: demande.statut },
-      nouvelleValeur: { statut: miseAJour.statut, conditions: miseAJour.conditions },
-    },
+  await tracerModification({
+    utilisateurId: droits.utilisateur.personnelId,
+    entite: "DemandeModificationSequencement",
+    entiteId: demande.id,
+    ancienneValeur: { statut: demande.statut },
+    nouvelleValeur: { statut: miseAJour.statut, conditions: miseAJour.conditions },
   });
 
   return NextResponse.json(miseAJour);

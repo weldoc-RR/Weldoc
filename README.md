@@ -601,8 +601,24 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
     `src/lib/auth.ts`). Une personne ne peut pas suspendre son propre
     compte (422), pour éviter un verrouillage accidentel. Les deux
     actions sont tracées par l'audit trail (entités `Personnel`/`Compte`).
-- `src/app/alertes/page.tsx` — outils bientôt à échéance ou expirés, et
-  bibliothèque des destinataires du récapitulatif hebdomadaire par email.
+- `src/app/alertes/page.tsx` — alertes centralisées (voir le cahier des
+  charges, "ALERTES" : "Qualifications à échéance, habilitations expirées,
+  documents obsolètes, FNC ouvertes, blocages, validations niveau 3 en
+  attente, dossiers réglementaires incomplets, contrôles manquants, outils
+  métrologiques expirés, documents manquants") : un seul écran plutôt que
+  d'aller chercher chaque signal sur sa page d'origine. Sept catégories :
+  qualifications et habilitations à échéance ou expirées (`calculerStatut`,
+  même calcul que sur la fiche personnel), confirmations de validité de
+  qualification et reconductions proposées (déjà existantes), FNC ouvertes
+  (bloquantes mises en évidence), points bloquants du dossier réglementaire
+  (`pointBloque`, même calcul que `/systeme-qualite`), et vérifications
+  d'outillage. Chaque catégorie réutilise un calcul déjà en place ailleurs
+  dans l'application — rien n'est recalculé différemment ici, tout reste
+  recalculé à la lecture, jamais stocké. "Documents obsolètes/manquants" et
+  "contrôles manquants" ne sont volontairement pas repris : Weldoc n'a pas
+  encore de notion de "documents/contrôles attendus" pour une affaire à
+  comparer à l'existant (voir plus bas dans ce README). Bibliothèque des
+  destinataires du récapitulatif hebdomadaire par email, inchangée.
 - `src/app/pieces/page.tsx` — prise en charge de pièces (atelier) et suivi
   de leur statut.
 - `src/app/joints/page.tsx` — création de joints, consultation groupée par
@@ -811,13 +827,15 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   le projet est déployé sur Vercel ; sur un autre hébergeur, il faudra un
   déclencheur équivalent qui appelle `GET /api/alertes/recapitulatif`
   chaque semaine.
-- Les autres types d'alertes évoqués au cahier des charges (qualifications
-  à échéance, habilitations expirées, FNC ouvertes, validations niveau 3
-  en attente...) : `/api/alertes` couvre l'outillage et les confirmations
-  de validité de qualification périodiques, mais pas encore les
-  échéances finales de qualification/habilitation ni les FNC ouvertes ;
-  l'information existe déjà ailleurs (`statutCalcule` sur chaque fiche)
-  mais n'est pas encore centralisée ici.
+- Deux types d'alertes du cahier des charges restent hors de `/alertes` :
+  "documents obsolètes/manquants" et "contrôles manquants" — Weldoc n'a
+  pas encore de notion de "documents/contrôles attendus" pour une affaire
+  à comparer à l'existant (il faudrait d'abord définir, quelque part,
+  quels contrôles/documents sont censés exister). "Validations niveau 3
+  en attente" n'a qu'un seul cas couvert pour l'instant (reconductions de
+  qualification proposées) ; d'autres validations niveau 3 existent dans
+  l'application (documents externes, RFF...) sans être encore remontées
+  ici comme alerte.
 - L'adaptation complète à la fabrication en atelier : le cahier des
   charges est écrit en vocabulaire "chantier" (organigramme chantier,
   prise en charge du chantier...). `Affaire.typeRealisation`

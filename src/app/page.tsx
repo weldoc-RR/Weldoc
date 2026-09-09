@@ -45,7 +45,11 @@ export default async function HomePage() {
         <Link href="/documents">Documents externes →</Link>{" "}
         <Link href="/rex">REX →</Link>{" "}
         <Link href="/productivite">Temps et productivité →</Link>{" "}
-        {aNiveauMinimum(utilisateur.niveau, "NIVEAU_3") && <Link href="/audit">Audit trail →</Link>}
+        {aNiveauMinimum(utilisateur.niveau, "NIVEAU_3") && (
+          <>
+            <Link href="/audit">Audit trail →</Link> <Link href="/systeme-qualite">Système qualité →</Link>
+          </>
+        )}
       </p>
       <ul style={{ listStyle: "none", padding: 0 }}>
         {affaires.map((a) => {

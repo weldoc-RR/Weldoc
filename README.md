@@ -405,6 +405,21 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
     MODIFICATIONS"), lien visible uniquement pour ce niveau depuis la page
     d'accueil. Filtrable par entité en cliquant sur son nom dans le
     tableau.
+- **Système qualité** (voir le cahier des charges) — `src/lib/systemeQualite.ts`,
+  fonction `calculerIndicateursQualite` : rassemble ce qui existe déjà
+  ailleurs (qualifications/habilitations/formations par statut, FNC,
+  contrôles réalisés par méthode avec taux de conformité, points
+  réglementaires bloquants ouverts, validations de rapport de fin de
+  fabrication, signatures, bibliothèques versionnées WPS/QMOS/procédures
+  internes/documents externes/bibliothèque dimensionnelle) en indicateurs
+  exploitables pour un audit ISO 9001 — rien de nouveau n'est stocké,
+  tout est recalculé à la lecture à partir des modules existants. Comme
+  le cahier des charges le précise, Weldoc fournit des preuves
+  structurées mais ne "certifie" jamais l'entreprise lui-même.
+  - Page `/systeme-qualite`, réservée au niveau 3 (même logique que
+    l'audit trail : outil de contrôle interne), lien visible uniquement
+    pour ce niveau depuis la page d'accueil. Renvoie vers l'audit trail
+    pour le détail événement par événement.
 - **Retour d'expérience (REX)** (voir le cahier des charges) — une fiche
   REX par FNC documentée (`FicheREX`, `fncId` unique) : type de problème,
   origine, cause, solution, résultat. Le classement par matériau/procédé/
@@ -792,8 +807,9 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   pas encore joint par joint (ex. "38 joints soudés sur 120 prévus") : ça
   suppose de connaître à l'avance le nombre de joints prévus sur l'affaire,
   ce qui n'est pas encore saisi dans Weldoc.
-- Une bonne partie des ~50 modules du cahier des charges reste encore à
-  construire (système qualité, entre autres). Le TQC
+- Quelques modules plus secondaires du cahier des charges restent encore à
+  construire (offre documentaire Weldoc, formation/déploiement — plutôt
+  des sujets d'offre commerciale que des écrans à construire). Le TQC
   ("tel que construit") a une première version textuelle (voir ci-dessus,
   bouton "+ TQC" sur `/joints`), mais deux des trois méthodes prévues au
   cahier des charges restent à construire : l'ISO manuel au stylet sur

@@ -734,7 +734,12 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
     Vercel du projet). Composant réutilisable `src/components/
     file-upload.tsx` : un bouton "ou déposer un fichier" à côté de
     chaque champ lien existant plutôt qu'à sa place — coller un lien
-    déjà hébergé reste toujours possible. Branché sur les certificats de
+    déjà hébergé reste toujours possible. **"📷 Prendre une photo"** : un
+    second bouton ouvre directement l'appareil photo de la tablette/du
+    téléphone (attribut HTML `capture="environment"`, uniquement sur le
+    bouton image — un PDF ne se "capture" pas), pour photographier sur
+    le moment sans passer par la galerie. Les deux boutons envoient au
+    même dépôt (`POST /api/upload`). Branché sur les certificats de
     qualification/habilitation/acuité visuelle et les documents
     justificatifs du personnel (voir ci-dessus), ainsi que sur le book
     photo (`/affaires/[id]/photos`), les PV externes

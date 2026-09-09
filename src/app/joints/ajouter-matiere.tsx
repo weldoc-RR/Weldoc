@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { FileUpload } from "@/components/file-upload";
 
 type Affaire = { id: string; numero: string };
 
@@ -158,10 +159,12 @@ export function AjouterMatiere({ affaires }: { affaires: Affaire[] }) {
         Lien vers le CCPU (optionnel)
         <input type="text" value={ccpuDocumentUrl} onChange={(e) => setCcpuDocumentUrl(e.target.value)} style={{ display: "block", width: "100%", padding: "0.4rem" }} />
       </label>
+      <FileUpload onDepose={setCcpuDocumentUrl} />
       <label>
         Lien vers le certificat (optionnel)
         <input type="text" value={certificatUrl} onChange={(e) => setCertificatUrl(e.target.value)} style={{ display: "block", width: "100%", padding: "0.4rem" }} />
       </label>
+      <FileUpload onDepose={setCertificatUrl} />
       <div>
         <button type="submit" disabled={enCours}>
           {enCours ? "Enregistrement..." : "Enregistrer la matière"}

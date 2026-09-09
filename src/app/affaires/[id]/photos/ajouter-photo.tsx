@@ -2,14 +2,15 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { FileUpload } from "@/components/file-upload";
 
 type Phase = { id: string; nom: string };
 type Joint = { id: string; numeroAffiche: string };
 type Fnc = { id: string; reference: string };
 
-// Ajoute une photo au book photo (voir POST /api/photos). `url` reste du
-// texte libre (image déjà hébergée quelque part) : pas de téléversement de
-// fichier intégré à Weldoc pour l'instant.
+// Ajoute une photo au book photo (voir POST /api/photos). `url` peut
+// venir d'un lien déjà hébergé ou d'un dépôt direct dans Weldoc (voir
+// POST /api/upload, le "drive").
 export function AjouterPhoto({
   affaireId,
   phases,
@@ -67,6 +68,7 @@ export function AjouterPhoto({
         Adresse de la photo (déjà hébergée quelque part)
         <input required type="url" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://..." style={{ display: "block", width: "100%", padding: "0.4rem" }} />
       </label>
+      <FileUpload onDepose={setUrl} />
       <label>
         Légende / commentaire (optionnel)
         <input type="text" value={commentaire} onChange={(e) => setCommentaire(e.target.value)} style={{ display: "block", width: "100%", padding: "0.4rem" }} />

@@ -2,14 +2,15 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { FileUpload } from "@/components/file-upload";
 
 type Joint = { id: string; numeroAffiche: string };
 type Phase = { id: string; nom: string };
 
 // Importe un document produit par un prestataire externe (voir POST
 // /api/pv-externes). L'intitulé et le prestataire restent en texte libre.
-// `url` est pour l'instant un lien/chemin saisi à la main — le dépôt de
-// fichier proprement dit sera à décider avec l'utilisateur.
+// `url` peut venir d'un lien déjà hébergé ou d'un dépôt direct dans
+// Weldoc (voir POST /api/upload, le "drive").
 export function AjouterPvExterne({ affaireId, joints, phases }: { affaireId: string; joints: Joint[]; phases: Phase[] }) {
   const router = useRouter();
   const [ouvert, setOuvert] = useState(false);
@@ -78,6 +79,7 @@ export function AjouterPvExterne({ affaireId, joints, phases }: { affaireId: str
         Lien / chemin du document
         <input required type="text" value={url} onChange={(e) => setUrl(e.target.value)} style={{ display: "block", width: "100%", padding: "0.4rem" }} />
       </label>
+      <FileUpload onDepose={setUrl} />
       <label>
         Date du document (optionnel)
         <input type="date" value={dateDocument} onChange={(e) => setDateDocument(e.target.value)} style={{ display: "block", width: "100%", padding: "0.4rem" }} />

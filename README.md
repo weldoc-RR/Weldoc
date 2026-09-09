@@ -653,10 +653,14 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
     file-upload.tsx` : un bouton "ou déposer un fichier" à côté de
     chaque champ lien existant plutôt qu'à sa place — coller un lien
     déjà hébergé reste toujours possible. Branché sur les certificats de
-    qualification/habilitation/acuité visuelle et sur les documents
-    justificatifs du personnel (voir ci-dessus) : c'est ce qui permet
-    de déposer au fur et à mesure les habilitations/qualifications/
-    acuités visuelles scannées, sans passer par un hébergement externe.
+    qualification/habilitation/acuité visuelle et les documents
+    justificatifs du personnel (voir ci-dessus), ainsi que sur le book
+    photo (`/affaires/[id]/photos`), les PV externes
+    (`/affaires/[id]/pv-externes`) et la réception d'une matière/CCPU
+    (`/joints`, document CCPU et certificat) : c'est ce qui permet de
+    déposer au fur et à mesure les habilitations/qualifications/acuités
+    visuelles scannées, les photos, les PV de sous-traitants et les CCPU,
+    sans passer par un hébergement externe.
     **Non testé en conditions réelles** dans cette session : l'environnement
     de développement n'a pas de jeton Vercel Blob configuré, donc le
     dépôt effectif d'un fichier (au-delà de l'authentification, du

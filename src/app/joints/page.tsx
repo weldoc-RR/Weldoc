@@ -7,6 +7,7 @@ import { calculerStatut } from "@/lib/statutValidite";
 import { verifierQS } from "@/lib/verificationQS";
 import { calculerStatutOutil, outilUtilisable } from "@/lib/statutOutil";
 import { AjouterJoint } from "./ajouter-joint";
+import { AjouterMatiere } from "./ajouter-matiere";
 import { DeclarerReparation } from "./declarer-reparation";
 import { BadgeControle } from "./badge-controle";
 import { ControlesJoint } from "./controles-joint";
@@ -48,7 +49,7 @@ export default async function JointsPage() {
             },
           },
         },
-        matiere: { select: { designation: true, nuance: true } },
+        matiere: { select: { designation: true, nuance: true, normeProduit: true, diametre: true, epaisseur: true } },
         wps: {
           select: {
             reference: true,
@@ -134,6 +135,9 @@ export default async function JointsPage() {
         jamais un enregistrement écrasé par un autre.
       </p>
 
+      <h2>Réceptionner une matière</h2>
+      <AjouterMatiere affaires={affaires} />
+
       <h2>Créer un joint</h2>
       <AjouterJoint affaires={affaires} soudeurs={soudeurs} matieres={matieres} wpsEnVigueur={wpsEnVigueur} />
 
@@ -218,6 +222,7 @@ export default async function JointsPage() {
                       consommables={consommablesList}
                       outils={outilsUtilisables}
                       produitsDimensionnels={produitsDimEnVigueur}
+                      matiere={j.matiere}
                       ficheSoudage={j.ficheSoudage}
                       tqc={j.tqc}
                     />

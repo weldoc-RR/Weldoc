@@ -20,6 +20,7 @@ type ProduitDimensionnel = {
   diametreNominalMm: number | null;
   epaisseurNominaleMm: number | null;
 };
+type MatiereJoint = { normeProduit: string; diametre: number | null; epaisseur: number | null } | null;
 
 type TypeFormulaireOuvert = "DIM" | "VT" | "PT" | "MT" | "RT" | "UT" | "FTS" | "TQC" | null;
 
@@ -41,6 +42,7 @@ export function ControlesJoint({
   consommables,
   outils,
   produitsDimensionnels,
+  matiere,
   ficheSoudage,
   tqc,
 }: {
@@ -49,6 +51,7 @@ export function ControlesJoint({
   consommables: Consommable[];
   outils: Outil[];
   produitsDimensionnels: ProduitDimensionnel[];
+  matiere: MatiereJoint;
   ficheSoudage: FicheSoudage;
   tqc: Tqc;
 }) {
@@ -73,7 +76,14 @@ export function ControlesJoint({
       {ouvert === "FTS" && <FicheSoudageForm jointId={jointId} fiche={ficheSoudage} onFermer={fermer} />}
       {ouvert === "TQC" && <TqcForm jointId={jointId} tqc={tqc} onFermer={fermer} />}
       {ouvert === "DIM" && (
-        <ControleDimensionnelForm jointId={jointId} outils={outils} produitsDimensionnels={produitsDimensionnels} onCree={fermer} onAnnuler={fermer} />
+        <ControleDimensionnelForm
+          jointId={jointId}
+          outils={outils}
+          produitsDimensionnels={produitsDimensionnels}
+          matiere={matiere}
+          onCree={fermer}
+          onAnnuler={fermer}
+        />
       )}
       {ouvert === "VT" && (
         <ControleGeneriqueForm endpoint="/api/controles-visuels" jointId={jointId} onCree={fermer} onAnnuler={fermer} />

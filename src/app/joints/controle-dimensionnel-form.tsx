@@ -25,29 +25,35 @@ function mesureVide(): MesureFormulaire {
   return { position: "", diametreMm: "", epaisseurMm: "" };
 }
 
+type MatiereJoint = { normeProduit: string; diametre: number | null; epaisseur: number | null } | null;
+
 // Le résultat n'est jamais saisi directement : il est calculé côté serveur
-// à partir des mesures et de la table de tolérances (voir
-// src/lib/tolerances.ts — seule "EXEMPLE-DEMO" y est configurée pour
-// l'instant, en attendant les vraies valeurs normatives).
+// à partir des mesures et des critères applicables (voir
+// src/lib/tolerances.ts pour les normes déjà configurées, ou un produit de
+// la bibliothèque dimensionnelle). Norme/diamètre/épaisseur se préremplissent
+// automatiquement depuis la matière (CCPU) du joint quand il y en a une —
+// une donnée saisie une seule fois à la réception, jamais reressaisie ici.
 export function ControleDimensionnelForm({
   jointId,
   outils,
   produitsDimensionnels,
+  matiere,
   onCree,
   onAnnuler,
 }: {
   jointId: string;
   outils: Outil[];
   produitsDimensionnels: ProduitDimensionnel[];
+  matiere: MatiereJoint;
   onCree: () => void;
   onAnnuler: () => void;
 }) {
   const router = useRouter();
   const [outilId, setOutilId] = useState("");
   const [produitDimensionnelId, setProduitDimensionnelId] = useState("");
-  const [normeProduit, setNormeProduit] = useState("");
-  const [diametreNominalMm, setDiametreNominalMm] = useState("");
-  const [epaisseurNominaleMm, setEpaisseurNominaleMm] = useState("");
+  const [normeProduit, setNormeProduit] = useState(() => matiere?.normeProduit ?? "");
+  const [diametreNominalMm, setDiametreNominalMm] = useState(() => (matiere?.diametre != null ? String(matiere.diametre) : ""));
+  const [epaisseurNominaleMm, setEpaisseurNominaleMm] = useState(() => (matiere?.epaisseur != null ? String(matiere.epaisseur) : ""));
 
   function choisirProduit(id: string) {
     setProduitDimensionnelId(id);
@@ -112,6 +118,11 @@ export function ControleDimensionnelForm({
           ))}
         </select>
       </label>
+      {matiere && (
+        <p style={{ fontSize: "0.8rem", color: "#0ca30c", margin: "0.3rem 0 0 0" }}>
+          Norme, diamètre et épaisseur préremplis depuis la matière (CCPU) de ce joint — modifiables si besoin.
+        </p>
+      )}
       {produitsDimensionnels.length > 0 && (
         <label style={{ fontSize: "0.85rem" }}>
           Produit de la bibliothèque dimensionnelle (optionnel — remplit et fait foi pour les critères)
@@ -127,7 +138,7 @@ export function ControleDimensionnelForm({
       )}
       <label style={{ fontSize: "0.85rem" }}>
         Norme produit
-        {!produitDimensionnelId && ' (ex. "EXEMPLE-DEMO" si aucun produit de la bibliothèque ne correspond — voir src/lib/tolerances.ts)'}
+        {!produitDimensionnelId && ' (ex. "EN 10216-2 (T nominale)", "EXEMPLE-DEMO"... — voir src/lib/tolerances.ts pour les normes reconnues)'}
         <input
           required
           type="text"

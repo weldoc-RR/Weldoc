@@ -20,14 +20,23 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   M800 → M800 R1 → M800 R2), fiches de suivi soudage, métrologie/outillage,
   contrôles dimensionnels, FNC, signatures (QR + PIN), audit trail.
 - `src/lib/tolerances.ts` — moteur de détermination des critères
-  dimensionnels par formule. **Les valeurs sont un exemple factice** : il
-  faut y intégrer les vraies tolérances de vos normes (avec les licences
-  nécessaires) avant toute utilisation réelle. Le code est fait pour que
-  chaque calcul reste traçable vers une norme et une version, comme
-  demandé dans le cahier des charges. Une deuxième voie existe désormais,
-  data plutôt que formule : voir "Bibliothèque dimensionnelle" plus bas,
-  qui vise à terme à remplacer ce moteur placeholder référence par
-  référence.
+  dimensionnels par formule. Contient désormais trois règles réelles pour
+  l'**EN 10216-2:2013+A1:2019** (tubes sans soudure), transmises par un
+  utilisateur détenant l'accès licencié à la norme : Tableau 7 (diamètre/
+  épaisseur nominale), Tableau 9 (diamètre/épaisseur minimale garantie
+  Tmin) et Tableau 11 (tubes finis à froid). **Important sur ce qui est
+  reproduit ou non** : le code encode uniquement la *règle de calcul*
+  (seuils numériques traduits en fonctions, avec mes propres noms de
+  variables) — jamais le texte de la norme (légendes de tableau, notes,
+  mise en page, en-têtes AFNOR). C'est la distinction faite ici entre
+  "implémenter la règle technique qui en découle" (autorisé, pratique
+  courante des logiciels techniques) et "republier le document" (jamais
+  fait, et aucune image/capture de la norme n'est stockée dans le dépôt).
+  Simplification assumée et documentée dans le code : la tolérance locale
+  supplémentaire (+5 % sur l'épaisseur maxi, D ≥ 355,6 mm, mesure
+  ponctuelle) n'est pas appliquée, seul le cas général l'est. "EXEMPLE-DEMO"
+  reste disponible comme norme placeholder pour toute norme pas encore
+  configurée — le message d'erreur du contrôle le rappelle.
 - **Bibliothèque dimensionnelle** (voir le cahier des charges) — produits
   normalisés (tubes, tôles, raccords, brides...) enregistrés une fois par
   une personne compétente, avec leurs critères min/maxi déjà déterminés
@@ -46,6 +55,19 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
     bibliothèque, qui préremplit norme/diamètre/épaisseur — la saisie
     manuelle reste possible tant que la bibliothèque ne couvre pas encore
     tout.
+- **Tolérances automatiques depuis le CCPU** — jusqu'ici il n'existait
+  aucun écran pour réceptionner une matière (`POST /api/matieres` existait
+  mais restait inaccessible en pratique). Bouton "+ Réceptionner une
+  matière (CCPU)" sur `/joints` (`ajouter-matiere.tsx`) : fournisseur,
+  norme produit, nuance, diamètre/épaisseur nominaux, coulée/lot,
+  liens CCPU/certificat — saisis une seule fois à la réception. Dès qu'un
+  joint est relié à cette matière (`Joint.matiereId`, déjà existant), le
+  formulaire "+ DIM" du contrôle dimensionnel préremplit automatiquement
+  norme/diamètre/épaisseur depuis elle (modifiable si besoin) : si la
+  norme produit reprend exactement un intitulé reconnu par
+  `src/lib/tolerances.ts` (ex. "EN 10216-2 (T nominale)"), les critères
+  applicables se déterminent alors sans aucune ressaisie, du début de
+  l'affaire jusqu'au contrôle.
 - `src/app/api/` — points d'entrée de l'application :
   - `POST /api/personnel` — créer une fiche personne minimale (identité + niveau)
   - `POST /api/auth/comptes` — créer le compte de connexion d'une personne
@@ -762,7 +784,10 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   jusqu'ici (le cahier des charges signale d'ailleurs le scan 3D comme une
   fonction complémentaire, non obligatoire).
 - Une vraie interface tablette soignée (ici, des pages HTML minimales).
-- Les vraies valeurs de tolérances normatives (voir avertissement ci-dessus).
+- Les vraies valeurs de tolérances normatives, sauf l'EN 10216-2 (Tableaux
+  7, 9, 11 — voir ci-dessus) : toute autre norme reste à intégrer au fil de
+  l'eau, au fur et à mesure qu'un utilisateur ou un expert métier avec
+  l'accès licencié la fournit.
 - Les tests automatisés et le déploiement.
 
 L'objectif de cette première étape était de valider que l'architecture

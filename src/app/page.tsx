@@ -72,6 +72,11 @@ export default async function HomePage() {
                   <span style={{ fontSize: "0.85rem" }}>
                     <Link href={`/avancement/${a.id}`}>{avancement.pourcentageGlobal}% d&apos;avancement</Link>
                   </span>
+                  {avancement.joints.prevus !== null && (
+                    <span style={{ fontSize: "0.85rem", color: "#52514e" }}>
+                      {avancement.joints.soudes}/{avancement.joints.prevus} joints soudés
+                    </span>
+                  )}
                   {avancement.fnc.ouvertes > 0 && (
                     <span style={{ fontSize: "0.85rem", color: "#d03b3b" }}>{avancement.fnc.ouvertes} FNC ouverte(s)</span>
                   )}

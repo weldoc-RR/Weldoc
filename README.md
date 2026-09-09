@@ -255,6 +255,19 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   - `src/app/avancement/[id]/page.tsx` — détail par séquence, sous forme
     de barres empilées (terminé/en cours/à faire/non applicable) avec les
     effectifs en clair à côté de chaque barre.
+  - **Avancement joint par joint** ("38 joints soudés sur 120 prévus"),
+    en plus de l'avancement par phase : nouveau champ
+    `Affaire.nombreJointsPrevus` (saisi une fois, ex. d'après le plan
+    d'isométrie — `PATCH /api/affaires/[id]`, bouton "Saisir le nombre de
+    joints prévus"/"Corriger" sur `/avancement/[id]`), comparé aux joints
+    d'origine dont la fiche technique de suivi de soudage est **signée**
+    (`FicheTechniqueSoudage.signatureId`, donc les valeurs attestées
+    comme définitives — les réparations ne comptent ni dans "prévus" ni
+    dans "soudés", c'est un travail en plus de la fabrication initiale).
+    Affiché sur `/avancement/[id]` (barre de progression dédiée),
+    `/avancement` (liste) et la page d'accueil, partout où l'avancement
+    par phase l'était déjà — masqué tant que le nombre prévu n'a pas été
+    saisi, pour ne jamais afficher un pourcentage inventé.
 - `src/lib/dossierFinFabrication.ts` — rapport de fin d'intervention (RFI),
   restructuré pour suivre précisément le modèle réel fourni par
   l'entreprise (un vrai document EDF/ULM) : seule la **structure** du
@@ -865,10 +878,6 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   et maintenant le modèle `Photo` (book photo) attendent tous des URLs déjà
   hébergées quelque part, il n'y a pas encore de téléversement de fichier
   intégré à Weldoc.
-- L'avancement (`/avancement`) reste au niveau des phases du séquencement,
-  pas encore joint par joint (ex. "38 joints soudés sur 120 prévus") : ça
-  suppose de connaître à l'avance le nombre de joints prévus sur l'affaire,
-  ce qui n'est pas encore saisi dans Weldoc.
 - Quelques modules plus secondaires du cahier des charges restent encore à
   construire (offre documentaire Weldoc, formation/déploiement — plutôt
   des sujets d'offre commerciale que des écrans à construire). Le TQC

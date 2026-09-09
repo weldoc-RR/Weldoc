@@ -302,6 +302,13 @@ model Affaire {
   dateDebut         DateTime?
   dateFin           DateTime?
   cahierDesChargesUrl String?
+  // Nombre de joints prévus sur l'affaire, saisi une fois (ex. d'après le
+  // plan d'isométrie) pour permettre un avancement "38 joints soudés sur
+  // 120 prévus" en plus de l'avancement par phase — voir
+  // src/lib/avancement.ts. Simple champ éditable comme les autres
+  // informations générales de l'affaire (client, projet, dates...), pas
+  // une donnée réglementaire tracée par l'audit trail.
+  nombreJointsPrevus Int?
   createdAt         DateTime @default(now())
 
   referentiels      AffaireReferentiel[]

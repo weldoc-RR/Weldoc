@@ -28,6 +28,17 @@ export interface AvancementAffaire {
     total: number;
     reparations: number;
     controlesDimensionnelsConformes: number;
+    // "38 joints soudés sur 120 prévus" : prevus vient d'une saisie
+    // ponctuelle sur l'affaire (Affaire.nombreJointsPrevus, ex. d'après le
+    // plan d'isométrie) ; soudes compte les joints d'origine dont la
+    // fiche technique de suivi de soudage est signée (donc les valeurs
+    // atteste comme définitives — voir FicheTechniqueSoudage). Les
+    // réparations ne comptent pas dans "prévus" ni dans "soudés" ici :
+    // elles sont un travail en plus, pas la fabrication initialement
+    // planifiée. `null` tant que le nombre prévu n'a pas été saisi.
+    prevus: number | null;
+    soudes: number;
+    pourcentageJoints: number | null;
   };
   fnc: {
     total: number;
@@ -69,14 +80,19 @@ export async function calculerAvancementAffaire(affaireId: string): Promise<Avan
     };
   });
 
-  const joints = await prisma.joint.findMany({
-    where: { affaireId },
-    include: { controlesDim: true },
-  });
+  const [affaire, joints] = await Promise.all([
+    prisma.affaire.findUnique({ where: { id: affaireId }, select: { nombreJointsPrevus: true } }),
+    prisma.joint.findMany({
+      where: { affaireId },
+      include: { controlesDim: true, ficheSoudage: { select: { signatureId: true } } },
+    }),
+  ]);
   const jointsOrigine = joints.filter((j) => j.indiceReparation === 0);
   const controlesDimensionnelsConformes = joints.filter((j) =>
     j.controlesDim.some((c) => c.resultat === "CONFORME")
   ).length;
+  const soudes = jointsOrigine.filter((j) => j.ficheSoudage?.signatureId).length;
+  const prevus = affaire?.nombreJointsPrevus ?? null;
 
   const fncs = await prisma.fNC.findMany({ where: { affaireId } });
   const fncOuvertes = fncs.filter((f) => f.statut !== "CLOTUREE").length;
@@ -89,6 +105,9 @@ export async function calculerAvancementAffaire(affaireId: string): Promise<Avan
       total: jointsOrigine.length,
       reparations: joints.length - jointsOrigine.length,
       controlesDimensionnelsConformes,
+      prevus,
+      soudes,
+      pourcentageJoints: prevus && prevus > 0 ? Math.round((soudes / prevus) * 100) : null,
     },
     fnc: {
       total: fncs.length,

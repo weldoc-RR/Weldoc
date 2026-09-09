@@ -5,6 +5,7 @@ import { getUtilisateurConnecteServeur } from "@/lib/auth";
 import { calculerAvancementAffaire } from "@/lib/avancement";
 import { BarreSequence, LegendeStatutsPhase } from "../barre-sequence";
 import { PhaseLigne } from "./phase-ligne";
+import { DefinirJointsPrevus } from "./definir-joints-prevus";
 
 export const dynamic = "force-dynamic";
 
@@ -43,7 +44,7 @@ export default async function AvancementAffairePage({ params }: { params: { id: 
         <span style={{ color: "#52514e" }}>des phases applicables du dossier de fabrication sont terminées</span>
       </div>
 
-      <div style={{ display: "flex", gap: "2rem", marginBottom: "1.5rem", color: "#52514e" }}>
+      <div style={{ display: "flex", gap: "2rem", marginBottom: "0.5rem", color: "#52514e", flexWrap: "wrap" }}>
         <div>
           <strong style={{ color: "#0b0b0b" }}>{avancement.joints.total}</strong> joint(s)
           {avancement.joints.reparations > 0 && <> ({avancement.joints.reparations} réparation(s))</>}
@@ -58,6 +59,30 @@ export default async function AvancementAffairePage({ params }: { params: { id: 
           </strong>{" "}
           FNC ouverte(s) sur {avancement.fnc.total}
         </div>
+      </div>
+
+      <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "1.5rem" }}>
+        {avancement.joints.prevus !== null ? (
+          <>
+            <div style={{ width: 240, height: 10, background: "#e1e0d9", borderRadius: 5, overflow: "hidden" }}>
+              <div
+                style={{
+                  width: `${Math.min(100, avancement.joints.pourcentageJoints ?? 0)}%`,
+                  height: "100%",
+                  background: "#0086c9",
+                }}
+              />
+            </div>
+            <span style={{ color: "#52514e" }}>
+              <strong style={{ color: "#0b0b0b" }}>{avancement.joints.soudes}</strong> joint(s) soudé(s) sur{" "}
+              <strong style={{ color: "#0b0b0b" }}>{avancement.joints.prevus}</strong> prévu(s) (
+              {avancement.joints.pourcentageJoints}%)
+            </span>
+          </>
+        ) : (
+          <span style={{ color: "#898781" }}>Nombre de joints prévus non saisi</span>
+        )}
+        <DefinirJointsPrevus affaireId={affaire.id} valeurActuelle={affaire.nombreJointsPrevus} />
       </div>
 
       <h2>Par séquence</h2>

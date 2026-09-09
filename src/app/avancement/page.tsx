@@ -52,6 +52,11 @@ export default async function AvancementPage() {
                   />
                 </div>
                 <strong>{avancement.pourcentageGlobal}%</strong>
+                {avancement.joints.prevus !== null && (
+                  <span style={{ color: "#52514e" }}>
+                    {avancement.joints.soudes}/{avancement.joints.prevus} joints soudés
+                  </span>
+                )}
                 {avancement.fnc.ouvertes > 0 && (
                   <span style={{ color: "#d03b3b" }}>{avancement.fnc.ouvertes} FNC ouverte(s)</span>
                 )}

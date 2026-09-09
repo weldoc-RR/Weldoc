@@ -5,6 +5,7 @@ import { getUtilisateurConnecteServeur, aNiveauMinimum } from "@/lib/auth";
 import { AjouterPoint } from "./ajouter-point";
 import { PointReglementaireCarte } from "./point-reglementaire";
 import { ReferentielsAffaire } from "./referentiels-affaire";
+import { ControlesRequis } from "./controles-requis";
 
 export const dynamic = "force-dynamic";
 
@@ -67,6 +68,8 @@ export default async function DossierReglementairePage({ params }: { params: { i
         tous={tousReferentiels}
         lies={liensReferentiels.map((l) => l.referentiel)}
       />
+
+      <ControlesRequis affaireId={affaire.id} valeurActuelle={affaire.controlesRequis} />
 
       <AjouterPoint
         affaireId={affaire.id}

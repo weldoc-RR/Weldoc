@@ -2,17 +2,20 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
+import { SIGLES_CONTROLE } from "@/lib/controlesManquants";
 
 const UpdateSchema = z.object({
-  nombreJointsPrevus: z.number().int().nonnegative().nullable(),
+  nombreJointsPrevus: z.number().int().nonnegative().nullable().optional(),
+  // Contrôles exigés sur chaque joint d'origine de l'affaire (voir
+  // src/lib/controlesManquants.ts et l'alerte "contrôles manquants" sur
+  // /alertes). Omis, ne change pas ; [] pour tout retirer.
+  controlesRequis: z.array(z.enum(SIGLES_CONTROLE)).optional(),
 });
 
-// PATCH /api/affaires/[id] — pour l'instant, uniquement le nombre de
-// joints prévus (voir le cahier des charges, avancement joint par joint :
-// "38 joints soudés sur 120 prévus" — src/lib/avancement.ts). Simple
-// champ éditable, comme les autres informations générales de l'affaire :
-// pas une décision réglementaire, pas de contrôle de niveau ni d'audit
-// trail dédié.
+// PATCH /api/affaires/[id] — informations générales éditables de
+// l'affaire (nombre de joints prévus, contrôles requis). Simples champs
+// éditables, comme les autres informations générales : pas une décision
+// réglementaire, pas de contrôle de niveau ni d'audit trail dédié.
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const auth = await requireAuth(req);
   if ("erreur" in auth) return auth.erreur;
@@ -30,7 +33,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
   const misAJour = await prisma.affaire.update({
     where: { id: params.id },
-    data: { nombreJointsPrevus: parsed.data.nombreJointsPrevus },
+    data: parsed.data,
   });
 
   return NextResponse.json(misAJour);

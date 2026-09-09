@@ -338,6 +338,14 @@ model Affaire {
   // informations générales de l'affaire (client, projet, dates...), pas
   // une donnée réglementaire tracée par l'audit trail.
   nombreJointsPrevus Int?
+  // Types de contrôle exigés sur chaque joint d'origine de l'affaire (DIM,
+  // VT, PT, MT, RT, UT — mêmes sigles que BadgeControle), saisi une fois
+  // pour permettre l'alerte "contrôles manquants" (voir le cahier des
+  // charges, "ALERTES") : src/lib/controlesManquants.ts compare cette
+  // liste aux contrôles réellement enregistrés sur chaque joint. Vide par
+  // défaut = comportement additif, aucune alerte tant que rien n'est
+  // déclaré (même principe que MatierePrevue/AutorisationSignature).
+  controlesRequis  String[] @default([])
   createdAt         DateTime @default(now())
 
   referentiels      AffaireReferentiel[]

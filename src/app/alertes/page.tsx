@@ -6,6 +6,7 @@ import { calculerStatutOutil } from "@/lib/statutOutil";
 import { calculerStatut } from "@/lib/statutValidite";
 import { calculerProchaineConfirmation } from "@/lib/confirmationQualification";
 import { pointBloque } from "@/lib/dossierReglementaire";
+import { controlesManquants } from "@/lib/controlesManquants";
 import { Destinataires } from "./destinataires";
 
 export const dynamic = "force-dynamic";
@@ -18,16 +19,19 @@ export const dynamic = "force-dynamic";
 // sa page d'origine (personnel, système qualité, dossier réglementaire...).
 // Chaque catégorie ci-dessous réutilise le calcul déjà en place ailleurs
 // (calculerStatut, statutActuel/pointBloque) — rien n'est recalculé
-// différemment ici. "Documents obsolètes/manquants" et "contrôles
-// manquants" ne sont pas repris : Weldoc n'a pas encore de notion de
-// "documents/contrôles attendus" pour une affaire à comparer à l'existant.
+// différemment ici. "Contrôles manquants" compare maintenant les contrôles
+// réellement enregistrés à ceux déclarés requis par affaire (voir
+// src/lib/controlesManquants.ts et /affaires/[id]/reglementaire — additif :
+// une affaire n'ayant rien déclaré n'apparaît jamais ici). "Documents
+// obsolètes/manquants" reste hors de cette page : Weldoc n'a pas encore de
+// notion de "documents attendus" pour une affaire à comparer à l'existant.
 export default async function AlertesPage() {
   const utilisateur = await getUtilisateurConnecteServeur();
   if (!utilisateur) {
     redirect("/login");
   }
 
-  const [outils, qualifications, qualificationsToutes, habilitations, fncsOuvertes, pointsReglementaires, destinataires] =
+  const [outils, qualifications, qualificationsToutes, habilitations, fncsOuvertes, pointsReglementaires, destinataires, jointsControlesManquants] =
     await Promise.all([
       prisma.outil.findMany({ where: { statut: { not: "HORS_SERVICE" } } }),
       prisma.qualification.findMany({
@@ -50,6 +54,7 @@ export default async function AlertesPage() {
         include: { affaire: { select: { numero: true } }, evenements: { orderBy: { date: "desc" }, take: 1 } },
       }),
       prisma.destinataireAlerte.findMany({ orderBy: { email: "asc" } }),
+      controlesManquants(),
     ]);
 
   const alertesQualification = qualificationsToutes
@@ -148,6 +153,20 @@ export default async function AlertesPage() {
             <li key={p.id} style={{ color: "crimson" }}>
               <strong>{p.intitule}</strong> — affaire {p.affaire.numero} (
               <Link href={`/affaires/${p.affaireId}/reglementaire`}>voir le dossier réglementaire</Link>)
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <h2>Contrôles manquants</h2>
+      {jointsControlesManquants.length === 0 ? (
+        <p>Aucune alerte pour l&apos;instant.</p>
+      ) : (
+        <ul>
+          {jointsControlesManquants.map((j) => (
+            <li key={j.jointId} style={{ color: "darkorange" }}>
+              Joint <strong>{j.numero}</strong> — affaire {j.affaireNumero} — contrôle(s) manquant(s) :{" "}
+              {j.manquants.join(", ")} (<Link href="/joints">voir les joints</Link>)
             </li>
           ))}
         </ul>

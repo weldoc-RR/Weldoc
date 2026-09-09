@@ -470,6 +470,7 @@ model Referentiel {
   version     String?
   affaires    AffaireReferentiel[]
   qualifications Qualification[]
+  produitsDimensionnels ProduitDimensionnel[]
 }
 
 model AffaireReferentiel {
@@ -692,6 +693,13 @@ model ControleDimensionnel {
   controleurId   String
   outil          Outil?              @relation(fields: [outilId], references: [id])
   outilId        String?
+  // Produit de la bibliothèque dimensionnelle utilisé, quand il y en a un
+  // (voir ProduitDimensionnel ci-dessous) — sinon les critères viennent du
+  // moteur de tolérances placeholder (src/lib/tolerances.ts). Dans les
+  // deux cas, `criteresAppliques` garde une copie des critères réellement
+  // appliqués au moment du contrôle (jamais recalculée après coup).
+  produitDimensionnel   ProduitDimensionnel? @relation(fields: [produitDimensionnelId], references: [id])
+  produitDimensionnelId String?
   dateControle   DateTime            @default(now())
   mesures        Json
   criteresAppliques Json
@@ -699,6 +707,41 @@ model ControleDimensionnel {
   signatureId    String?
 
   fncsGenerees   FNC[]
+}
+
+// Bibliothèque dimensionnelle (voir le cahier des charges, "BIBLIOTHÈQUE
+// DIMENSIONNELLE") : produits normalisés (tubes, tôles, raccords,
+// brides...) avec leurs critères dimensionnels déjà déterminés par une
+// personne compétente à partir de la norme réelle — jamais recalculés par
+// une formule Weldoc, contrairement au moteur placeholder de
+// src/lib/tolerances.ts (que cette bibliothèque vise à terme à
+// remplacer, référence par référence, à mesure qu'elle se remplit). Même
+// principe de versionnage que WPS/QMOS/ProcedureInterne/DocumentExterne :
+// une nouvelle révision (norme mise à jour) est un nouvel enregistrement.
+model ProduitDimensionnel {
+  id                  String   @id @default(cuid())
+  reference           String
+  version             String   @default("Rev 0")
+  designation         String
+  type                String?
+  normeProduit        String
+  diametreNominalMm   Float?
+  epaisseurNominaleMm Float?
+  finition            String?
+  etat                String?
+  classeType          String?
+  diametreMiniMm      Float
+  diametreMaxiMm      Float
+  epaisseurMiniMm     Float
+  epaisseurMaxiMm     Float
+  referentiel         Referentiel? @relation(fields: [referentielId], references: [id])
+  referentielId       String?
+  retiree             Boolean  @default(false)
+  createdAt           DateTime @default(now())
+
+  controles           ControleDimensionnel[]
+
+  @@index([reference])
 }
 
 // ============================================================================

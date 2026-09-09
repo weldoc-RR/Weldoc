@@ -24,7 +24,7 @@ export default async function JointsPage() {
     redirect("/login");
   }
 
-  const [joints, affaires, soudeurs, matieres, wpsList, consommablesList, outilsList] = await Promise.all([
+  const [joints, affaires, soudeurs, matieres, wpsList, consommablesList, outilsList, produitsDimList] = await Promise.all([
     prisma.joint.findMany({
       include: {
         affaire: { select: { numero: true, client: true } },
@@ -89,7 +89,18 @@ export default async function JointsPage() {
       where: { statut: { not: "HORS_SERVICE" } },
       select: { id: true, reference: true, type: true, dateEcheance: true, statut: true },
     }),
+    prisma.produitDimensionnel.findMany({
+      where: { retiree: false },
+      select: { id: true, reference: true, version: true, designation: true, normeProduit: true, diametreNominalMm: true, epaisseurNominaleMm: true, createdAt: true, retiree: true },
+      orderBy: [{ reference: "asc" }, { createdAt: "desc" }],
+    }),
   ]);
+  // Seule la révision la plus récente (non retirée) de chaque référence
+  // est proposée au contrôle, même principe que les WPS en vigueur
+  // ci-dessus.
+  const produitsDimEnVigueur = annoterStatutProcedures(produitsDimList, (p) => p.createdAt).filter(
+    (p) => p.statutAffiche === "EN_VIGUEUR"
+  );
   // Seules les révisions en vigueur (les plus récentes, non retirées) sont
   // proposées pour un nouveau joint — les anciennes restent visibles mais
   // ne doivent plus être choisies pour du travail neuf.
@@ -206,6 +217,7 @@ export default async function JointsPage() {
                       }))}
                       consommables={consommablesList}
                       outils={outilsUtilisables}
+                      produitsDimensionnels={produitsDimEnVigueur}
                       ficheSoudage={j.ficheSoudage}
                       tqc={j.tqc}
                     />

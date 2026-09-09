@@ -20,11 +20,32 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   M800 → M800 R1 → M800 R2), fiches de suivi soudage, métrologie/outillage,
   contrôles dimensionnels, FNC, signatures (QR + PIN), audit trail.
 - `src/lib/tolerances.ts` — moteur de détermination des critères
-  dimensionnels. **Les valeurs sont un exemple factice** : il faut y intégrer
-  les vraies tolérances de vos normes (avec les licences nécessaires) avant
-  toute utilisation réelle. Le code est fait pour que chaque calcul reste
-  traçable vers une norme et une version, comme demandé dans le cahier des
-  charges.
+  dimensionnels par formule. **Les valeurs sont un exemple factice** : il
+  faut y intégrer les vraies tolérances de vos normes (avec les licences
+  nécessaires) avant toute utilisation réelle. Le code est fait pour que
+  chaque calcul reste traçable vers une norme et une version, comme
+  demandé dans le cahier des charges. Une deuxième voie existe désormais,
+  data plutôt que formule : voir "Bibliothèque dimensionnelle" plus bas,
+  qui vise à terme à remplacer ce moteur placeholder référence par
+  référence.
+- **Bibliothèque dimensionnelle** (voir le cahier des charges) — produits
+  normalisés (tubes, tôles, raccords, brides...) enregistrés une fois par
+  une personne compétente, avec leurs critères min/maxi déjà déterminés
+  depuis la norme réelle (`ProduitDimensionnel`, jamais recalculés par
+  Weldoc, contrairement au moteur formule ci-dessus). Même principe de
+  versionnage que WPS/QMOS/ProcedureInterne/DocumentExterne
+  (`annoterStatutProcedures` réutilisée telle quelle).
+  - `GET`/`POST`/`PATCH /api/produits-dimensionnels` — liste, création
+    (niveau 2), retrait/réactivation. Section "Bibliothèque dimensionnelle"
+    sur `/procedures`.
+  - `POST /api/controles-dimensionnels` accepte maintenant un
+    `produitDimensionnelId` optionnel : si fourni, ses critères min/maxi
+    font foi (au lieu de `determinerCriteres`) et sont copiés dans
+    `criteresAppliques` comme avant (rien n'est recalculé après coup). Le
+    formulaire "+ DIM" sur `/joints` propose de choisir un produit de la
+    bibliothèque, qui préremplit norme/diamètre/épaisseur — la saisie
+    manuelle reste possible tant que la bibliothèque ne couvre pas encore
+    tout.
 - `src/app/api/` — points d'entrée de l'application :
   - `POST /api/personnel` — créer une fiche personne minimale (identité + niveau)
   - `POST /api/auth/comptes` — créer le compte de connexion d'une personne
@@ -694,10 +715,6 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   (le cahier des charges évoque "peut proposer une affectation adaptée") :
   pour l'instant Weldoc détecte et signale, mais ne suggère pas encore
   d'alternative.
-- La bibliothèque des produits normalisés ("bibliothèque dimensionnelle" du
-  cahier des charges : tubes/tôles/raccords/brides avec leurs tolérances) :
-  distincte des matières effectivement réceptionnées (`Matiere`), pas
-  encore modélisée.
 - L'import du CCPU et la reconnaissance de caractères sur étiquette
   (consommables comme matières) : pour l'instant les URLs de documents se
   renseignent à la main.
@@ -736,8 +753,7 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   suppose de connaître à l'avance le nombre de joints prévus sur l'affaire,
   ce qui n'est pas encore saisi dans Weldoc.
 - Une bonne partie des ~50 modules du cahier des charges reste encore à
-  construire (temps et productivité, système qualité, bibliothèque
-  dimensionnelle...). Le TQC
+  construire (temps et productivité, système qualité...). Le TQC
   ("tel que construit") a une première version textuelle (voir ci-dessus,
   bouton "+ TQC" sur `/joints`), mais deux des trois méthodes prévues au
   cahier des charges restent à construire : l'ISO manuel au stylet sur

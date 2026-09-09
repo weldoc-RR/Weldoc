@@ -5,6 +5,15 @@ import { useRouter } from "next/navigation";
 import { SignerQrPin } from "@/components/signer-qr-pin";
 
 type Outil = { id: string; reference: string; type: string };
+type ProduitDimensionnel = {
+  id: string;
+  reference: string;
+  version: string;
+  designation: string;
+  normeProduit: string;
+  diametreNominalMm: number | null;
+  epaisseurNominaleMm: number | null;
+};
 
 interface MesureFormulaire {
   position: string;
@@ -23,19 +32,32 @@ function mesureVide(): MesureFormulaire {
 export function ControleDimensionnelForm({
   jointId,
   outils,
+  produitsDimensionnels,
   onCree,
   onAnnuler,
 }: {
   jointId: string;
   outils: Outil[];
+  produitsDimensionnels: ProduitDimensionnel[];
   onCree: () => void;
   onAnnuler: () => void;
 }) {
   const router = useRouter();
   const [outilId, setOutilId] = useState("");
+  const [produitDimensionnelId, setProduitDimensionnelId] = useState("");
   const [normeProduit, setNormeProduit] = useState("");
   const [diametreNominalMm, setDiametreNominalMm] = useState("");
   const [epaisseurNominaleMm, setEpaisseurNominaleMm] = useState("");
+
+  function choisirProduit(id: string) {
+    setProduitDimensionnelId(id);
+    const produit = produitsDimensionnels.find((p) => p.id === id);
+    if (produit) {
+      setNormeProduit(produit.normeProduit);
+      if (produit.diametreNominalMm !== null) setDiametreNominalMm(String(produit.diametreNominalMm));
+      if (produit.epaisseurNominaleMm !== null) setEpaisseurNominaleMm(String(produit.epaisseurNominaleMm));
+    }
+  }
   const [mesures, setMesures] = useState<MesureFormulaire[]>([mesureVide()]);
   const [signatureId, setSignatureId] = useState<string | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
@@ -55,6 +77,7 @@ export function ControleDimensionnelForm({
       body: JSON.stringify({
         jointId,
         outilId: outilId || undefined,
+        produitDimensionnelId: produitDimensionnelId || undefined,
         normeProduit,
         diametreNominalMm: Number(diametreNominalMm),
         epaisseurNominaleMm: Number(epaisseurNominaleMm),
@@ -89,10 +112,30 @@ export function ControleDimensionnelForm({
           ))}
         </select>
       </label>
+      {produitsDimensionnels.length > 0 && (
+        <label style={{ fontSize: "0.85rem" }}>
+          Produit de la bibliothèque dimensionnelle (optionnel — remplit et fait foi pour les critères)
+          <select value={produitDimensionnelId} onChange={(e) => choisirProduit(e.target.value)} style={{ display: "block", width: "100%", padding: "0.3rem" }}>
+            <option value="">— aucun, saisie manuelle —</option>
+            {produitsDimensionnels.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.reference} ({p.version}) — {p.designation}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
       <label style={{ fontSize: "0.85rem" }}>
-        Norme produit (ex. "EXEMPLE-DEMO" — seule norme configurée pour l&apos;instant, voir
-        src/lib/tolerances.ts)
-        <input required type="text" value={normeProduit} onChange={(e) => setNormeProduit(e.target.value)} style={{ display: "block", width: "100%", padding: "0.3rem" }} />
+        Norme produit
+        {!produitDimensionnelId && ' (ex. "EXEMPLE-DEMO" si aucun produit de la bibliothèque ne correspond — voir src/lib/tolerances.ts)'}
+        <input
+          required
+          type="text"
+          value={normeProduit}
+          onChange={(e) => setNormeProduit(e.target.value)}
+          readOnly={Boolean(produitDimensionnelId)}
+          style={{ display: "block", width: "100%", padding: "0.3rem", background: produitDimensionnelId ? "#f2f1ec" : undefined }}
+        />
       </label>
       <div style={{ display: "flex", gap: "0.4rem" }}>
         <label style={{ fontSize: "0.85rem", flex: 1 }}>

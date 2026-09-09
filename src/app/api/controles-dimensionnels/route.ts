@@ -15,6 +15,12 @@ const MesureSchema = z.object({
 const CreateControleSchema = z.object({
   jointId: z.string().min(1),
   outilId: z.string().optional(),
+  // Produit de la bibliothèque dimensionnelle, quand il y en a un pour ce
+  // contrôle (voir /produits-dimensionnels) : ses critères min/maxi déjà
+  // déterminés font foi, au lieu du moteur de tolérances placeholder
+  // (src/lib/tolerances.ts). normeProduit/diamètre/épaisseur nominaux
+  // restent transmis dans tous les cas (affichage, FNC éventuelle).
+  produitDimensionnelId: z.string().optional(),
   normeProduit: z.string().min(1),
   diametreNominalMm: z.number(),
   epaisseurNominaleMm: z.number(),
@@ -41,7 +47,8 @@ export async function POST(req: NextRequest) {
   // une valeur transmise par le client : on ne peut pas signer le travail de
   // quelqu'un d'autre.
   const controleurId = auth.utilisateur.personnelId;
-  const { jointId, outilId, normeProduit, diametreNominalMm, epaisseurNominaleMm, mesures, signatureId } = parsed.data;
+  const { jointId, outilId, produitDimensionnelId, normeProduit, diametreNominalMm, epaisseurNominaleMm, mesures, signatureId } =
+    parsed.data;
 
   // Vérification de l'outil de mesure (rattachement automatique au PV,
   // comme demandé au cahier des charges) : un outil expiré ou hors service
@@ -53,10 +60,25 @@ export async function POST(req: NextRequest) {
   }
 
   let criteres;
-  try {
-    criteres = determinerCriteres({ normeProduit, diametreNominalMm, epaisseurNominaleMm });
-  } catch (e) {
-    return NextResponse.json({ error: (e as Error).message }, { status: 422 });
+  if (produitDimensionnelId) {
+    const produit = await prisma.produitDimensionnel.findUnique({ where: { id: produitDimensionnelId } });
+    if (!produit) {
+      return NextResponse.json({ error: "Produit de la bibliothèque dimensionnelle introuvable." }, { status: 422 });
+    }
+    criteres = {
+      norme: `${produit.normeProduit} — ${produit.reference} (${produit.version})`,
+      diametreNominalMm,
+      diametreMiniMm: produit.diametreMiniMm,
+      diametreMaxiMm: produit.diametreMaxiMm,
+      epaisseurMiniMm: produit.epaisseurMiniMm,
+      epaisseurMaxiMm: produit.epaisseurMaxiMm,
+    };
+  } else {
+    try {
+      criteres = determinerCriteres({ normeProduit, diametreNominalMm, epaisseurNominaleMm });
+    } catch (e) {
+      return NextResponse.json({ error: (e as Error).message }, { status: 422 });
+    }
   }
 
   const resultat = evaluerConformite(mesures as Mesure[], criteres);
@@ -66,6 +88,7 @@ export async function POST(req: NextRequest) {
       jointId,
       controleurId,
       outilId,
+      produitDimensionnelId,
       mesures: mesures as object,
       criteresAppliques: criteres as unknown as object,
       resultat,

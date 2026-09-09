@@ -11,6 +11,15 @@ import { TqcForm, type Tqc } from "./tqc-form";
 type ControleVisuel = { id: string; procedureRef: string; dateControle: string };
 type Consommable = { id: string; type: string; fabricant: string; reference: string; lot: string };
 type Outil = { id: string; reference: string; type: string };
+type ProduitDimensionnel = {
+  id: string;
+  reference: string;
+  version: string;
+  designation: string;
+  normeProduit: string;
+  diametreNominalMm: number | null;
+  epaisseurNominaleMm: number | null;
+};
 
 type TypeFormulaireOuvert = "DIM" | "VT" | "PT" | "MT" | "RT" | "UT" | "FTS" | "TQC" | null;
 
@@ -31,6 +40,7 @@ export function ControlesJoint({
   controlesVisuels,
   consommables,
   outils,
+  produitsDimensionnels,
   ficheSoudage,
   tqc,
 }: {
@@ -38,6 +48,7 @@ export function ControlesJoint({
   controlesVisuels: ControleVisuel[];
   consommables: Consommable[];
   outils: Outil[];
+  produitsDimensionnels: ProduitDimensionnel[];
   ficheSoudage: FicheSoudage;
   tqc: Tqc;
 }) {
@@ -61,7 +72,9 @@ export function ControlesJoint({
       </button>
       {ouvert === "FTS" && <FicheSoudageForm jointId={jointId} fiche={ficheSoudage} onFermer={fermer} />}
       {ouvert === "TQC" && <TqcForm jointId={jointId} tqc={tqc} onFermer={fermer} />}
-      {ouvert === "DIM" && <ControleDimensionnelForm jointId={jointId} outils={outils} onCree={fermer} onAnnuler={fermer} />}
+      {ouvert === "DIM" && (
+        <ControleDimensionnelForm jointId={jointId} outils={outils} produitsDimensionnels={produitsDimensionnels} onCree={fermer} onAnnuler={fermer} />
+      )}
       {ouvert === "VT" && (
         <ControleGeneriqueForm endpoint="/api/controles-visuels" jointId={jointId} onCree={fermer} onAnnuler={fermer} />
       )}

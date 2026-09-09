@@ -7,7 +7,7 @@ export function RetirerProcedure({
   id,
   retiree,
 }: {
-  endpoint: "/api/wps" | "/api/qmos" | "/api/procedures-internes" | "/api/documents-externes";
+  endpoint: "/api/wps" | "/api/qmos" | "/api/procedures-internes" | "/api/documents-externes" | "/api/produits-dimensionnels";
   id: string;
   retiree: boolean;
 }) {

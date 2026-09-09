@@ -6,6 +6,7 @@ import { annoterStatutProcedures, type StatutAffichageProcedure } from "@/lib/pr
 import { AjouterQmos } from "./ajouter-qmos";
 import { AjouterWps } from "./ajouter-wps";
 import { AjouterProcedureInterne } from "./ajouter-procedure-interne";
+import { AjouterProduitDimensionnel } from "./ajouter-produit-dimensionnel";
 import { RetirerProcedure } from "./retirer-procedure";
 
 export const dynamic = "force-dynamic";
@@ -51,18 +52,24 @@ export default async function ProceduresPage() {
     redirect("/login");
   }
 
-  const [wpsList, qmosList, procInternesList] = await Promise.all([
+  const [wpsList, qmosList, procInternesList, produitsDimList, referentiels] = await Promise.all([
     prisma.wps.findMany({
       include: { qmos: { select: { reference: true, version: true } }, passes: { orderBy: { ordre: "asc" } } },
       orderBy: [{ reference: "asc" }, { dateEmission: "desc" }],
     }),
     prisma.qmos.findMany({ orderBy: [{ reference: "asc" }, { createdAt: "desc" }] }),
     prisma.procedureInterne.findMany({ orderBy: [{ reference: "asc" }, { dateEmission: "desc" }] }),
+    prisma.produitDimensionnel.findMany({
+      include: { referentiel: { select: { code: true, domaine: true } } },
+      orderBy: [{ reference: "asc" }, { createdAt: "desc" }],
+    }),
+    prisma.referentiel.findMany({ select: { id: true, code: true, domaine: true }, orderBy: { code: "asc" } }),
   ]);
   const wpsAnnotes = annoterStatutProcedures(wpsList, (w) => w.dateEmission);
   const qmosAnnotes = annoterStatutProcedures(qmosList, (q) => q.dateEssai ?? q.createdAt);
   const qmosDisponibles = qmosAnnotes.filter((q) => q.statutAffiche !== "RETIREE");
   const procInternesAnnotees = annoterStatutProcedures(procInternesList, (p) => p.dateEmission);
+  const produitsDimAnnotes = annoterStatutProcedures(produitsDimList, (p) => p.createdAt);
 
   return (
     <main style={{ fontFamily: "sans-serif", padding: "2rem" }}>
@@ -202,6 +209,38 @@ export default async function ProceduresPage() {
                   </a>
                 </div>
               )}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <h2 style={{ marginTop: "2rem" }}>Bibliothèque dimensionnelle</h2>
+      <p style={{ fontSize: "0.85rem", color: "#52514e" }}>
+        Produits normalisés (tubes, tôles, raccords, brides...) avec leurs critères dimensionnels déjà déterminés
+        depuis la norme réelle (voir le cahier des charges, "BIBLIOTHÈQUE DIMENSIONNELLE"). Sélectionnable au
+        contrôle dimensionnel d&apos;un joint plutôt que de ressaisir norme/diamètre/épaisseur à chaque fois. Vise
+        à terme à remplacer, référence par référence, le moteur de tolérances placeholder
+        (<code>src/lib/tolerances.ts</code>).
+      </p>
+      <AjouterProduitDimensionnel referentiels={referentiels} />
+      {produitsDimAnnotes.length === 0 ? (
+        <p>Aucun produit enregistré pour l&apos;instant.</p>
+      ) : (
+        <ul style={{ listStyle: "none", padding: 0, marginTop: "1.5rem" }}>
+          {produitsDimAnnotes.map((p) => (
+            <li key={p.id} style={{ marginBottom: "0.6rem", borderBottom: "1px solid #ddd", paddingBottom: "0.4rem" }}>
+              <strong>{p.reference}</strong> ({p.version}) — {p.designation}
+              {p.type && ` — ${p.type}`} — {p.normeProduit}
+              {p.referentiel && ` — ${p.referentiel.code}`}
+              <BadgeStatut statut={p.statutAffiche} />
+              <RetirerProcedure endpoint="/api/produits-dimensionnels" id={p.id} retiree={p.retiree} />
+              <div style={{ fontSize: "0.85rem", color: "#52514e", marginTop: "0.2rem" }}>
+                Diamètre {p.diametreMiniMm} à {p.diametreMaxiMm} mm — épaisseur {p.epaisseurMiniMm} à{" "}
+                {p.epaisseurMaxiMm} mm
+                {p.finition && ` — finition ${p.finition}`}
+                {p.etat && ` — état ${p.etat}`}
+                {p.classeType && ` — ${p.classeType}`}
+              </div>
             </li>
           ))}
         </ul>

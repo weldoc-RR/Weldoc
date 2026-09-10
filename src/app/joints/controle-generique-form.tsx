@@ -84,19 +84,19 @@ export function ControleGeneriqueForm({
   }
 
   return (
-    <form onSubmit={enregistrer} style={{ border: "1px solid #ddd", padding: "0.6rem", marginTop: "0.4rem", maxWidth: 600 }}>
-      <label style={{ fontSize: "0.85rem" }}>
+    <form onSubmit={enregistrer} style={{ border: "1px solid var(--couleur-bordure)", borderRadius: 6, padding: "1rem", marginTop: "0.5rem", maxWidth: 660 }}>
+      <label style={{ fontSize: "0.95rem", display: "block" }}>
         Référence de la procédure
-        <input required type="text" value={procedureRef} onChange={(e) => setProcedureRef(e.target.value)} style={{ display: "block", width: "100%", padding: "0.3rem" }} />
+        <input required type="text" value={procedureRef} onChange={(e) => setProcedureRef(e.target.value)} style={{ display: "block", width: "100%" }} />
       </label>
-      <label style={{ fontSize: "0.85rem" }}>
+      <label style={{ fontSize: "0.95rem", display: "block", marginTop: "0.6rem" }}>
         Version de la procédure (optionnel)
-        <input type="text" value={procedureVersion} onChange={(e) => setProcedureVersion(e.target.value)} style={{ display: "block", width: "100%", padding: "0.3rem" }} />
+        <input type="text" value={procedureVersion} onChange={(e) => setProcedureVersion(e.target.value)} style={{ display: "block", width: "100%" }} />
       </label>
       {outils && (
-        <label style={{ fontSize: "0.85rem" }}>
+        <label style={{ fontSize: "0.95rem", display: "block", marginTop: "0.6rem" }}>
           Équipement utilisé (optionnel)
-          <select value={outilId} onChange={(e) => setOutilId(e.target.value)} style={{ display: "block", width: "100%", padding: "0.3rem" }}>
+          <select value={outilId} onChange={(e) => setOutilId(e.target.value)} style={{ display: "block", width: "100%" }}>
             <option value="">— non précisé —</option>
             {outils.map((o) => (
               <option key={o.id} value={o.id}>
@@ -109,8 +109,8 @@ export function ControleGeneriqueForm({
       {extra}
       <EditeurIndications indications={indications} onChange={setIndications} />
       <EditeurConditionsExamen valeurs={conditionsExamen} onChange={setConditionsExamen} />
-      <div style={{ marginTop: "0.4rem" }}>
-        <p style={{ fontSize: "0.8rem", margin: "0 0 0.2rem 0" }}>Signature du contrôleur (matricule/QR + PIN) :</p>
+      <div style={{ marginTop: "0.6rem" }}>
+        <p style={{ fontSize: "0.9rem", margin: "0 0 0.3rem 0" }}>Signature du contrôleur (matricule/QR + PIN) :</p>
         <SignerQrPin
           documentType={endpoint}
           documentId={jointId}
@@ -118,14 +118,14 @@ export function ControleGeneriqueForm({
           onSigne={setSignatureId}
         />
       </div>
-      <div style={{ marginTop: "0.4rem" }}>
+      <div style={{ marginTop: "0.6rem", display: "flex", gap: "0.5rem", flexWrap: "wrap", alignItems: "center" }}>
         <button type="submit" disabled={enCours || indications.length === 0 || !signatureId}>
           {enCours ? "Enregistrement..." : "Enregistrer le contrôle"}
         </button>
-        <button type="button" onClick={onAnnuler} style={{ marginLeft: "0.4rem" }}>
+        <button type="button" onClick={onAnnuler}>
           Annuler
         </button>
-        {erreur && <span style={{ color: "crimson", fontSize: "0.85rem", marginLeft: "0.4rem" }}>{erreur}</span>}
+        {erreur && <span style={{ color: "crimson", fontSize: "0.9rem" }}>{erreur}</span>}
       </div>
     </form>
   );

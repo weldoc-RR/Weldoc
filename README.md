@@ -1355,11 +1355,19 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   de prise en charge/restitution de chantier (`etat-des-lieux/`,
   `ouvrir-constat.tsx` et `constat-card.tsx`) ont reçu le même traitement
   (champs pleine largeur, cases à cocher agrandies, boutons d'action
-  espacés en ligne plutôt qu'alignés à coups de marges). Le reste de la
-  mise en page (structure des pages, tableaux denses) garde encore le
-  style HTML minimal du squelette de démonstration — à affiner page par
-  page au fil des prochains modules, sur ce même socle. Le dessin au
-  stylet fonctionne déjà (testé au doigt/stylet/souris via les événements
+  espacés en ligne plutôt qu'alignés à coups de marges). Les formulaires
+  de contrôle CND (VT/PT/MT/RT/UT, contrôle dimensionnel) et la fiche
+  technique de suivi de soudage — les écrans les plus tapés sur le
+  terrain, joint par joint — ont reçu le même traitement : grille
+  d'indications qui passe de 3 colonnes fixes à un affichage qui
+  s'adapte à la largeur disponible (`repeat(auto-fit, minmax(...))`
+  plutôt que des colonnes figées), ligne de mesures dimensionnelles qui
+  passe à la ligne au lieu de se tasser, cases à cocher des joints
+  couverts par une fiche de soudage agrandies. Le reste de la mise en
+  page (structure des pages, tableaux denses) garde encore le style HTML
+  minimal du squelette de démonstration — à affiner page par page au fil
+  des prochains modules, sur ce même socle. Le dessin au stylet
+  fonctionne déjà (testé au doigt/stylet/souris via les événements
   `pointer`).
 - Les vraies valeurs de tolérances normatives, sauf l'EN 10216-2 (Tableaux
   7, 9, 11 — voir ci-dessus) : toute autre norme reste à intégrer au fil de

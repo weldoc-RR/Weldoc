@@ -2,7 +2,7 @@
 
 import type { ConditionsExamenFormulaire } from "./conditions-examen";
 
-const champ = { display: "block", width: "100%", padding: "0.3rem", fontSize: "0.85rem" } as const;
+const champ = { display: "block", width: "100%" } as const;
 
 function Champ({
   label,
@@ -14,7 +14,7 @@ function Champ({
   onChange: (v: string) => void;
 }) {
   return (
-    <label style={{ fontSize: "0.8rem" }}>
+    <label style={{ fontSize: "0.9rem" }}>
       {label}
       <input type="text" value={value} onChange={(e) => onChange(e.target.value)} style={champ} />
     </label>
@@ -36,11 +36,11 @@ export function EditeurConditionsExamen({
   }
 
   return (
-    <details style={{ marginTop: "0.4rem" }}>
-      <summary style={{ fontSize: "0.85rem", cursor: "pointer" }}>
+    <details style={{ marginTop: "0.6rem" }}>
+      <summary style={{ fontSize: "0.9rem", cursor: "pointer" }}>
         N° de PV, critères d&apos;acceptation et conditions d&apos;examen (optionnel)
       </summary>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.4rem", marginTop: "0.4rem" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "0.6rem", marginTop: "0.6rem" }}>
         <Champ label="N° de PV" value={valeurs.numeroPV} onChange={(v) => maj("numeroPV", v)} />
         <Champ label="Référentiel d'acceptation" value={valeurs.referentielAcceptation} onChange={(v) => maj("referentielAcceptation", v)} />
         <Champ label="Édition du référentiel" value={valeurs.editionReferentiel} onChange={(v) => maj("editionReferentiel", v)} />

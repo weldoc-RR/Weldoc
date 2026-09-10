@@ -35,13 +35,13 @@ export function ControleRessuageForm({
       extraJson={() => (controleVisuelPrealableId ? { controleVisuelPrealableId, consommableIds } : null)}
       extra={
         <>
-          <label style={{ fontSize: "0.85rem", display: "block" }}>
+          <label style={{ fontSize: "0.95rem", display: "block", marginTop: "0.6rem" }}>
             Contrôle visuel préalable (obligatoire)
             <select
               required
               value={controleVisuelPrealableId}
               onChange={(e) => setControleVisuelPrealableId(e.target.value)}
-              style={{ display: "block", width: "100%", padding: "0.3rem" }}
+              style={{ display: "block", width: "100%" }}
             >
               <option value="">— choisir —</option>
               {controlesVisuels.map((cv) => (
@@ -52,7 +52,7 @@ export function ControleRessuageForm({
             </select>
           </label>
           {controlesVisuels.length === 0 && (
-            <p style={{ fontSize: "0.8rem", color: "crimson" }}>
+            <p style={{ fontSize: "0.9rem", color: "crimson" }}>
               Aucun contrôle visuel enregistré sur ce joint : il en faut un avant de pouvoir faire un ressuage.
             </p>
           )}

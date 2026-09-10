@@ -106,10 +106,10 @@ export function ControleDimensionnelForm({
   }
 
   return (
-    <form onSubmit={enregistrer} style={{ border: "1px solid #ddd", padding: "0.6rem", marginTop: "0.4rem", maxWidth: 600 }}>
-      <label style={{ fontSize: "0.85rem" }}>
+    <form onSubmit={enregistrer} style={{ border: "1px solid var(--couleur-bordure)", borderRadius: 6, padding: "1rem", marginTop: "0.5rem", maxWidth: 660 }}>
+      <label style={{ fontSize: "0.95rem", display: "block" }}>
         Outil de mesure (optionnel)
-        <select value={outilId} onChange={(e) => setOutilId(e.target.value)} style={{ display: "block", width: "100%", padding: "0.3rem" }}>
+        <select value={outilId} onChange={(e) => setOutilId(e.target.value)} style={{ display: "block", width: "100%" }}>
           <option value="">— non précisé —</option>
           {outils.map((o) => (
             <option key={o.id} value={o.id}>
@@ -119,14 +119,14 @@ export function ControleDimensionnelForm({
         </select>
       </label>
       {matiere && (
-        <p style={{ fontSize: "0.8rem", color: "#0ca30c", margin: "0.3rem 0 0 0" }}>
+        <p style={{ fontSize: "0.9rem", color: "#0ca30c", margin: "0.4rem 0 0 0" }}>
           Norme, diamètre et épaisseur préremplis depuis la matière (CCPU) de ce joint — modifiables si besoin.
         </p>
       )}
       {produitsDimensionnels.length > 0 && (
-        <label style={{ fontSize: "0.85rem" }}>
+        <label style={{ fontSize: "0.95rem", display: "block", marginTop: "0.6rem" }}>
           Produit de la bibliothèque dimensionnelle (optionnel — remplit et fait foi pour les critères)
-          <select value={produitDimensionnelId} onChange={(e) => choisirProduit(e.target.value)} style={{ display: "block", width: "100%", padding: "0.3rem" }}>
+          <select value={produitDimensionnelId} onChange={(e) => choisirProduit(e.target.value)} style={{ display: "block", width: "100%" }}>
             <option value="">— aucun, saisie manuelle —</option>
             {produitsDimensionnels.map((p) => (
               <option key={p.id} value={p.id}>
@@ -136,7 +136,7 @@ export function ControleDimensionnelForm({
           </select>
         </label>
       )}
-      <label style={{ fontSize: "0.85rem" }}>
+      <label style={{ fontSize: "0.95rem", display: "block", marginTop: "0.6rem" }}>
         Norme produit
         {!produitDimensionnelId && ' (ex. "EN 10216-2 (T nominale)", "EXEMPLE-DEMO"... — voir src/lib/tolerances.ts pour les normes reconnues)'}
         <input
@@ -145,36 +145,36 @@ export function ControleDimensionnelForm({
           value={normeProduit}
           onChange={(e) => setNormeProduit(e.target.value)}
           readOnly={Boolean(produitDimensionnelId)}
-          style={{ display: "block", width: "100%", padding: "0.3rem", background: produitDimensionnelId ? "#f2f1ec" : undefined }}
+          style={{ display: "block", width: "100%", background: produitDimensionnelId ? "#f2f1ec" : undefined }}
         />
       </label>
-      <div style={{ display: "flex", gap: "0.4rem" }}>
-        <label style={{ fontSize: "0.85rem", flex: 1 }}>
+      <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap", marginTop: "0.6rem" }}>
+        <label style={{ fontSize: "0.95rem", flex: 1, minWidth: 180 }}>
           Diamètre nominal (mm)
-          <input required type="number" step="0.1" value={diametreNominalMm} onChange={(e) => setDiametreNominalMm(e.target.value)} style={{ display: "block", width: "100%", padding: "0.3rem" }} />
+          <input required type="number" step="0.1" value={diametreNominalMm} onChange={(e) => setDiametreNominalMm(e.target.value)} style={{ display: "block", width: "100%" }} />
         </label>
-        <label style={{ fontSize: "0.85rem", flex: 1 }}>
+        <label style={{ fontSize: "0.95rem", flex: 1, minWidth: 180 }}>
           Épaisseur nominale (mm)
-          <input required type="number" step="0.1" value={epaisseurNominaleMm} onChange={(e) => setEpaisseurNominaleMm(e.target.value)} style={{ display: "block", width: "100%", padding: "0.3rem" }} />
+          <input required type="number" step="0.1" value={epaisseurNominaleMm} onChange={(e) => setEpaisseurNominaleMm(e.target.value)} style={{ display: "block", width: "100%" }} />
         </label>
       </div>
 
-      <p style={{ fontSize: "0.85rem", margin: "0.4rem 0 0.2rem 0" }}>Mesures ({mesures.length})</p>
+      <p style={{ fontSize: "0.9rem", margin: "0.6rem 0 0.3rem 0" }}>Mesures ({mesures.length})</p>
       {mesures.map((m, i) => (
-        <div key={i} style={{ display: "flex", gap: "0.4rem", alignItems: "flex-end", marginBottom: "0.3rem" }}>
-          <label style={{ fontSize: "0.8rem", flex: 1 }}>
+        <div key={i} style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap", alignItems: "flex-end", marginBottom: "0.5rem" }}>
+          <label style={{ fontSize: "0.9rem", flex: 1, minWidth: 140 }}>
             Position
-            <input required type="text" value={m.position} onChange={(e) => majMesure(i, { ...m, position: e.target.value })} style={{ display: "block", width: "100%", padding: "0.3rem" }} />
+            <input required type="text" value={m.position} onChange={(e) => majMesure(i, { ...m, position: e.target.value })} style={{ display: "block", width: "100%" }} />
           </label>
-          <label style={{ fontSize: "0.8rem", flex: 1 }}>
+          <label style={{ fontSize: "0.9rem", flex: 1, minWidth: 140 }}>
             Diamètre mesuré (mm)
-            <input type="number" step="0.01" value={m.diametreMm} onChange={(e) => majMesure(i, { ...m, diametreMm: e.target.value })} style={{ display: "block", width: "100%", padding: "0.3rem" }} />
+            <input type="number" step="0.01" value={m.diametreMm} onChange={(e) => majMesure(i, { ...m, diametreMm: e.target.value })} style={{ display: "block", width: "100%" }} />
           </label>
-          <label style={{ fontSize: "0.8rem", flex: 1 }}>
+          <label style={{ fontSize: "0.9rem", flex: 1, minWidth: 140 }}>
             Épaisseur mesurée (mm)
-            <input type="number" step="0.01" value={m.epaisseurMm} onChange={(e) => majMesure(i, { ...m, epaisseurMm: e.target.value })} style={{ display: "block", width: "100%", padding: "0.3rem" }} />
+            <input type="number" step="0.01" value={m.epaisseurMm} onChange={(e) => majMesure(i, { ...m, epaisseurMm: e.target.value })} style={{ display: "block", width: "100%" }} />
           </label>
-          <button type="button" onClick={() => setMesures((actuelles) => actuelles.filter((_, idx) => idx !== i))} style={{ fontSize: "0.8rem" }}>
+          <button type="button" onClick={() => setMesures((actuelles) => actuelles.filter((_, idx) => idx !== i))}>
             Retirer
           </button>
         </div>
@@ -183,8 +183,8 @@ export function ControleDimensionnelForm({
         + Ajouter une mesure
       </button>
 
-      <div style={{ marginTop: "0.5rem" }}>
-        <p style={{ fontSize: "0.8rem", margin: "0 0 0.2rem 0" }}>Signature du contrôleur (matricule/QR + PIN) :</p>
+      <div style={{ marginTop: "0.6rem" }}>
+        <p style={{ fontSize: "0.9rem", margin: "0 0 0.3rem 0" }}>Signature du contrôleur (matricule/QR + PIN) :</p>
         <SignerQrPin
           documentType="ControleDimensionnel"
           documentId={jointId}
@@ -192,14 +192,14 @@ export function ControleDimensionnelForm({
           onSigne={setSignatureId}
         />
       </div>
-      <div style={{ marginTop: "0.4rem" }}>
+      <div style={{ marginTop: "0.6rem", display: "flex", gap: "0.5rem", flexWrap: "wrap", alignItems: "center" }}>
         <button type="submit" disabled={enCours || !signatureId}>
           {enCours ? "Enregistrement..." : "Enregistrer le contrôle"}
         </button>
-        <button type="button" onClick={onAnnuler} style={{ marginLeft: "0.4rem" }}>
+        <button type="button" onClick={onAnnuler}>
           Annuler
         </button>
-        {erreur && <span style={{ color: "crimson", fontSize: "0.85rem", marginLeft: "0.4rem" }}>{erreur}</span>}
+        {erreur && <span style={{ color: "crimson", fontSize: "0.9rem" }}>{erreur}</span>}
       </div>
     </form>
   );

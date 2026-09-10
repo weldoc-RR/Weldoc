@@ -158,19 +158,19 @@ export function FicheSoudageForm({
   }
 
   return (
-    <form onSubmit={enregistrer} style={{ border: "1px solid #ddd", padding: "0.6rem", marginTop: "0.4rem", maxWidth: 600 }}>
+    <form onSubmit={enregistrer} style={{ border: "1px solid var(--couleur-bordure)", borderRadius: 6, padding: "1rem", marginTop: "0.5rem", maxWidth: 660 }}>
       {candidats.length > 1 && (
-        <div style={{ fontSize: "0.8rem", marginBottom: "0.4rem" }}>
+        <div style={{ fontSize: "0.9rem", marginBottom: "0.5rem" }}>
           Joints couverts par cette fiche (cochez les autres soudures faites avec les mêmes paramètres) :
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem", marginTop: "0.3rem" }}>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginTop: "0.4rem" }}>
             {candidats.map((c) => (
-              <label key={c.id} style={{ border: "1px solid #ddd", padding: "0.15rem 0.4rem", borderRadius: 4 }}>
+              <label key={c.id} style={{ display: "flex", alignItems: "center", gap: "0.35rem", border: "1px solid var(--couleur-bordure)", padding: "0.25rem 0.5rem", borderRadius: 5 }}>
                 <input
                   type="checkbox"
                   checked={jointIds.includes(c.id)}
                   disabled={c.id === jointId}
                   onChange={(e) => cocher(c.id, e.target.checked)}
-                />{" "}
+                />
                 {libelleJoint(c)}
                 {c.id === jointId && " (ce joint)"}
               </label>
@@ -178,39 +178,39 @@ export function FicheSoudageForm({
           </div>
         </div>
       )}
-      <label style={{ fontSize: "0.85rem" }}>
+      <label style={{ fontSize: "0.95rem", display: "block" }}>
         Procédé
-        <input type="text" value={procede} onChange={(e) => setProcede(e.target.value)} style={{ display: "block", width: "100%", padding: "0.3rem" }} />
+        <input type="text" value={procede} onChange={(e) => setProcede(e.target.value)} style={{ display: "block", width: "100%" }} />
       </label>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.4rem", marginTop: "0.4rem" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "0.6rem", marginTop: "0.6rem" }}>
         {CHAMPS_NUMERIQUES.map((c) => (
-          <label key={c.cle} style={{ fontSize: "0.8rem" }}>
+          <label key={c.cle} style={{ fontSize: "0.9rem" }}>
             {c.label}
             <input
               type="number"
               step="0.01"
               value={valeurs[c.cle]}
               onChange={(e) => setValeurs((v) => ({ ...v, [c.cle]: e.target.value }))}
-              style={{ display: "block", width: "100%", padding: "0.3rem" }}
+              style={{ display: "block", width: "100%" }}
             />
           </label>
         ))}
       </div>
-      <label style={{ fontSize: "0.85rem", display: "block", marginTop: "0.4rem" }}>
+      <label style={{ fontSize: "0.95rem", display: "block", marginTop: "0.6rem" }}>
         Observations (interruptions, reprises...)
-        <textarea value={observations} onChange={(e) => setObservations(e.target.value)} rows={2} style={{ display: "block", width: "100%", padding: "0.3rem", fontFamily: "inherit" }} />
+        <textarea value={observations} onChange={(e) => setObservations(e.target.value)} rows={3} style={{ display: "block", width: "100%", padding: "0.5rem", fontFamily: "inherit", fontSize: "1rem" }} />
       </label>
 
-      <div style={{ fontSize: "0.85rem", marginTop: "0.4rem" }}>
+      <div style={{ fontSize: "0.95rem", marginTop: "0.6rem" }}>
         Photos (book photo de la soudure, optionnel)
         {photosUrls.length > 0 && (
-          <ul style={{ margin: "0.2rem 0", padding: 0, listStyle: "none" }}>
+          <ul style={{ margin: "0.3rem 0", padding: 0, listStyle: "none" }}>
             {photosUrls.map((url, i) => (
-              <li key={url}>
+              <li key={url} style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.2rem" }}>
                 <a href={url} target="_blank" rel="noreferrer">
                   {url.length > 50 ? `${url.slice(0, 50)}…` : url}
-                </a>{" "}
-                <button type="button" onClick={() => retirerPhoto(i)} style={{ fontSize: "0.75rem" }}>
+                </a>
+                <button type="button" onClick={() => retirerPhoto(i)}>
                   Retirer
                 </button>
               </li>
@@ -220,23 +220,23 @@ export function FicheSoudageForm({
         <FileUpload onDepose={(url) => setPhotosUrls((liste) => [...liste, url])} />
       </div>
 
-      <div style={{ marginTop: "0.5rem" }}>
+      <div style={{ marginTop: "0.6rem", display: "flex", gap: "0.5rem", flexWrap: "wrap", alignItems: "center" }}>
         <button type="submit" disabled={enCours}>
           {enCours ? "Enregistrement..." : "Enregistrer (sans signer)"}
         </button>
-        <button type="button" onClick={onFermer} style={{ marginLeft: "0.4rem" }}>
+        <button type="button" onClick={onFermer}>
           Fermer
         </button>
-        {erreur && <span style={{ color: "crimson", fontSize: "0.85rem", marginLeft: "0.4rem" }}>{erreur}</span>}
+        {erreur && <span style={{ color: "crimson", fontSize: "0.9rem" }}>{erreur}</span>}
       </div>
 
-      <div style={{ marginTop: "0.5rem" }}>
-        <p style={{ fontSize: "0.8rem", margin: "0 0 0.2rem 0" }}>
+      <div style={{ marginTop: "0.6rem" }}>
+        <p style={{ fontSize: "0.9rem", margin: "0 0 0.3rem 0" }}>
           Signer pour clore la fiche — {jointIds.length} joint(s) couvert(s) — (matricule/QR + PIN), plus aucune
           modification possible ensuite :
         </p>
         {!ficheId ? (
-          <p style={{ fontSize: "0.8rem", color: "#898781" }}>Enregistrez d&apos;abord (sans signer) pour pouvoir signer.</p>
+          <p style={{ fontSize: "0.9rem", color: "#898781" }}>Enregistrez d&apos;abord (sans signer) pour pouvoir signer.</p>
         ) : signatureId ? (
           <button type="submit" disabled={enCours}>
             {enCours ? "..." : "Confirmer et signer"}

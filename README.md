@@ -528,10 +528,6 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   fournisseur/type de joint/chantier, prévu au cahier des charges, n'est
   jamais ressaisi : il se lit à la lecture sur le joint et l'affaire de
   la FNC (`Joint.matiere`, `Joint.wps`, `Affaire.chantier`...).
-  "Identification de problématiques similaires" reste explicitement "à
-  terme" au cahier des charges — pas construit ici (pas d'assistance IA
-  sur la recherche) : seul un filtre manuel par type de problème aide à
-  repérer des cas proches.
   - `GET`/`POST /api/rex` — liste et rédaction (n'importe quelle personne
     connectée : ce n'est pas une décision réglementaire, une FNC n'a
     qu'une seule fiche REX).
@@ -539,6 +535,16 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
     formulaire de rédaction), la base REX filtrable par type de problème,
     et le contexte du joint/de l'affaire affiché sous chaque fiche. Lien
     depuis la page d'accueil.
+  - **"Identification de problématiques similaires"** (voir le cahier des
+    charges, "à terme") : `src/lib/rexSimilaire.ts` compare maintenant
+    chaque fiche aux autres sur les cinq critères déjà prévus pour le
+    classement REX (matière, fournisseur, procédé, type de joint,
+    chantier) et affiche, sous chaque fiche, les "Cas similaires" avec les
+    critères réellement communs (ex. "même matière, même procédé") —
+    triés par nombre de critères communs. Une aide au repérage, jamais un
+    diagnostic : Weldoc ne dit jamais que deux problèmes sont "les mêmes",
+    seulement quels critères se recoupent, à la personne qui consulte
+    d'en juger la pertinence.
 - **Dossier réglementaire** (voir le cahier des charges, "DOSSIER
   RÉGLEMENTAIRE" / "Blocage réglementaire") — distinct du rapport de fin
   de fabrication : ici, chaque exigence réglementaire (ex. "Attestation de

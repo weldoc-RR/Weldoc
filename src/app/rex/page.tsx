@@ -3,6 +3,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getUtilisateurConnecteServeur } from "@/lib/auth";
 import { OuvrirRedactionRex } from "./ouvrir-redaction-rex";
+import { problematiquesSimilaires, type CriteresRex } from "@/lib/rexSimilaire";
 
 export const dynamic = "force-dynamic";
 
@@ -17,9 +18,11 @@ const LIBELLE_IMPACT: Record<string, string> = {
 // problème/origine/cause/solution/résultat. Le matériau/procédé/
 // fournisseur/type de joint/chantier ne sont jamais ressaisis : ils
 // viennent du joint et de l'affaire de la FNC. "Identification de
-// problématiques similaires" reste "à terme" au cahier des charges — pas
-// d'assistance automatique ici, seul le filtre par type de problème aide
-// à repérer des cas proches.
+// problématiques similaires" (voir src/lib/rexSimilaire.ts) rapproche
+// maintenant chaque fiche des autres qui partagent au moins un de ces
+// cinq critères — une aide au repérage, jamais un diagnostic : Weldoc ne
+// dit jamais "c'est le même problème", seulement quels critères sont
+// communs.
 export default async function RexPage({ searchParams }: { searchParams: { typeProbleme?: string } }) {
   const utilisateur = await getUtilisateurConnecteServeur();
   if (!utilisateur) {
@@ -61,6 +64,17 @@ export default async function RexPage({ searchParams }: { searchParams: { typePr
   const typesProbleme = [...new Set(fichesRex.map((f) => f.typeProbleme))].sort();
   const filtre = searchParams.typeProbleme;
   const fichesFiltrees = filtre ? fichesRex.filter((f) => f.typeProbleme === filtre) : fichesRex;
+
+  const criteresParFiche: CriteresRex[] = fichesRex.map((f) => ({
+    ficheId: f.id,
+    matiereNuance: f.fnc.joint?.matiere?.nuance ?? null,
+    matiereFournisseur: f.fnc.joint?.matiere?.fournisseur ?? null,
+    procede: f.fnc.joint?.wps?.procede ?? f.fnc.joint?.wpsReference ?? null,
+    typeJoint: f.fnc.joint?.typeJoint ?? null,
+    chantier: f.fnc.affaire.chantier,
+  }));
+  const similitudesParFiche = problematiquesSimilaires(criteresParFiche);
+  const fichesParId = new Map(fichesRex.map((f) => [f.id, f]));
 
   return (
     <main style={{ fontFamily: "sans-serif", padding: "2rem" }}>
@@ -140,6 +154,26 @@ export default async function RexPage({ searchParams }: { searchParams: { typePr
                     <strong>Résultat :</strong> {f.resultat}
                   </p>
                 )}
+                {(() => {
+                  const similitudes = similitudesParFiche.get(f.id) ?? [];
+                  if (similitudes.length === 0) return null;
+                  return (
+                    <div style={{ fontSize: "0.8rem", margin: "0.4rem 0", padding: "0.4rem", background: "#f7f6f1" }}>
+                      <strong>Cas similaires ({similitudes.length}) :</strong>
+                      <ul style={{ margin: "0.2rem 0 0 0", paddingLeft: "1.2rem" }}>
+                        {similitudes.slice(0, 5).map((s) => {
+                          const autre = fichesParId.get(s.ficheId);
+                          if (!autre) return null;
+                          return (
+                            <li key={s.ficheId}>
+                              {autre.typeProbleme} (FNC {autre.fnc.reference}) — même {s.criteresCommuns.join(", même ")}
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
+                  );
+                })()}
                 <p style={{ fontSize: "0.75rem", color: "#898781", margin: 0 }}>
                   Rédigée par {f.redacteur.prenom} {f.redacteur.nom} le {f.dateRedaction.toLocaleDateString("fr-FR")}
                 </p>

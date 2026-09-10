@@ -1479,7 +1479,12 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
     "bientôt à échéance" de `/systeme-qualite` (`#c98a1f`, un ambre plus
     sombre que `--couleur-a-verifier` — ce dernier, pensé pour un fond de
     badge avec texte sombre dessus, serait peu lisible utilisé tel quel
-    comme couleur de texte sur fond blanc).
+    comme couleur de texte sur fond blanc). Un dernier oubli corrigé
+    après coup : le premier lot (rapport de fin de fabrication, état des
+    lieux, notes REX, planning d'une affaire) n'avait repris que la
+    page principale de chacun, pas leurs sous-composants (formulaires,
+    carte de constat, ligne d'affectation) — désormais alignés eux
+    aussi.
 - Une vraie interface tablette soignée sur l'ensemble de l'application —
   un premier socle vient d'être posé (`src/app/globals.css`, importé
   depuis `src/app/layout.tsx`) : boutons et champs de saisie sans style

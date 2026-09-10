@@ -39,7 +39,7 @@ export function ValiderRapport({ affaireId }: { affaireId: string }) {
   }
 
   if (valide) {
-    return <p style={{ color: "#0ca30c" }}>✓ Rapport de fin de fabrication validé.</p>;
+    return <p style={{ color: "var(--couleur-conforme)" }}>✓ Rapport de fin de fabrication validé.</p>;
   }
 
   return (
@@ -63,7 +63,7 @@ export function ValiderRapport({ affaireId }: { affaireId: string }) {
       <button type="submit" disabled={enCours}>
         {enCours ? "..." : "Signer et valider"}
       </button>
-      {erreur && <span style={{ color: "crimson", fontSize: "0.8rem" }}>{erreur}</span>}
+      {erreur && <span style={{ color: "var(--couleur-non-conforme)", fontSize: "0.8rem" }}>{erreur}</span>}
     </form>
   );
 }

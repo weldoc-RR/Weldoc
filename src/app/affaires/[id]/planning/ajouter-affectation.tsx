@@ -83,7 +83,7 @@ export function AjouterAffectation({ affaireId, personnel, joints }: { affaireId
   }
 
   return (
-    <form onSubmit={ajouter} style={{ display: "flex", flexDirection: "column", gap: "0.5rem", maxWidth: 480, marginBottom: "1.5rem", border: "1px solid #ddd", padding: "1rem" }}>
+    <form onSubmit={ajouter} style={{ display: "flex", flexDirection: "column", gap: "0.5rem", maxWidth: 480, marginBottom: "1.5rem", border: "1px solid var(--couleur-bordure)", padding: "1rem" }}>
       <label>
         Personne
         <select value={personnelId} onChange={(e) => setPersonnelId(e.target.value)} style={{ display: "block", width: "100%", padding: "0.4rem" }}>
@@ -141,9 +141,9 @@ export function AjouterAffectation({ affaireId, personnel, joints }: { affaireId
         </button>
       </div>
       {candidats && (
-        <div style={{ fontSize: "0.85rem", border: "1px solid #eee", padding: "0.5rem" }}>
+        <div style={{ fontSize: "0.85rem", border: "1px solid var(--couleur-bordure)", padding: "0.5rem" }}>
           {candidats.length === 0 ? (
-            <p style={{ margin: 0, color: "#898781" }}>Personne n&apos;a la fonction &quot;{fonction}&quot;.</p>
+            <p style={{ margin: 0, color: "var(--couleur-texte-discret)" }}>Personne n&apos;a la fonction &quot;{fonction}&quot;.</p>
           ) : (
             <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
               {candidats.map((c) => (
@@ -156,7 +156,7 @@ export function AjouterAffectation({ affaireId, personnel, joints }: { affaireId
                     }}
                     style={{
                       fontWeight: c.alertes.length === 0 ? "bold" : "normal",
-                      color: c.alertes.length === 0 ? "#0ca30c" : "inherit",
+                      color: c.alertes.length === 0 ? "var(--couleur-conforme)" : "inherit",
                     }}
                   >
                     {c.prenom} {c.nom} {c.alertes.length === 0 ? "— disponible et qualifié(e)" : `— ${c.alertes.length} alerte(s)`}
@@ -164,7 +164,7 @@ export function AjouterAffectation({ affaireId, personnel, joints }: { affaireId
                   {c.alertes.length > 0 && (
                     <ul style={{ margin: "0.1rem 0 0 1rem", padding: 0 }}>
                       {c.alertes.map((a, i) => (
-                        <li key={i} style={{ color: "darkorange", fontSize: "0.8rem" }}>
+                        <li key={i} style={{ color: "var(--couleur-a-verifier)", fontSize: "0.8rem" }}>
                           {a}
                         </li>
                       ))}
@@ -181,11 +181,11 @@ export function AjouterAffectation({ affaireId, personnel, joints }: { affaireId
           {enCours ? "Enregistrement..." : "Affecter"}
         </button>
       </div>
-      {erreur && <p style={{ color: "crimson" }}>{erreur}</p>}
+      {erreur && <p style={{ color: "var(--couleur-non-conforme)" }}>{erreur}</p>}
       {alertes.length > 0 && (
         <ul style={{ margin: 0 }}>
           {alertes.map((a, i) => (
-            <li key={i} style={{ color: "darkorange", fontSize: "0.85rem" }}>
+            <li key={i} style={{ color: "var(--couleur-a-verifier)", fontSize: "0.85rem" }}>
               {a}
             </li>
           ))}

@@ -76,7 +76,7 @@ export function FormulaireBilanIntervention({ affaireId, valeurs }: { affaireId:
   }
 
   return (
-    <form onSubmit={enregistrer} className="no-print" style={{ display: "flex", flexDirection: "column", gap: "0.5rem", maxWidth: 600, marginBottom: "1rem", border: "1px solid #ddd", padding: "1rem" }}>
+    <form onSubmit={enregistrer} className="no-print" style={{ display: "flex", flexDirection: "column", gap: "0.5rem", maxWidth: 600, marginBottom: "1rem", border: "1px solid var(--couleur-bordure)", padding: "1rem" }}>
       <label>
         Accessibilité
         <select value={accessibilite} onChange={(e) => setAccessibilite(e.target.value)} style={{ display: "block", width: "100%", padding: "0.4rem" }}>
@@ -107,7 +107,7 @@ export function FormulaireBilanIntervention({ affaireId, valeurs }: { affaireId:
           Fermer
         </button>
       </div>
-      {erreur && <p style={{ color: "crimson" }}>{erreur}</p>}
+      {erreur && <p style={{ color: "var(--couleur-non-conforme)" }}>{erreur}</p>}
     </form>
   );
 }

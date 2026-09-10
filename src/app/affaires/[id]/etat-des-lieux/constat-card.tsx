@@ -123,7 +123,7 @@ export function ConstatCard({ constat, affaireId }: { constat: ConstatVM; affair
       <p style={{ fontSize: "0.9rem", color: "var(--couleur-texte-attenue)", margin: "0 0 0.5rem 0" }}>
         Rédigé par {constat.redacteur.prenom} {constat.redacteur.nom} le {new Date(constat.dateConstat).toLocaleDateString("fr-FR")}
         {constat.zone && ` — zone : ${constat.zone}`}
-        {dejaSigne && <span style={{ color: "#0ca30c" }}> — ✓ signé (lecture seule)</span>}
+        {dejaSigne && <span style={{ color: "var(--couleur-conforme)" }}> — ✓ signé (lecture seule)</span>}
       </p>
 
       {modeEdition ? (
@@ -152,7 +152,7 @@ export function ConstatCard({ constat, affaireId }: { constat: ConstatVM; affair
               Fermer
             </button>
           </div>
-          {erreur && <p style={{ color: "crimson", fontSize: "0.9rem" }}>{erreur}</p>}
+          {erreur && <p style={{ color: "var(--couleur-non-conforme)", fontSize: "0.9rem" }}>{erreur}</p>}
         </form>
       ) : (
         <div style={{ fontSize: "0.95rem" }}>
@@ -175,7 +175,7 @@ export function ConstatCard({ constat, affaireId }: { constat: ConstatVM; affair
 
       <h4 style={{ marginBottom: "0.3rem" }}>Réserves</h4>
       {constat.reserves.length === 0 ? (
-        <p style={{ fontSize: "0.85rem", color: "#898781" }}>Aucune réserve.</p>
+        <p style={{ fontSize: "0.85rem", color: "var(--couleur-texte-discret)" }}>Aucune réserve.</p>
       ) : (
         <ul style={{ paddingLeft: "1.2rem", fontSize: "0.85rem" }}>
           {constat.reserves.map((r) => (
@@ -201,16 +201,16 @@ export function ConstatCard({ constat, affaireId }: { constat: ConstatVM; affair
             <input type="checkbox" checked={reserveTransmise} onChange={(e) => setReserveTransmise(e.target.checked)} /> transmise au client
           </label>
           <button type="submit">Ajouter</button>
-          {erreurReserve && <span style={{ color: "crimson", fontSize: "0.9rem" }}>{erreurReserve}</span>}
+          {erreurReserve && <span style={{ color: "var(--couleur-non-conforme)", fontSize: "0.9rem" }}>{erreurReserve}</span>}
         </form>
       )}
-      <p style={{ fontSize: "0.75rem", color: "#898781", marginTop: "-0.3rem" }}>
+      <p style={{ fontSize: "0.75rem", color: "var(--couleur-texte-discret)", marginTop: "-0.3rem" }}>
         Un problème plus grave se déclare comme FNC (module FNC existant, sur cette même affaire).
       </p>
 
       <h4 style={{ marginBottom: "0.3rem" }}>Photos</h4>
       {constat.photos.length === 0 ? (
-        <p style={{ fontSize: "0.85rem", color: "#898781" }}>Aucune photo.</p>
+        <p style={{ fontSize: "0.85rem", color: "var(--couleur-texte-discret)" }}>Aucune photo.</p>
       ) : (
         <ul style={{ listStyle: "none", padding: 0, display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: "0.5rem", marginBottom: "0.6rem" }}>
           {constat.photos.map((p) => (
@@ -239,7 +239,7 @@ export function ConstatCard({ constat, affaireId }: { constat: ConstatVM; affair
             style={{ flex: 1, minWidth: 160 }}
           />
           <button type="submit">Ajouter</button>
-          {erreurPhoto && <span style={{ color: "crimson", fontSize: "0.9rem" }}>{erreurPhoto}</span>}
+          {erreurPhoto && <span style={{ color: "var(--couleur-non-conforme)", fontSize: "0.9rem" }}>{erreurPhoto}</span>}
         </form>
       )}
 

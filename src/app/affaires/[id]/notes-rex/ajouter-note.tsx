@@ -59,7 +59,7 @@ export function AjouterNote({ affaireId }: { affaireId: string }) {
           Annuler
         </button>
       </div>
-      {erreur && <p style={{ color: "crimson", fontSize: "0.85rem" }}>{erreur}</p>}
+      {erreur && <p style={{ color: "var(--couleur-non-conforme)", fontSize: "0.85rem" }}>{erreur}</p>}
     </form>
   );
 }

@@ -22,8 +22,8 @@ const LIBELLE_STATUT: Record<string, string> = {
 };
 
 function couleurStatut(statut: string): string {
-  if (statut === "EN_COURS") return "#0ca30c";
-  if (statut === "ANNULEE") return "#898781";
+  if (statut === "EN_COURS") return "var(--couleur-conforme)";
+  if (statut === "ANNULEE") return "var(--couleur-texte-discret)";
   return "inherit";
 }
 
@@ -46,14 +46,14 @@ export function AffectationLigne({ affectation: a }: { affectation: Affectation 
   }
 
   return (
-    <li style={{ marginBottom: "0.4rem", borderBottom: "1px solid #eee", paddingBottom: "0.4rem" }}>
+    <li style={{ marginBottom: "0.4rem", borderBottom: "1px solid var(--couleur-bordure)", paddingBottom: "0.4rem" }}>
       <strong>{a.personnelNom}</strong>
       {a.jointNumero && ` — ${a.jointNumero}`}
       {a.codes && ` — codes : ${a.codes}`} — du {new Date(a.dateDebut).toLocaleDateString("fr-FR")} au{" "}
       {new Date(a.dateFin).toLocaleDateString("fr-FR")} —{" "}
       <span style={{ color: couleurStatut(a.statut) }}>{LIBELLE_STATUT[a.statut] ?? a.statut}</span>
       {a.habilitationsExpirees > 0 && (
-        <span style={{ color: "crimson" }}> — {a.habilitationsExpirees} habilitation(s) expirée(s)</span>
+        <span style={{ color: "var(--couleur-non-conforme)" }}> — {a.habilitationsExpirees} habilitation(s) expirée(s)</span>
       )}
       {(a.statut === "PLANIFIEE" || a.statut === "EN_COURS") && (
         <span style={{ marginLeft: "0.5rem" }}>

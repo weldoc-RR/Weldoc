@@ -152,7 +152,7 @@ export default async function AlertesPage() {
       ) : (
         <ul>
           {alertesQualification.map(({ qualification: q, statut }) => (
-            <li key={q.id} style={{ color: statut === "EXPIRE" ? "crimson" : "darkorange" }}>
+            <li key={q.id} style={{ color: statut === "EXPIRE" ? "var(--couleur-non-conforme)" : "var(--couleur-a-verifier)" }}>
               <strong>{q.reference}</strong> ({q.personnel.prenom} {q.personnel.nom}) —{" "}
               {statut === "EXPIRE" ? "expirée" : "à échéance"} le {q.dateExpiration?.toLocaleDateString("fr-FR")} (
               <Link href="/personnel">voir la fiche personnel</Link>)
@@ -167,7 +167,7 @@ export default async function AlertesPage() {
       ) : (
         <ul>
           {alertesHabilitation.map(({ habilitation: h, statut }) => (
-            <li key={h.id} style={{ color: statut === "EXPIRE" ? "crimson" : "darkorange" }}>
+            <li key={h.id} style={{ color: statut === "EXPIRE" ? "var(--couleur-non-conforme)" : "var(--couleur-a-verifier)" }}>
               <strong>{h.intitule}</strong> ({h.personnel.prenom} {h.personnel.nom}) —{" "}
               {statut === "EXPIRE" ? "expirée" : "à échéance"} le {h.dateExpiration?.toLocaleDateString("fr-FR")} (
               <Link href="/personnel">voir la fiche personnel</Link>)
@@ -182,7 +182,7 @@ export default async function AlertesPage() {
       ) : (
         <ul>
           {fncsOuvertes.map((f) => (
-            <li key={f.id} style={{ color: f.impact === "BLOQUANTE" ? "crimson" : "darkorange" }}>
+            <li key={f.id} style={{ color: f.impact === "BLOQUANTE" ? "var(--couleur-non-conforme)" : "var(--couleur-a-verifier)" }}>
               <strong>{f.reference}</strong> ({f.impact === "BLOQUANTE" ? "bloquante" : "non bloquante"}) — affaire{" "}
               {f.affaire.numero}
               {f.joint && `, joint ${f.joint.indiceReparation > 0 ? `${f.joint.numero} R${f.joint.indiceReparation}` : f.joint.numero}`}
@@ -197,7 +197,7 @@ export default async function AlertesPage() {
       ) : (
         <ul>
           {pointsBloquants.map((p) => (
-            <li key={p.id} style={{ color: "crimson" }}>
+            <li key={p.id} style={{ color: "var(--couleur-non-conforme)" }}>
               <strong>{p.intitule}</strong> — affaire {p.affaire.numero} (
               <Link href={`/affaires/${p.affaireId}/reglementaire`}>voir le dossier réglementaire</Link>)
             </li>
@@ -211,7 +211,7 @@ export default async function AlertesPage() {
       ) : (
         <ul>
           {jointsControlesManquants.map((j) => (
-            <li key={j.jointId} style={{ color: "darkorange" }}>
+            <li key={j.jointId} style={{ color: "var(--couleur-a-verifier)" }}>
               Joint <strong>{j.numero}</strong> — affaire {j.affaireNumero} — contrôle(s) manquant(s) :{" "}
               {j.manquants.join(", ")} (<Link href="/joints">voir les joints</Link>)
             </li>
@@ -225,7 +225,7 @@ export default async function AlertesPage() {
       ) : (
         <ul>
           {jointsDocumentsManquants.map((j) => (
-            <li key={j.jointId} style={{ color: "darkorange" }}>
+            <li key={j.jointId} style={{ color: "var(--couleur-a-verifier)" }}>
               Joint <strong>{j.numero}</strong> — affaire {j.affaireNumero} — document(s) manquant(s) :{" "}
               {j.manquants.map((sigle) => LIBELLES_DOCUMENT[sigle]).join(", ")} (<Link href="/joints">voir les joints</Link>)
             </li>
@@ -239,7 +239,7 @@ export default async function AlertesPage() {
       ) : (
         <ul>
           {documentsObsoletesUtilises.map((d, i) => (
-            <li key={i} style={{ color: "darkorange" }}>
+            <li key={i} style={{ color: "var(--couleur-a-verifier)" }}>
               {LIBELLE_TYPE[d.type]} <strong>{d.reference}</strong> ({d.version}) — plus en vigueur, encore utilisé
               sur {d.utiliseSur} (<Link href={d.lienHref}>voir</Link>)
             </li>
@@ -253,7 +253,7 @@ export default async function AlertesPage() {
       ) : (
         <ul>
           {alertes.map(({ outil, statut }) => (
-            <li key={outil.id} style={{ color: statut === "EXPIRE" ? "crimson" : "darkorange" }}>
+            <li key={outil.id} style={{ color: statut === "EXPIRE" ? "var(--couleur-non-conforme)" : "var(--couleur-a-verifier)" }}>
               <strong>{outil.reference}</strong> ({outil.type}) —{" "}
               {statut === "EXPIRE" ? "vérification expirée" : "à renouveler"} le{" "}
               {outil.dateEcheance?.toLocaleDateString("fr-FR")}
@@ -268,7 +268,7 @@ export default async function AlertesPage() {
       ) : (
         <ul>
           {alertesConfirmation.map(({ qualification: q, confirmation }) => (
-            <li key={q.id} style={{ color: confirmation.enRetard ? "crimson" : "darkorange" }}>
+            <li key={q.id} style={{ color: confirmation.enRetard ? "var(--couleur-non-conforme)" : "var(--couleur-a-verifier)" }}>
               <strong>{q.reference}</strong> ({q.personnel.prenom} {q.personnel.nom}) —{" "}
               {confirmation.enRetard ? "confirmation en retard depuis" : "confirmation à faire avant"} le{" "}
               {confirmation.prochaineDateDue?.toLocaleDateString("fr-FR")}
@@ -283,7 +283,7 @@ export default async function AlertesPage() {
       ) : (
         <ul>
           {alertesReconduction.map((q) => (
-            <li key={q.id} style={{ color: "darkorange" }}>
+            <li key={q.id} style={{ color: "var(--couleur-a-verifier)" }}>
               <strong>{q.reference}</strong> ({q.personnel.prenom} {q.personnel.nom}) — proposée le{" "}
               {q.evenements[0]?.date.toLocaleDateString("fr-FR")}, en attente de validation (
               <Link href="/personnel">voir la fiche personnel</Link>)
@@ -298,7 +298,7 @@ export default async function AlertesPage() {
       ) : (
         <ul>
           {documentsExternesEnAttente.map((d) => (
-            <li key={d.id} style={{ color: "darkorange" }}>
+            <li key={d.id} style={{ color: "var(--couleur-a-verifier)" }}>
               <strong>{d.reference}</strong> ({d.version}) — {d.titre} — importé le{" "}
               {d.dateImport.toLocaleDateString("fr-FR")}, en attente de validation (
               <Link href="/documents">voir les documents externes</Link>)
@@ -313,7 +313,7 @@ export default async function AlertesPage() {
       ) : (
         <ul>
           {pvExternesEnAttente.map((p) => (
-            <li key={p.id} style={{ color: "darkorange" }}>
+            <li key={p.id} style={{ color: "var(--couleur-a-verifier)" }}>
               <strong>{p.intitule}</strong> — affaire {p.affaire.numero} — importé le{" "}
               {p.dateImport.toLocaleDateString("fr-FR")}, en attente de revue (
               <Link href={`/affaires/${p.affaireId}/pv-externes`}>voir les PV externes</Link>)
@@ -328,7 +328,7 @@ export default async function AlertesPage() {
       ) : (
         <ul>
           {demandesSequencementEnAttente.map((d) => (
-            <li key={d.id} style={{ color: d.urgent ? "crimson" : "darkorange" }}>
+            <li key={d.id} style={{ color: d.urgent ? "var(--couleur-non-conforme)" : "var(--couleur-a-verifier)" }}>
               Affaire {d.affaire.numero}
               {d.urgent && " (urgent)"} — {d.motif} — demandée le {d.dateDemande.toLocaleDateString("fr-FR")} (
               <Link href={`/avancement/${d.affaireId}`}>voir l&apos;avancement</Link>)

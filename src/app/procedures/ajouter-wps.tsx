@@ -206,7 +206,7 @@ export function AjouterWps({ qmosDisponibles }: { qmosDisponibles: Qmos[] }) {
       <button type="submit" disabled={enCours}>
         {enCours ? "Création..." : "Créer le WPS/DMOS"}
       </button>
-      {erreur && <p style={{ color: "crimson" }}>{erreur}</p>}
+      {erreur && <p style={{ color: "var(--couleur-non-conforme)" }}>{erreur}</p>}
     </form>
   );
 }

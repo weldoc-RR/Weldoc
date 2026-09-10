@@ -76,7 +76,7 @@ export function AjouterProduitDimensionnel({ referentiels }: { referentiels: Ref
   }
 
   return (
-    <form onSubmit={ajouter} style={{ display: "flex", flexDirection: "column", gap: "0.5rem", maxWidth: 480, marginBottom: "1.5rem", border: "1px solid #ddd", padding: "1rem" }}>
+    <form onSubmit={ajouter} style={{ display: "flex", flexDirection: "column", gap: "0.5rem", maxWidth: 480, marginBottom: "1.5rem", border: "1px solid var(--couleur-bordure)", padding: "1rem" }}>
       <label>
         Référence (ex. TUBE-DN100-SCH40)
         <input required type="text" value={reference} onChange={(e) => setReference(e.target.value)} style={{ display: "block", width: "100%", padding: "0.4rem" }} />
@@ -121,7 +121,7 @@ export function AjouterProduitDimensionnel({ referentiels }: { referentiels: Ref
           <input type="text" value={classeType} onChange={(e) => setClasseType(e.target.value)} style={{ display: "block", width: "100%", padding: "0.4rem" }} />
         </label>
       </div>
-      <p style={{ fontSize: "0.8rem", color: "#898781", margin: "0.2rem 0 0 0" }}>
+      <p style={{ fontSize: "0.8rem", color: "var(--couleur-texte-discret)", margin: "0.2rem 0 0 0" }}>
         Critères min/maxi (à reprendre depuis la norme réelle, jamais calculés par Weldoc) :
       </p>
       <div style={{ display: "flex", gap: "0.4rem" }}>
@@ -165,7 +165,7 @@ export function AjouterProduitDimensionnel({ referentiels }: { referentiels: Ref
           Annuler
         </button>
       </div>
-      {erreur && <p style={{ color: "crimson" }}>{erreur}</p>}
+      {erreur && <p style={{ color: "var(--couleur-non-conforme)" }}>{erreur}</p>}
     </form>
   );
 }

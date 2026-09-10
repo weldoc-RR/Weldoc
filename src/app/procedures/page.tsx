@@ -16,9 +16,9 @@ const LIBELLE_STATUT: Record<StatutAffichageProcedure, string> = {
   RETIREE: "Retirée",
 };
 const COULEUR_STATUT: Record<StatutAffichageProcedure, string> = {
-  EN_VIGUEUR: "#0ca30c",
-  ANCIENNE_VERSION: "#898781",
-  RETIREE: "#d03b3b",
+  EN_VIGUEUR: "var(--couleur-conforme)",
+  ANCIENNE_VERSION: "var(--couleur-texte-discret)",
+  RETIREE: "var(--couleur-non-conforme)",
 };
 const LIBELLE_TYPE_ASSEMBLAGE: Record<string, string> = {
   BOUT_A_BOUT: "Bout à bout",
@@ -86,7 +86,7 @@ export default async function ProceduresPage() {
       ) : (
         <ul style={{ listStyle: "none", padding: 0, marginTop: "1.5rem" }}>
           {qmosAnnotes.map((q) => (
-            <li key={q.id} style={{ marginBottom: "0.6rem", borderBottom: "1px solid #ddd", paddingBottom: "0.4rem" }}>
+            <li key={q.id} style={{ marginBottom: "0.6rem", borderBottom: "1px solid var(--couleur-bordure)", paddingBottom: "0.4rem" }}>
               <strong>{q.reference}</strong> ({q.version}) — {q.procede} — {q.normeReference}
               {q.laboratoire && ` — ${q.laboratoire}`}
               <BadgeStatut statut={q.statutAffiche} />
@@ -103,7 +103,7 @@ export default async function ProceduresPage() {
       ) : (
         <ul style={{ listStyle: "none", padding: 0, marginTop: "1.5rem" }}>
           {wpsAnnotes.map((w) => (
-            <li key={w.id} style={{ marginBottom: "0.6rem", borderBottom: "1px solid #ddd", paddingBottom: "0.4rem" }}>
+            <li key={w.id} style={{ marginBottom: "0.6rem", borderBottom: "1px solid var(--couleur-bordure)", paddingBottom: "0.4rem" }}>
               <strong>{w.reference}</strong> ({w.version})
               {w.typeAssemblage && ` — ${LIBELLE_TYPE_ASSEMBLAGE[w.typeAssemblage]}`} — {w.procede} —{" "}
               {w.normeReference}
@@ -119,7 +119,7 @@ export default async function ProceduresPage() {
               <BadgeStatut statut={w.statutAffiche} />
               <RetirerProcedure endpoint="/api/wps" id={w.id} retiree={w.retiree} />
               {w.preparationNotes && (
-                <div style={{ fontSize: "0.85rem", color: "#52514e", marginTop: "0.2rem" }}>
+                <div style={{ fontSize: "0.85rem", color: "var(--couleur-texte-attenue)", marginTop: "0.2rem" }}>
                   Préparation : {w.preparationNotes}
                 </div>
               )}
@@ -144,7 +144,7 @@ export default async function ProceduresPage() {
                             "I (A)",
                             "U (V)",
                           ].map((th) => (
-                            <th key={th} style={{ textAlign: "left", padding: "0.2rem 0.5rem", borderBottom: "1px solid #ddd" }}>
+                            <th key={th} style={{ textAlign: "left", padding: "0.2rem 0.5rem", borderBottom: "1px solid var(--couleur-bordure)" }}>
                               {th}
                             </th>
                           ))}
@@ -182,7 +182,7 @@ export default async function ProceduresPage() {
       )}
 
       <h2 style={{ marginTop: "2rem" }}>Procédures internes</h2>
-      <p style={{ fontSize: "0.85rem", color: "#52514e" }}>
+      <p style={{ fontSize: "0.85rem", color: "var(--couleur-texte-attenue)" }}>
         Procédures, instructions, formulaires, PV types, fiches techniques... (voir le cahier des charges,
         "DOCUMENTATION ET PROCÉDURES INTERNES"). Une phase peut être reliée à une révision précise ici — c&apos;est
         ce lien qui conserve la version réellement utilisée à l&apos;exécution.
@@ -193,7 +193,7 @@ export default async function ProceduresPage() {
       ) : (
         <ul style={{ listStyle: "none", padding: 0, marginTop: "1.5rem" }}>
           {procInternesAnnotees.map((p) => (
-            <li key={p.id} style={{ marginBottom: "0.6rem", borderBottom: "1px solid #ddd", paddingBottom: "0.4rem" }}>
+            <li key={p.id} style={{ marginBottom: "0.6rem", borderBottom: "1px solid var(--couleur-bordure)", paddingBottom: "0.4rem" }}>
               <strong>{p.reference}</strong> ({p.version}) — {p.titre}
               {p.type && ` — ${p.type}`}
               <BadgeStatut statut={p.statutAffiche} />
@@ -211,7 +211,7 @@ export default async function ProceduresPage() {
       )}
 
       <h2 style={{ marginTop: "2rem" }}>Bibliothèque dimensionnelle</h2>
-      <p style={{ fontSize: "0.85rem", color: "#52514e" }}>
+      <p style={{ fontSize: "0.85rem", color: "var(--couleur-texte-attenue)" }}>
         Produits normalisés (tubes, tôles, raccords, brides...) avec leurs critères dimensionnels déjà déterminés
         depuis la norme réelle (voir le cahier des charges, "BIBLIOTHÈQUE DIMENSIONNELLE"). Sélectionnable au
         contrôle dimensionnel d&apos;un joint plutôt que de ressaisir norme/diamètre/épaisseur à chaque fois. Vise
@@ -224,13 +224,13 @@ export default async function ProceduresPage() {
       ) : (
         <ul style={{ listStyle: "none", padding: 0, marginTop: "1.5rem" }}>
           {produitsDimAnnotes.map((p) => (
-            <li key={p.id} style={{ marginBottom: "0.6rem", borderBottom: "1px solid #ddd", paddingBottom: "0.4rem" }}>
+            <li key={p.id} style={{ marginBottom: "0.6rem", borderBottom: "1px solid var(--couleur-bordure)", paddingBottom: "0.4rem" }}>
               <strong>{p.reference}</strong> ({p.version}) — {p.designation}
               {p.type && ` — ${p.type}`} — {p.normeProduit}
               {p.referentiel && ` — ${p.referentiel.code}`}
               <BadgeStatut statut={p.statutAffiche} />
               <RetirerProcedure endpoint="/api/produits-dimensionnels" id={p.id} retiree={p.retiree} />
-              <div style={{ fontSize: "0.85rem", color: "#52514e", marginTop: "0.2rem" }}>
+              <div style={{ fontSize: "0.85rem", color: "var(--couleur-texte-attenue)", marginTop: "0.2rem" }}>
                 Diamètre {p.diametreMiniMm} à {p.diametreMaxiMm} mm — épaisseur {p.epaisseurMiniMm} à{" "}
                 {p.epaisseurMaxiMm} mm
                 {p.finition && ` — finition ${p.finition}`}

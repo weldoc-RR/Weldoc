@@ -93,7 +93,7 @@ export function AjouterPiece({ affaires }: { affaires: Affaire[] }) {
       <button type="submit" disabled={enCours}>
         {enCours ? "Enregistrement..." : "Prendre en charge"}
       </button>
-      {erreur && <p style={{ color: "crimson" }}>{erreur}</p>}
+      {erreur && <p style={{ color: "var(--couleur-non-conforme)" }}>{erreur}</p>}
     </form>
   );
 }

@@ -102,8 +102,8 @@ export function PhasesSection({
           alignItems: "center",
           marginTop: "1rem",
           padding: "0.75rem",
-          border: "1px solid #ddd",
-          background: "#fafaf8",
+          border: "1px solid var(--couleur-bordure)",
+          background: "var(--couleur-fond-discret)",
         }}
       >
         <strong>
@@ -131,10 +131,10 @@ export function PhasesSection({
         <button type="submit" disabled={selectionnees.size === 0 || enCours}>
           {enCours ? "Signature..." : "Signer les phases cochées"}
         </button>
-        {erreur && <span style={{ color: "crimson", fontSize: "0.85rem" }}>{erreur}</span>}
-        {succes && <span style={{ color: "#0ca30c", fontSize: "0.85rem" }}>✓ {succes}</span>}
+        {erreur && <span style={{ color: "var(--couleur-non-conforme)", fontSize: "0.85rem" }}>{erreur}</span>}
+        {succes && <span style={{ color: "var(--couleur-conforme)", fontSize: "0.85rem" }}>✓ {succes}</span>}
       </form>
-      <p style={{ fontSize: "0.75rem", color: "#898781", marginTop: "0.3rem" }}>
+      <p style={{ fontSize: "0.75rem", color: "var(--couleur-texte-discret)", marginTop: "0.3rem" }}>
         Cocher une ou plusieurs phases réalisées, puis s&apos;identifier une seule fois (même code PIN que pour
         signer un document) : ça vaut signature pour chacune et les passe &quot;Terminée&quot;.
       </p>

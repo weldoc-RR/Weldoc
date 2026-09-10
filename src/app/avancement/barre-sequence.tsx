@@ -4,10 +4,10 @@ import type { AvancementSequence } from "@/lib/avancement";
 // terminée = vert, en cours = orange, à faire = gris neutre. Une phase
 // "non applicable" (ex. justifiée sans objet pour cette affaire) est
 // affichée à part, hachurée, et exclue du calcul du pourcentage.
-const COULEUR_TERMINEE = "#0ca30c";
-const COULEUR_EN_COURS = "#fab219";
-const COULEUR_A_FAIRE = "#898781";
-const COULEUR_NON_APPLICABLE = "#e1e0d9";
+const COULEUR_TERMINEE = "var(--couleur-conforme)";
+const COULEUR_EN_COURS = "var(--couleur-a-verifier)";
+const COULEUR_A_FAIRE = "var(--couleur-texte-discret)";
+const COULEUR_NON_APPLICABLE = "var(--couleur-fond-discret)";
 
 const LARGEUR = 320;
 const HAUTEUR = 14;
@@ -15,7 +15,7 @@ const HAUTEUR = 14;
 export function BarreSequence({ avancement }: { avancement: AvancementSequence }) {
   const { totalPhases, terminees, enCours, aFaire, nonApplicables } = avancement;
   if (totalPhases === 0) {
-    return <span style={{ color: "#898781" }}>Aucune phase.</span>;
+    return <span style={{ color: "var(--couleur-texte-discret)" }}>Aucune phase.</span>;
   }
 
   const segments = [
@@ -38,7 +38,7 @@ export function BarreSequence({ avancement }: { avancement: AvancementSequence }
         height={HAUTEUR}
         rx={4}
         fill={s.couleur}
-        stroke={s.couleur === COULEUR_NON_APPLICABLE ? "#c3c2b7" : "none"}
+        stroke={s.couleur === COULEUR_NON_APPLICABLE ? "var(--couleur-texte-discret)" : "none"}
         strokeWidth={s.couleur === COULEUR_NON_APPLICABLE ? 1 : 0}
       />
     );
@@ -61,7 +61,7 @@ export function LegendeStatutsPhase() {
     [COULEUR_NON_APPLICABLE, "Non applicable"],
   ];
   return (
-    <div style={{ display: "flex", gap: "1rem", fontSize: "0.85rem", color: "#52514e", marginTop: "0.5rem" }}>
+    <div style={{ display: "flex", gap: "1rem", fontSize: "0.85rem", color: "var(--couleur-texte-attenue)", marginTop: "0.5rem" }}>
       {items.map(([couleur, label]) => (
         <span key={label} style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem" }}>
           <span

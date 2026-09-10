@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 function Carte({ titre, children }: { titre: string; children: React.ReactNode }) {
   return (
-    <div style={{ border: "1px solid #ddd", padding: "0.75rem", marginBottom: "1rem" }}>
+    <div style={{ border: "1px solid var(--couleur-bordure)", padding: "0.75rem", marginBottom: "1rem" }}>
       <h3 style={{ marginTop: 0 }}>{titre}</h3>
       {children}
     </div>
@@ -56,43 +56,43 @@ export default async function SystemeQualitePage() {
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1rem" }}>
         <Carte titre="Preuves de compétence — Qualifications">
-          <LigneStat label="Valides" valeur={indicateurs.qualifications.valide} couleur="#0ca30c" />
+          <LigneStat label="Valides" valeur={indicateurs.qualifications.valide} couleur="var(--couleur-conforme)" />
           <LigneStat label="Bientôt à échéance" valeur={indicateurs.qualifications.bientotEcheance} couleur="#c98a1f" />
-          <LigneStat label="Expirées" valeur={indicateurs.qualifications.expire} couleur="#d03b3b" />
-          <LigneStat label="Suspendues" valeur={indicateurs.qualifications.suspendu} couleur="#d03b3b" />
+          <LigneStat label="Expirées" valeur={indicateurs.qualifications.expire} couleur="var(--couleur-non-conforme)" />
+          <LigneStat label="Suspendues" valeur={indicateurs.qualifications.suspendu} couleur="var(--couleur-non-conforme)" />
         </Carte>
 
         <Carte titre="Preuves de compétence — Habilitations">
-          <LigneStat label="Valides" valeur={indicateurs.habilitations.valide} couleur="#0ca30c" />
+          <LigneStat label="Valides" valeur={indicateurs.habilitations.valide} couleur="var(--couleur-conforme)" />
           <LigneStat label="Bientôt à échéance" valeur={indicateurs.habilitations.bientotEcheance} couleur="#c98a1f" />
-          <LigneStat label="Expirées" valeur={indicateurs.habilitations.expire} couleur="#d03b3b" />
-          <LigneStat label="Suspendues" valeur={indicateurs.habilitations.suspendu} couleur="#d03b3b" />
+          <LigneStat label="Expirées" valeur={indicateurs.habilitations.expire} couleur="var(--couleur-non-conforme)" />
+          <LigneStat label="Suspendues" valeur={indicateurs.habilitations.suspendu} couleur="var(--couleur-non-conforme)" />
         </Carte>
 
         <Carte titre="Preuves de compétence — Formations">
-          <LigneStat label="Valides" valeur={indicateurs.formations.valide} couleur="#0ca30c" />
+          <LigneStat label="Valides" valeur={indicateurs.formations.valide} couleur="var(--couleur-conforme)" />
           <LigneStat label="Bientôt à échéance" valeur={indicateurs.formations.bientotEcheance} couleur="#c98a1f" />
-          <LigneStat label="Expirées" valeur={indicateurs.formations.expire} couleur="#d03b3b" />
+          <LigneStat label="Expirées" valeur={indicateurs.formations.expire} couleur="var(--couleur-non-conforme)" />
         </Carte>
 
         <Carte titre="FNC / actions correctives">
           <LigneStat label="Total" valeur={indicateurs.fnc.total} />
           <LigneStat label="Ouvertes" valeur={indicateurs.fnc.ouvertes} couleur={indicateurs.fnc.ouvertes > 0 ? "#c98a1f" : undefined} />
-          <LigneStat label="Clôturées" valeur={indicateurs.fnc.cloturees} couleur="#0ca30c" />
-          <LigneStat label="Bloquantes ouvertes" valeur={indicateurs.fnc.bloquantes} couleur={indicateurs.fnc.bloquantes > 0 ? "#d03b3b" : undefined} />
+          <LigneStat label="Clôturées" valeur={indicateurs.fnc.cloturees} couleur="var(--couleur-conforme)" />
+          <LigneStat label="Bloquantes ouvertes" valeur={indicateurs.fnc.bloquantes} couleur={indicateurs.fnc.bloquantes > 0 ? "var(--couleur-non-conforme)" : undefined} />
         </Carte>
 
         <Carte titre="Dossier réglementaire">
           <LigneStat
             label="Points bloquants ouverts"
             valeur={indicateurs.pointsReglementairesBloquantsOuverts}
-            couleur={indicateurs.pointsReglementairesBloquantsOuverts > 0 ? "#d03b3b" : "#0ca30c"}
+            couleur={indicateurs.pointsReglementairesBloquantsOuverts > 0 ? "var(--couleur-non-conforme)" : "var(--couleur-conforme)"}
           />
         </Carte>
 
         <Carte titre="Rapport de fin de fabrication">
           <LigneStat label="Affaires" valeur={indicateurs.rff.affairesTotal} />
-          <LigneStat label="Validées (signées niveau 3)" valeur={indicateurs.rff.affairesValidees} couleur="#0ca30c" />
+          <LigneStat label="Validées (signées niveau 3)" valeur={indicateurs.rff.affairesValidees} couleur="var(--couleur-conforme)" />
         </Carte>
 
         <Carte titre="Traçabilité">
@@ -103,7 +103,7 @@ export default async function SystemeQualitePage() {
       <h2 style={{ marginTop: "1.5rem" }}>Contrôles réalisés</h2>
       <table style={{ borderCollapse: "collapse", width: "100%", fontSize: "0.9rem" }}>
         <thead>
-          <tr style={{ textAlign: "left", borderBottom: "2px solid #ddd" }}>
+          <tr style={{ textAlign: "left", borderBottom: "2px solid var(--couleur-bordure)" }}>
             <th style={{ padding: "0.4rem" }}>Méthode</th>
             <th style={{ padding: "0.4rem" }}>Total</th>
             <th style={{ padding: "0.4rem" }}>Conformes</th>
@@ -112,11 +112,11 @@ export default async function SystemeQualitePage() {
         </thead>
         <tbody>
           {indicateurs.controles.map((c) => (
-            <tr key={c.methode} style={{ borderBottom: "1px solid #eee" }}>
+            <tr key={c.methode} style={{ borderBottom: "1px solid var(--couleur-bordure)" }}>
               <td style={{ padding: "0.4rem" }}>{c.methode}</td>
               <td style={{ padding: "0.4rem" }}>{c.total}</td>
-              <td style={{ padding: "0.4rem", color: "#0ca30c" }}>{c.conformes}</td>
-              <td style={{ padding: "0.4rem", color: c.nonConformes > 0 ? "#d03b3b" : undefined }}>{c.nonConformes}</td>
+              <td style={{ padding: "0.4rem", color: "var(--couleur-conforme)" }}>{c.conformes}</td>
+              <td style={{ padding: "0.4rem", color: c.nonConformes > 0 ? "var(--couleur-non-conforme)" : undefined }}>{c.nonConformes}</td>
             </tr>
           ))}
         </tbody>
@@ -125,7 +125,7 @@ export default async function SystemeQualitePage() {
       <h2 style={{ marginTop: "1.5rem" }}>Maîtrise documentaire (bibliothèques versionnées)</h2>
       <table style={{ borderCollapse: "collapse", width: "100%", fontSize: "0.9rem" }}>
         <thead>
-          <tr style={{ textAlign: "left", borderBottom: "2px solid #ddd" }}>
+          <tr style={{ textAlign: "left", borderBottom: "2px solid var(--couleur-bordure)" }}>
             <th style={{ padding: "0.4rem" }}>Bibliothèque</th>
             <th style={{ padding: "0.4rem" }}>En vigueur</th>
             <th style={{ padding: "0.4rem" }}>Ancienne version</th>
@@ -134,17 +134,17 @@ export default async function SystemeQualitePage() {
         </thead>
         <tbody>
           {indicateurs.documentsVersionnes.map((d) => (
-            <tr key={d.categorie} style={{ borderBottom: "1px solid #eee" }}>
+            <tr key={d.categorie} style={{ borderBottom: "1px solid var(--couleur-bordure)" }}>
               <td style={{ padding: "0.4rem" }}>{d.categorie}</td>
-              <td style={{ padding: "0.4rem", color: "#0ca30c" }}>{d.enVigueur}</td>
-              <td style={{ padding: "0.4rem", color: "#898781" }}>{d.ancienneVersion}</td>
-              <td style={{ padding: "0.4rem", color: "#d03b3b" }}>{d.retiree}</td>
+              <td style={{ padding: "0.4rem", color: "var(--couleur-conforme)" }}>{d.enVigueur}</td>
+              <td style={{ padding: "0.4rem", color: "var(--couleur-texte-discret)" }}>{d.ancienneVersion}</td>
+              <td style={{ padding: "0.4rem", color: "var(--couleur-non-conforme)" }}>{d.retiree}</td>
             </tr>
           ))}
         </tbody>
       </table>
 
-      <p style={{ fontSize: "0.8rem", color: "#898781", marginTop: "1.5rem" }}>
+      <p style={{ fontSize: "0.8rem", color: "var(--couleur-texte-discret)", marginTop: "1.5rem" }}>
         Pour le détail événement par événement (qui, quand, ancienne/nouvelle valeur), voir l&apos;
         <Link href="/audit">audit trail</Link>.
       </p>

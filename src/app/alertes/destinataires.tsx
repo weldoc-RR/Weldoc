@@ -78,7 +78,7 @@ export function Destinataires({ initiaux }: { initiaux: Destinataire[] }) {
           {enCours ? "Ajout..." : "Ajouter"}
         </button>
       </form>
-      {erreur && <p style={{ color: "crimson" }}>{erreur}</p>}
+      {erreur && <p style={{ color: "var(--couleur-non-conforme)" }}>{erreur}</p>}
     </div>
   );
 }

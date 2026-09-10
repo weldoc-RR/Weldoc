@@ -90,13 +90,13 @@ export default async function RexPage({ searchParams }: { searchParams: { typePr
 
       <h2>FNC sans fiche REX ({fncsSansRex.length})</h2>
       {fncsSansRex.length === 0 ? (
-        <p style={{ fontSize: "0.9rem", color: "#898781" }}>Toutes les FNC ont une fiche REX.</p>
+        <p style={{ fontSize: "0.9rem", color: "var(--couleur-texte-discret)" }}>Toutes les FNC ont une fiche REX.</p>
       ) : (
         <ul style={{ listStyle: "none", padding: 0, marginBottom: "2rem" }}>
           {fncsSansRex.map((f) => (
-            <li key={f.id} style={{ marginBottom: "0.6rem", border: "1px solid #ddd", padding: "0.6rem" }}>
+            <li key={f.id} style={{ marginBottom: "0.6rem", border: "1px solid var(--couleur-bordure)", padding: "0.6rem" }}>
               <strong>{f.reference}</strong> — {f.affaire.numero} — {LIBELLE_IMPACT[f.impact]}
-              <div style={{ fontSize: "0.85rem", color: "#52514e" }}>{f.description}</div>
+              <div style={{ fontSize: "0.85rem", color: "var(--couleur-texte-attenue)" }}>{f.description}</div>
               <p style={{ fontSize: "0.8rem", margin: "0.2rem 0" }}>
                 <Link href={`/affaires/${f.affaire.id}/notes-rex`}>Voir les notes de l&apos;affaire →</Link>
               </p>
@@ -130,10 +130,10 @@ export default async function RexPage({ searchParams }: { searchParams: { typePr
           {fichesFiltrees.map((f) => {
             const j = f.fnc.joint;
             return (
-              <li key={f.id} style={{ marginBottom: "1rem", border: "1px solid #ddd", padding: "0.75rem" }}>
+              <li key={f.id} style={{ marginBottom: "1rem", border: "1px solid var(--couleur-bordure)", padding: "0.75rem" }}>
                 <strong>{f.typeProbleme}</strong>
                 {f.origine && ` — origine : ${f.origine}`}
-                <div style={{ fontSize: "0.8rem", color: "#898781", margin: "0.2rem 0" }}>
+                <div style={{ fontSize: "0.8rem", color: "var(--couleur-texte-discret)", margin: "0.2rem 0" }}>
                   FNC {f.fnc.reference} — {f.fnc.affaire.numero}
                   {f.fnc.affaire.chantier && ` (${f.fnc.affaire.chantier})`}
                   {j && (
@@ -164,7 +164,7 @@ export default async function RexPage({ searchParams }: { searchParams: { typePr
                   const similitudes = similitudesParFiche.get(f.id) ?? [];
                   if (similitudes.length === 0) return null;
                   return (
-                    <div style={{ fontSize: "0.8rem", margin: "0.4rem 0", padding: "0.4rem", background: "#f7f6f1" }}>
+                    <div style={{ fontSize: "0.8rem", margin: "0.4rem 0", padding: "0.4rem", background: "var(--couleur-fond-discret)" }}>
                       <strong>Cas similaires ({similitudes.length}) :</strong>
                       <ul style={{ margin: "0.2rem 0 0 0", paddingLeft: "1.2rem" }}>
                         {similitudes.slice(0, 5).map((s) => {
@@ -180,7 +180,7 @@ export default async function RexPage({ searchParams }: { searchParams: { typePr
                     </div>
                   );
                 })()}
-                <p style={{ fontSize: "0.75rem", color: "#898781", margin: 0 }}>
+                <p style={{ fontSize: "0.75rem", color: "var(--couleur-texte-discret)", margin: 0 }}>
                   Rédigée par {f.redacteur.prenom} {f.redacteur.nom} le {f.dateRedaction.toLocaleDateString("fr-FR")}
                 </p>
               </li>

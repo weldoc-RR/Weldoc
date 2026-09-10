@@ -28,10 +28,10 @@ const LIBELLE_STATUT: Record<string, string> = {
   MODIFICATION_DEMANDEE: "modification demandée",
 };
 const COULEUR_STATUT: Record<string, string> = {
-  EN_ATTENTE: "darkorange",
-  ACCEPTEE: "#0ca30c",
-  REFUSEE: "crimson",
-  MODIFICATION_DEMANDEE: "darkorange",
+  EN_ATTENTE: "var(--couleur-a-verifier)",
+  ACCEPTEE: "var(--couleur-conforme)",
+  REFUSEE: "var(--couleur-non-conforme)",
+  MODIFICATION_DEMANDEE: "var(--couleur-a-verifier)",
 };
 
 // Demande de modification de séquencement (voir le cahier des charges) :
@@ -109,7 +109,7 @@ export function DemandesSequencement({
   return (
     <div style={{ marginBottom: "2rem" }}>
       <h2>Demandes de modification de séquencement</h2>
-      <p style={{ fontSize: "0.85rem", color: "#898781" }}>
+      <p style={{ fontSize: "0.85rem", color: "var(--couleur-texte-discret)" }}>
         Pour s&apos;écarter de l&apos;ordre prévu (ex. souder avant que la préparation d&apos;une séquence
         précédente soit totalement terminée), une demande soumise ici et acceptée par le niveau 3 lève le blocage
         pour les phases concernées — jamais automatiquement.
@@ -120,12 +120,12 @@ export function DemandesSequencement({
           + Demander une modification de séquencement
         </button>
       ) : (
-        <form onSubmit={soumettre} style={{ display: "flex", flexDirection: "column", gap: "0.5rem", maxWidth: 560, border: "1px solid #ddd", padding: "1rem", marginBottom: "1rem" }}>
+        <form onSubmit={soumettre} style={{ display: "flex", flexDirection: "column", gap: "0.5rem", maxWidth: 560, border: "1px solid var(--couleur-bordure)", padding: "1rem", marginBottom: "1rem" }}>
           <div style={{ fontSize: "0.85rem" }}>
             Phases concernées :
             <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem", marginTop: "0.3rem" }}>
               {phases.map((p) => (
-                <label key={p.id} style={{ border: "1px solid #ddd", padding: "0.15rem 0.4rem", borderRadius: 4 }}>
+                <label key={p.id} style={{ border: "1px solid var(--couleur-bordure)", padding: "0.15rem 0.4rem", borderRadius: 4 }}>
                   <input type="checkbox" checked={phasesConcerneesIds.includes(p.id)} onChange={(e) => cocher(p.id, e.target.checked)} />{" "}
                   {p.sequenceNom} — {p.nom}
                 </label>
@@ -157,12 +157,12 @@ export function DemandesSequencement({
               Annuler
             </button>
           </div>
-          {erreur && <p style={{ color: "crimson", fontSize: "0.85rem" }}>{erreur}</p>}
+          {erreur && <p style={{ color: "var(--couleur-non-conforme)", fontSize: "0.85rem" }}>{erreur}</p>}
         </form>
       )}
 
       {demandes.length === 0 ? (
-        <p style={{ fontSize: "0.85rem", color: "#898781" }}>Aucune demande pour l&apos;instant.</p>
+        <p style={{ fontSize: "0.85rem", color: "var(--couleur-texte-discret)" }}>Aucune demande pour l&apos;instant.</p>
       ) : (
         <ul style={{ listStyle: "none", padding: 0 }}>
           {demandes.map((d) => (
@@ -208,13 +208,13 @@ function DemandeCarte({
   }
 
   return (
-    <li style={{ border: "1px solid #ddd", padding: "0.6rem", marginBottom: "0.6rem" }}>
+    <li style={{ border: "1px solid var(--couleur-bordure)", padding: "0.6rem", marginBottom: "0.6rem" }}>
       <p style={{ margin: 0 }}>
         <strong style={{ color: COULEUR_STATUT[d.statut] }}>{LIBELLE_STATUT[d.statut]}</strong>
-        {d.urgent && <span style={{ color: "crimson", marginLeft: "0.4rem" }}>(urgent)</span>} — {libellePhases}
+        {d.urgent && <span style={{ color: "var(--couleur-non-conforme)", marginLeft: "0.4rem" }}>(urgent)</span>} — {libellePhases}
       </p>
       <p style={{ margin: "0.2rem 0", fontSize: "0.85rem" }}>{d.motif}</p>
-      <p style={{ margin: "0.2rem 0", fontSize: "0.8rem", color: "#898781" }}>
+      <p style={{ margin: "0.2rem 0", fontSize: "0.8rem", color: "var(--couleur-texte-discret)" }}>
         Demandée par {d.demandeur ? `${d.demandeur.prenom} ${d.demandeur.nom}` : "—"} le{" "}
         {new Date(d.dateDemande).toLocaleDateString("fr-FR")}
         {d.photoUrl && (
@@ -235,7 +235,7 @@ function DemandeCarte({
         )}
       </p>
       {d.dateDecision && (
-        <p style={{ margin: "0.2rem 0", fontSize: "0.8rem", color: "#898781" }}>
+        <p style={{ margin: "0.2rem 0", fontSize: "0.8rem", color: "var(--couleur-texte-discret)" }}>
           Décidée par {d.decideur ? `${d.decideur.prenom} ${d.decideur.nom}` : "—"} le{" "}
           {new Date(d.dateDecision).toLocaleDateString("fr-FR")}
           {d.commentaireDecision && ` — ${d.commentaireDecision}`}
@@ -266,7 +266,7 @@ function DemandeCarte({
           <button type="submit" disabled={enCours}>
             {enCours ? "..." : "Valider la décision"}
           </button>
-          {erreur && <span style={{ color: "crimson" }}>{erreur}</span>}
+          {erreur && <span style={{ color: "var(--couleur-non-conforme)" }}>{erreur}</span>}
         </form>
       )}
     </li>

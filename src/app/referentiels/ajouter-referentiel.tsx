@@ -84,7 +84,7 @@ export function AjouterReferentiel() {
       <button type="submit" disabled={enCours}>
         {enCours ? "Ajout..." : "Ajouter"}
       </button>
-      {erreur && <span style={{ color: "crimson", fontSize: "0.85rem" }}>{erreur}</span>}
+      {erreur && <span style={{ color: "var(--couleur-non-conforme)", fontSize: "0.85rem" }}>{erreur}</span>}
     </form>
   );
 }

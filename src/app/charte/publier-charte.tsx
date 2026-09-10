@@ -40,8 +40,8 @@ export function PublierCharte() {
   }
 
   return (
-    <form onSubmit={publier} style={{ display: "flex", flexDirection: "column", gap: "0.5rem", maxWidth: 600, marginBottom: "1.5rem", border: "1px solid #ddd", padding: "1rem" }}>
-      <p style={{ margin: 0, fontSize: "0.85rem", color: "#52514e" }}>
+    <form onSubmit={publier} style={{ display: "flex", flexDirection: "column", gap: "0.5rem", maxWidth: 600, marginBottom: "1.5rem", border: "1px solid var(--couleur-bordure)", padding: "1rem" }}>
+      <p style={{ margin: 0, fontSize: "0.85rem", color: "var(--couleur-texte-attenue)" }}>
         Une nouvelle version ne remplace jamais la précédente : c&apos;est un nouvel enregistrement, et tout le
         monde devra la réaccepter avant de pouvoir de nouveau signer un document.
       </p>
@@ -61,7 +61,7 @@ export function PublierCharte() {
           Annuler
         </button>
       </div>
-      {erreur && <p style={{ color: "crimson" }}>{erreur}</p>}
+      {erreur && <p style={{ color: "var(--couleur-non-conforme)" }}>{erreur}</p>}
     </form>
   );
 }

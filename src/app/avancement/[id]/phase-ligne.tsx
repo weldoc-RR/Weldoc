@@ -72,7 +72,7 @@ export function PhaseLigne({
   }
 
   return (
-    <form onSubmit={enregistrer} style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem", alignItems: "center", padding: "0.4rem 0", borderBottom: "1px solid #eee" }}>
+    <form onSubmit={enregistrer} style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem", alignItems: "center", padding: "0.4rem 0", borderBottom: "1px solid var(--couleur-bordure)" }}>
       {selection && (
         <input
           type="checkbox"
@@ -110,9 +110,9 @@ export function PhaseLigne({
       <button type="submit" disabled={enCours} style={{ fontSize: "0.85rem" }}>
         {enCours ? "..." : "Enregistrer"}
       </button>
-      {erreur && <span style={{ color: "crimson", fontSize: "0.8rem" }}>{erreur}</span>}
+      {erreur && <span style={{ color: "var(--couleur-non-conforme)", fontSize: "0.8rem" }}>{erreur}</span>}
       {signature && (
-        <span style={{ fontSize: "0.75rem", color: "#0ca30c" }}>
+        <span style={{ fontSize: "0.75rem", color: "var(--couleur-conforme)" }}>
           ✓ Signée par {signature.prenom} {signature.nom} le {new Date(signature.dateSignature).toLocaleDateString("fr-FR")}
         </span>
       )}

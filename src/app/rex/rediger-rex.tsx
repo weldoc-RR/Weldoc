@@ -43,7 +43,7 @@ export function RedigerRex({ fncId, onTermine }: { fncId: string; onTermine: () 
   }
 
   return (
-    <form onSubmit={enregistrer} style={{ display: "flex", flexDirection: "column", gap: "0.4rem", maxWidth: 520, marginTop: "0.5rem", border: "1px solid #ddd", padding: "0.75rem" }}>
+    <form onSubmit={enregistrer} style={{ display: "flex", flexDirection: "column", gap: "0.4rem", maxWidth: 520, marginTop: "0.5rem", border: "1px solid var(--couleur-bordure)", padding: "0.75rem" }}>
       <label style={{ fontSize: "0.85rem" }}>
         Type de problème (ex. défaut de soudage, non-conformité dimensionnelle, problème de procédure...)
         <input required type="text" value={typeProbleme} onChange={(e) => setTypeProbleme(e.target.value)} style={{ display: "block", width: "100%", padding: "0.3rem" }} />
@@ -72,7 +72,7 @@ export function RedigerRex({ fncId, onTermine }: { fncId: string; onTermine: () 
           Annuler
         </button>
       </div>
-      {erreur && <p style={{ color: "crimson" }}>{erreur}</p>}
+      {erreur && <p style={{ color: "var(--couleur-non-conforme)" }}>{erreur}</p>}
     </form>
   );
 }

@@ -37,7 +37,7 @@ export function EditeurPasse({
   }
 
   return (
-    <div style={{ border: "1px solid #ddd", padding: "0.6rem", marginBottom: "0.5rem" }}>
+    <div style={{ border: "1px solid var(--couleur-bordure)", padding: "0.6rem", marginBottom: "0.5rem" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.4rem" }}>
         <strong style={{ fontSize: "0.85rem" }}>Passe n° {passe.ordre}</strong>
         <button type="button" onClick={onSupprimer} style={{ fontSize: "0.8rem" }}>

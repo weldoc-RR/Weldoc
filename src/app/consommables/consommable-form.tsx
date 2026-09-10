@@ -84,7 +84,7 @@ export function ConsommableForm() {
         <button type="submit" disabled={enCours}>
           {enCours ? "Ajout..." : "Ajouter"}
         </button>
-        {erreur && <span style={{ color: "crimson", fontSize: "0.85rem" }}>{erreur}</span>}
+        {erreur && <span style={{ color: "var(--couleur-non-conforme)", fontSize: "0.85rem" }}>{erreur}</span>}
       </div>
       <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap", fontSize: "0.85rem" }}>
         <input

@@ -1464,8 +1464,22 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
     personne). Le canevas de dessin ISO au stylet (`iso-canvas.tsx`) n'en
     fait volontairement pas partie : ses couleurs sont des couleurs de
     stylet choisies par l'utilisateur pour dessiner, pas des couleurs
-    d'interface. Les autres pages de la liste ci-dessus suivront au même
-    rythme.
+    d'interface. Troisième et dernier lot, qui clôt ce chantier : toutes
+    les pages restantes de la liste ci-dessus — `/alertes` (et sa
+    bibliothèque de destinataires), `/audit`, `/avancement` (liste et
+    détail par affaire : demandes de modification de séquencement,
+    ligne/section de phase, barre de progression par séquence
+    `barre-sequence.tsx`), `/charte`, `/consommables`, `/documents`,
+    `/pieces`, `/procedures` (WPS/DMOS, QMOS, procédures internes,
+    bibliothèque dimensionnelle), `/referentiels`, `/rex` et
+    `/systeme-qualite`. Toute l'application utilise maintenant les mêmes
+    variables CSS de statut plutôt que des couleurs figées éparpillées
+    par composant — à l'exception assumée de deux cas particuliers :
+    `iso-canvas.tsx` (couleurs de stylet, voir ci-dessus) et le texte
+    "bientôt à échéance" de `/systeme-qualite` (`#c98a1f`, un ambre plus
+    sombre que `--couleur-a-verifier` — ce dernier, pensé pour un fond de
+    badge avec texte sombre dessus, serait peu lisible utilisé tel quel
+    comme couleur de texte sur fond blanc).
 - Une vraie interface tablette soignée sur l'ensemble de l'application —
   un premier socle vient d'être posé (`src/app/globals.css`, importé
   depuis `src/app/layout.tsx`) : boutons et champs de saisie sans style

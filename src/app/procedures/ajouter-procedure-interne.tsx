@@ -79,7 +79,7 @@ export function AjouterProcedureInterne() {
       <button type="submit" disabled={enCours}>
         {enCours ? "Création..." : "Créer la procédure"}
       </button>
-      {erreur && <p style={{ color: "crimson" }}>{erreur}</p>}
+      {erreur && <p style={{ color: "var(--couleur-non-conforme)" }}>{erreur}</p>}
     </form>
   );
 }

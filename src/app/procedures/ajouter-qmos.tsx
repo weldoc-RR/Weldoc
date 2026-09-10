@@ -75,7 +75,7 @@ export function AjouterQmos() {
       <button type="submit" disabled={enCours}>
         {enCours ? "Création..." : "Créer la QMOS"}
       </button>
-      {erreur && <p style={{ color: "crimson" }}>{erreur}</p>}
+      {erreur && <p style={{ color: "var(--couleur-non-conforme)" }}>{erreur}</p>}
     </form>
   );
 }

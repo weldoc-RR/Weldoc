@@ -50,7 +50,7 @@ export default async function AuditTrailPage({ searchParams }: { searchParams: {
       ) : (
         <table style={{ borderCollapse: "collapse", width: "100%", fontSize: "0.85rem" }}>
           <thead>
-            <tr style={{ textAlign: "left", borderBottom: "2px solid #ddd" }}>
+            <tr style={{ textAlign: "left", borderBottom: "2px solid var(--couleur-bordure)" }}>
               <th style={{ padding: "0.4rem" }}>Date</th>
               <th style={{ padding: "0.4rem" }}>Utilisateur</th>
               <th style={{ padding: "0.4rem" }}>Entité</th>
@@ -63,7 +63,7 @@ export default async function AuditTrailPage({ searchParams }: { searchParams: {
             {entrees.map((e) => {
               const u = personnelParId.get(e.utilisateurId);
               return (
-                <tr key={e.id} style={{ borderBottom: "1px solid #eee" }}>
+                <tr key={e.id} style={{ borderBottom: "1px solid var(--couleur-bordure)" }}>
                   <td style={{ padding: "0.4rem", whiteSpace: "nowrap" }}>
                     {e.date.toLocaleDateString("fr-FR")} {e.date.toLocaleTimeString("fr-FR")}
                   </td>

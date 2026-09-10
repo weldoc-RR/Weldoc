@@ -100,7 +100,7 @@ export function AjouterDocumentExterne({
   }
 
   return (
-    <form onSubmit={ajouter} style={{ display: "flex", flexDirection: "column", gap: "0.5rem", maxWidth: 520, marginBottom: "1.5rem", border: "1px solid #ddd", padding: "1rem" }}>
+    <form onSubmit={ajouter} style={{ display: "flex", flexDirection: "column", gap: "0.5rem", maxWidth: 520, marginBottom: "1.5rem", border: "1px solid var(--couleur-bordure)", padding: "1rem" }}>
       <label>
         Référence (ex. DOC-FOURN-001)
         <input required type="text" value={reference} onChange={(e) => setReference(e.target.value)} style={{ display: "block", width: "100%", padding: "0.4rem" }} />
@@ -126,7 +126,7 @@ export function AjouterDocumentExterne({
         <input type="date" value={dateDocument} onChange={(e) => setDateDocument(e.target.value)} style={{ display: "block", width: "100%", padding: "0.4rem" }} />
       </label>
 
-      <p style={{ fontSize: "0.8rem", color: "#898781", margin: "0.4rem 0 0 0" }}>
+      <p style={{ fontSize: "0.8rem", color: "var(--couleur-texte-discret)", margin: "0.4rem 0 0 0" }}>
         Éléments concernés (optionnel, plusieurs possibles — Ctrl/Cmd + clic) :
       </p>
       {([
@@ -159,7 +159,7 @@ export function AjouterDocumentExterne({
           Annuler
         </button>
       </div>
-      {erreur && <p style={{ color: "crimson" }}>{erreur}</p>}
+      {erreur && <p style={{ color: "var(--couleur-non-conforme)" }}>{erreur}</p>}
     </form>
   );
 }

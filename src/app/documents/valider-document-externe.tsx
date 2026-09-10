@@ -51,7 +51,7 @@ export function ValiderDocumentExterne({ documentId }: { documentId: string }) {
           {enCours ? "Enregistrement..." : "Enregistrer la validation"}
         </button>
       </div>
-      {erreur && <p style={{ color: "crimson" }}>{erreur}</p>}
+      {erreur && <p style={{ color: "var(--couleur-non-conforme)" }}>{erreur}</p>}
     </form>
   );
 }

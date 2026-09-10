@@ -41,7 +41,7 @@ export function SuspendreHabilitation({ habilitationId, suspendue }: { habilitat
         <button onClick={() => envoyer("VALIDE")} disabled={enCours} style={{ fontSize: "0.8rem" }}>
           {enCours ? "..." : "Réactiver"}
         </button>
-        {erreur && <span style={{ color: "crimson", fontSize: "0.8rem", marginLeft: "0.3rem" }}>{erreur}</span>}
+        {erreur && <span style={{ color: "var(--couleur-non-conforme)", fontSize: "0.8rem", marginLeft: "0.3rem" }}>{erreur}</span>}
       </span>
     );
   }
@@ -70,7 +70,7 @@ export function SuspendreHabilitation({ habilitationId, suspendue }: { habilitat
       <button type="button" onClick={() => setOuvert(false)}>
         Annuler
       </button>
-      {erreur && <span style={{ color: "crimson", fontSize: "0.8rem" }}>{erreur}</span>}
+      {erreur && <span style={{ color: "var(--couleur-non-conforme)", fontSize: "0.8rem" }}>{erreur}</span>}
     </span>
   );
 }

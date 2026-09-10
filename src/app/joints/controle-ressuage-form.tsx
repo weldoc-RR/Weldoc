@@ -52,7 +52,7 @@ export function ControleRessuageForm({
             </select>
           </label>
           {controlesVisuels.length === 0 && (
-            <p style={{ fontSize: "0.9rem", color: "crimson" }}>
+            <p style={{ fontSize: "0.9rem", color: "var(--couleur-non-conforme)" }}>
               Aucun contrôle visuel enregistré sur ce joint : il en faut un avant de pouvoir faire un ressuage.
             </p>
           )}

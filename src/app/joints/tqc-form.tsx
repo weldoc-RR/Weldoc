@@ -74,8 +74,8 @@ export function TqcForm({ jointId, tqc, onFermer }: { jointId: string; tqc: Tqc;
 
   if (dejaSigne) {
     return (
-      <div style={{ border: "1px solid #ddd", padding: "0.6rem", marginTop: "0.4rem", maxWidth: 600 }}>
-        <p style={{ color: "#0ca30c", fontSize: "0.85rem" }}>✓ TQC signé (lecture seule).</p>
+      <div style={{ border: "1px solid var(--couleur-bordure)", padding: "0.6rem", marginTop: "0.4rem", maxWidth: 600 }}>
+        <p style={{ color: "var(--couleur-conforme)", fontSize: "0.85rem" }}>✓ TQC signé (lecture seule).</p>
         <p style={{ fontSize: "0.85rem" }}>
           Localisation : {tqc?.localisation ?? "—"} · Équipement : {tqc?.equipement ?? "—"} · Support :{" "}
           {tqc?.support ?? "—"}
@@ -128,7 +128,7 @@ export function TqcForm({ jointId, tqc, onFermer }: { jointId: string; tqc: Tqc;
         ISO manuel — fond à annoter (optionnel, lien vers un schéma iso déjà hébergé)
         <input type="text" value={isoFondUrl} onChange={(e) => setIsoFondUrl(e.target.value)} style={{ display: "block", width: "100%" }} />
       </label>
-      <p style={{ fontSize: "0.75rem", color: "#898781", margin: "0.3rem 0 0.2rem 0" }}>
+      <p style={{ fontSize: "0.75rem", color: "var(--couleur-texte-discret)", margin: "0.3rem 0 0.2rem 0" }}>
         Dessinez au stylet, au doigt ou à la souris directement sur le schéma (ou sur fond blanc si aucun lien
         renseigné) — le résultat est enregistré avec le reste du TQC.
       </p>
@@ -141,7 +141,7 @@ export function TqcForm({ jointId, tqc, onFermer }: { jointId: string; tqc: Tqc;
         <button type="button" onClick={onFermer}>
           Fermer
         </button>
-        {erreur && <span style={{ color: "crimson", fontSize: "0.9rem" }}>{erreur}</span>}
+        {erreur && <span style={{ color: "var(--couleur-non-conforme)", fontSize: "0.9rem" }}>{erreur}</span>}
       </div>
 
       <div style={{ marginTop: "0.75rem" }}>

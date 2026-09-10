@@ -1,9 +1,9 @@
 // Petit badge de statut par type de contrôle (DIM/VT/PT/MT/RT/UT) : couleur
 // = résultat du contrôle le plus récent de ce type sur le joint. Le texte
 // (sigle + résultat) porte toujours l'information, jamais la couleur seule.
-const COULEUR_CONFORME = "#0ca30c";
-const COULEUR_A_VERIFIER = "#fab219";
-const COULEUR_NON_CONFORME = "#d03b3b";
+const COULEUR_CONFORME = "var(--couleur-conforme)";
+const COULEUR_A_VERIFIER = "var(--couleur-a-verifier)";
+const COULEUR_NON_CONFORME = "var(--couleur-non-conforme)";
 
 function couleurResultat(resultat: string): string {
   if (resultat === "CONFORME") return COULEUR_CONFORME;
@@ -14,7 +14,7 @@ function couleurResultat(resultat: string): string {
 export function BadgeControle({ sigle, dernierResultat }: { sigle: string; dernierResultat: string | null }) {
   if (!dernierResultat) {
     return (
-      <span style={{ fontSize: "0.85rem", color: "#c3c2b7", border: "1px solid #e1e0d9", borderRadius: 5, padding: "0.25rem 0.5rem" }}>
+      <span style={{ fontSize: "0.85rem", color: "var(--couleur-texte-discret)", border: "1px solid var(--couleur-fond-discret)", borderRadius: 5, padding: "0.25rem 0.5rem" }}>
         {sigle}
       </span>
     );

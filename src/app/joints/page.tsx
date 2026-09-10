@@ -200,7 +200,7 @@ export default async function JointsPage() {
       <AjouterMatiere affaires={affaires} />
 
       <h2>Scan 3D (TQC)</h2>
-      <p style={{ fontSize: "0.85rem", color: "#52514e", maxWidth: 640 }}>
+      <p style={{ fontSize: "0.85rem", color: "var(--couleur-texte-attenue)", maxWidth: 640 }}>
         Deuxième méthode du TQC (voir le cahier des charges) — complémentaire au TQC texte + book photo de chaque
         joint (bouton &quot;+ TQC&quot; ci-dessous). Une zone peut couvrir plusieurs joints à la fois.
       </p>
@@ -225,7 +225,7 @@ export default async function JointsPage() {
             {(scansParAffaire.get(affaireId) ?? []).length > 0 && (
               <ul style={{ listStyle: "none", padding: 0, marginBottom: "0.8rem" }}>
                 {(scansParAffaire.get(affaireId) ?? []).map((s) => (
-                  <li key={s.id} style={{ fontSize: "0.85rem", color: "#52514e", marginBottom: "0.3rem" }}>
+                  <li key={s.id} style={{ fontSize: "0.85rem", color: "var(--couleur-texte-attenue)", marginBottom: "0.3rem" }}>
                     📡 Scan 3D — {s.zone} — {s.dateScan.toLocaleDateString("fr-FR")} — {s.operateur.prenom}{" "}
                     {s.operateur.nom}
                     {s.logiciel && ` — ${s.logiciel}${s.versionLogiciel ? ` ${s.versionLogiciel}` : ""}`}
@@ -288,7 +288,7 @@ export default async function JointsPage() {
                     style={{
                       marginBottom: "0.6rem",
                       paddingLeft: `${j.indiceReparation * 1.5}rem`,
-                      borderBottom: j.indiceReparation === 0 ? "1px solid #ddd" : "none",
+                      borderBottom: j.indiceReparation === 0 ? "1px solid var(--couleur-bordure)" : "none",
                       paddingBottom: "0.4rem",
                     }}
                   >
@@ -308,12 +308,12 @@ export default async function JointsPage() {
                       <BadgeControle sigle="UT" dernierResultat={dernierResultat(j.controlesUltrasons)} />
                     </span>
                     {fncsOuvertes.length > 0 && (
-                      <span style={{ marginLeft: "0.6rem", color: "#d03b3b" }}>
+                      <span style={{ marginLeft: "0.6rem", color: "var(--couleur-non-conforme)" }}>
                         {fncsOuvertes.length} FNC ouverte(s) : {fncsOuvertes.map((f) => f.reference).join(", ")}
                       </span>
                     )}
                     {alerteQS && (
-                      <span style={{ marginLeft: "0.6rem", color: "#fab219" }} title="Vérification indicative, à confirmer par une personne compétente">
+                      <span style={{ marginLeft: "0.6rem", color: "var(--couleur-a-verifier)" }} title="Vérification indicative, à confirmer par une personne compétente">
                         ⚠ {alerteQS}
                       </span>
                     )}

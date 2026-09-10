@@ -75,9 +75,9 @@ export function ChangerMotDePasse({ compteId, estSoiMeme }: { compteId: string; 
       <button type="button" onClick={() => setOuvert(false)}>
         Annuler
       </button>
-      {erreur && <span style={{ color: "crimson", fontSize: "0.8rem" }}>{erreur}</span>}
+      {erreur && <span style={{ color: "var(--couleur-non-conforme)", fontSize: "0.8rem" }}>{erreur}</span>}
       {estSoiMeme && (
-        <span style={{ fontSize: "0.75rem", color: "#898781" }}>Vous serez déconnecté(e) ensuite.</span>
+        <span style={{ fontSize: "0.75rem", color: "var(--couleur-texte-discret)" }}>Vous serez déconnecté(e) ensuite.</span>
       )}
     </form>
   );

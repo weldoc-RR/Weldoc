@@ -103,7 +103,7 @@ export function AjouterJoint({
           ))}
         </select>
       </label>
-      <p style={{ margin: 0, fontSize: "0.85rem", color: "#52514e" }}>
+      <p style={{ margin: 0, fontSize: "0.85rem", color: "var(--couleur-texte-attenue)" }}>
         Le numéro du joint (M800, M801...) est attribué automatiquement.
       </p>
       <label>
@@ -184,7 +184,7 @@ export function AjouterJoint({
       <button type="submit" disabled={enCours}>
         {enCours ? "Création..." : "Créer le joint"}
       </button>
-      {erreur && <p style={{ color: "crimson" }}>{erreur}</p>}
+      {erreur && <p style={{ color: "var(--couleur-non-conforme)" }}>{erreur}</p>}
     </form>
   );
 }

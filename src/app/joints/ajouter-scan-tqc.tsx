@@ -77,8 +77,8 @@ export function AjouterScanTqc({ affaires, joints }: { affaires: Affaire[]; join
   }
 
   return (
-    <form onSubmit={ajouter} style={{ display: "flex", flexDirection: "column", gap: "0.5rem", maxWidth: 480, marginBottom: "1.5rem", border: "1px solid #ddd", padding: "1rem" }}>
-      <p style={{ fontSize: "0.75rem", color: "#898781", margin: 0 }}>
+    <form onSubmit={ajouter} style={{ display: "flex", flexDirection: "column", gap: "0.5rem", maxWidth: 480, marginBottom: "1.5rem", border: "1px solid var(--couleur-bordure)", padding: "1rem" }}>
+      <p style={{ fontSize: "0.75rem", color: "var(--couleur-texte-discret)", margin: 0 }}>
         Un scan déjà réalisé par un prestataire ou un logiciel externe — Weldoc n&apos;en garde que la trace (lien
         vers les fichiers), pas de dessin ni d&apos;import 3D directement ici.
       </p>
@@ -156,7 +156,7 @@ export function AjouterScanTqc({ affaires, joints }: { affaires: Affaire[]; join
           Annuler
         </button>
       </div>
-      {erreur && <p style={{ color: "crimson" }}>{erreur}</p>}
+      {erreur && <p style={{ color: "var(--couleur-non-conforme)" }}>{erreur}</p>}
     </form>
   );
 }

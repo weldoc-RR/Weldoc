@@ -35,7 +35,7 @@ export function BasculerCompte({ compteId, statut }: { compteId: string; statut:
       <button onClick={basculer} disabled={enCours} style={{ fontSize: "0.8rem" }}>
         {enCours ? "..." : statut === "ACTIF" ? "Suspendre le compte" : "Réactiver le compte"}
       </button>
-      {erreur && <span style={{ color: "crimson", fontSize: "0.8rem", marginLeft: "0.3rem" }}>{erreur}</span>}
+      {erreur && <span style={{ color: "var(--couleur-non-conforme)", fontSize: "0.8rem", marginLeft: "0.3rem" }}>{erreur}</span>}
     </span>
   );
 }

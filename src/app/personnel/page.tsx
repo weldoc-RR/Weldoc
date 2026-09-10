@@ -34,8 +34,8 @@ const LIBELLE_STATUT: Record<string, string> = {
 };
 
 function couleurStatut(statut: string): string {
-  if (statut === "EXPIRE" || statut === "SUSPENDU") return "crimson";
-  if (statut === "BIENTOT_ECHEANCE" || statut === "EN_RENOUVELLEMENT") return "darkorange";
+  if (statut === "EXPIRE" || statut === "SUSPENDU") return "var(--couleur-non-conforme)";
+  if (statut === "BIENTOT_ECHEANCE" || statut === "EN_RENOUVELLEMENT") return "var(--couleur-a-verifier)";
   return "inherit";
 }
 
@@ -135,7 +135,7 @@ export default async function PersonnelPage() {
           const acuiteInapte = acuitesGroupees.some(({ actuel: t }) => !t.apte);
 
           return (
-            <li key={p.id} style={{ marginBottom: "1.5rem", borderBottom: "1px solid #ddd", paddingBottom: "1rem" }}>
+            <li key={p.id} style={{ marginBottom: "1.5rem", borderBottom: "1px solid var(--couleur-bordure)", paddingBottom: "1rem" }}>
               <strong>
                 {p.prenom} {p.nom}
               </strong>{" "}
@@ -146,7 +146,7 @@ export default async function PersonnelPage() {
                   {p.compte && (
                     <>
                       {" — "}
-                      <span style={{ fontSize: "0.8rem", color: p.compte.statut === "SUSPENDU" ? "crimson" : "#898781" }}>
+                      <span style={{ fontSize: "0.8rem", color: p.compte.statut === "SUSPENDU" ? "var(--couleur-non-conforme)" : "var(--couleur-texte-discret)" }}>
                         Compte {p.compte.statut === "SUSPENDU" ? "suspendu" : "actif"}
                       </span>
                       <BasculerCompte compteId={p.compte.id} statut={p.compte.statut} />
@@ -157,7 +157,7 @@ export default async function PersonnelPage() {
               {(p.id === utilisateur.personnelId || aNiveauMinimum(utilisateur.niveau, "NIVEAU_3")) && (
                 <>
                   {" — "}
-                  <span style={{ fontSize: "0.8rem", color: "#898781" }}>
+                  <span style={{ fontSize: "0.8rem", color: "var(--couleur-texte-discret)" }}>
                     {p.pinHash ? "PIN défini" : "PIN non défini"}
                   </span>
                   <DefinirPin personnelId={p.id} />
@@ -171,7 +171,7 @@ export default async function PersonnelPage() {
               <div style={{ marginTop: "0.3rem" }}>
                 {resume.urgentes === 0 && resume.bientotEcheance === 0 && !acuiteInapte ? (
                   <span
-                    style={{ fontSize: "0.8rem", color: "#fff", background: "var(--couleur-conforme, #0ca30c)", borderRadius: 5, padding: "0.1rem 0.5rem" }}
+                    style={{ fontSize: "0.8rem", color: "#fff", background: "var(--couleur-conforme)", borderRadius: 5, padding: "0.1rem 0.5rem" }}
                   >
                     ✓ À jour
                   </span>
@@ -182,7 +182,7 @@ export default async function PersonnelPage() {
                         style={{
                           fontSize: "0.8rem",
                           color: "#fff",
-                          background: "var(--couleur-non-conforme, #d03b3b)",
+                          background: "var(--couleur-non-conforme)",
                           borderRadius: 5,
                           padding: "0.1rem 0.5rem",
                           marginRight: "0.4rem",
@@ -196,7 +196,7 @@ export default async function PersonnelPage() {
                         style={{
                           fontSize: "0.8rem",
                           color: "#10161d",
-                          background: "var(--couleur-a-verifier, #fab219)",
+                          background: "var(--couleur-a-verifier)",
                           borderRadius: 5,
                           padding: "0.1rem 0.5rem",
                           marginRight: "0.4rem",
@@ -210,7 +210,7 @@ export default async function PersonnelPage() {
                         style={{
                           fontSize: "0.8rem",
                           color: "#fff",
-                          background: "var(--couleur-non-conforme, #d03b3b)",
+                          background: "var(--couleur-non-conforme)",
                           borderRadius: 5,
                           padding: "0.1rem 0.5rem",
                         }}
@@ -224,7 +224,7 @@ export default async function PersonnelPage() {
 
               {p.qualifications.length > 0 && (
                 <>
-                  <div style={{ fontSize: "0.8rem", color: "#52514e", marginTop: "0.4rem" }}>Qualifications soudage/CND</div>
+                  <div style={{ fontSize: "0.8rem", color: "var(--couleur-texte-attenue)", marginTop: "0.4rem" }}>Qualifications soudage/CND</div>
                   <ul>
                     {p.qualifications.map((q) => {
                       const statutCalcule =
@@ -265,7 +265,7 @@ export default async function PersonnelPage() {
                           {confirmation.prochaineDateDue && q.statut !== "SUSPENDU" && (
                             <>
                               {" — "}
-                              <span style={{ color: confirmation.enRetard ? "crimson" : confirmation.bientotDue ? "darkorange" : "inherit" }}>
+                              <span style={{ color: confirmation.enRetard ? "var(--couleur-non-conforme)" : confirmation.bientotDue ? "var(--couleur-a-verifier)" : "inherit" }}>
                                 confirmation {confirmation.enRetard ? "en retard depuis" : "due avant"} le{" "}
                                 {confirmation.prochaineDateDue.toLocaleDateString("fr-FR")}
                               </span>
@@ -273,7 +273,7 @@ export default async function PersonnelPage() {
                             </>
                           )}
                           {statutCalcule === "EN_RENOUVELLEMENT" && (
-                            <div style={{ fontSize: "0.85rem", color: "#52514e", marginTop: "0.2rem" }}>
+                            <div style={{ fontSize: "0.85rem", color: "var(--couleur-texte-attenue)", marginTop: "0.2rem" }}>
                               {q.evenements[0]?.commentaire}
                               <ValiderReconduction qualificationId={q.id} />
                             </div>
@@ -287,7 +287,7 @@ export default async function PersonnelPage() {
 
               {habilitationsGroupees.length > 0 && (
                 <>
-                  <div style={{ fontSize: "0.8rem", color: "#52514e", marginTop: "0.4rem" }}>Habilitations</div>
+                  <div style={{ fontSize: "0.8rem", color: "var(--couleur-texte-attenue)", marginTop: "0.4rem" }}>Habilitations</div>
                   <ul>
                     {habilitationsGroupees.map(({ actuel: h, historique }) => {
                       const statutCalcule = calculerStatut(h.dateExpiration, { suspendu: h.statut === "SUSPENDU" });
@@ -309,7 +309,7 @@ export default async function PersonnelPage() {
                             <SuspendreHabilitation habilitationId={h.id} suspendue={h.statut === "SUSPENDU"} />
                           )}
                           {historique.length > 0 && (
-                            <details style={{ fontSize: "0.8rem", color: "#52514e" }}>
+                            <details style={{ fontSize: "0.8rem", color: "var(--couleur-texte-attenue)" }}>
                               <summary>Historique ({historique.length})</summary>
                               <ul>
                                 {historique.map((anc) => (
@@ -330,7 +330,7 @@ export default async function PersonnelPage() {
 
               {p.formations.length > 0 && (
                 <>
-                  <div style={{ fontSize: "0.8rem", color: "#52514e", marginTop: "0.4rem" }}>
+                  <div style={{ fontSize: "0.8rem", color: "var(--couleur-texte-attenue)", marginTop: "0.4rem" }}>
                     Formations (historique complet)
                   </div>
                   <ul>
@@ -357,14 +357,14 @@ export default async function PersonnelPage() {
 
               {acuitesGroupees.length > 0 && (
                 <>
-                  <div style={{ fontSize: "0.8rem", color: "#52514e", marginTop: "0.4rem" }}>Acuité visuelle</div>
+                  <div style={{ fontSize: "0.8rem", color: "var(--couleur-texte-attenue)", marginTop: "0.4rem" }}>Acuité visuelle</div>
                   <ul>
                     {acuitesGroupees.map(({ actuel: t, historique }) => {
                       const statutCalcule = calculerStatut(t.dateExpiration, { suspendu: t.statut === "SUSPENDU" });
                       return (
                         <li key={t.id}>
                           Test du {t.dateTest.toLocaleDateString("fr-FR")} —{" "}
-                          <span style={{ color: t.apte ? "inherit" : "crimson" }}>{t.apte ? "apte" : "inapte"}</span>
+                          <span style={{ color: t.apte ? "inherit" : "var(--couleur-non-conforme)" }}>{t.apte ? "apte" : "inapte"}</span>
                           {" — "}
                           <span style={{ color: couleurStatut(statutCalcule) }}>{LIBELLE_STATUT[statutCalcule]}</span>
                           {t.dateExpiration && ` (échéance ${t.dateExpiration.toLocaleDateString("fr-FR")})`}
@@ -378,7 +378,7 @@ export default async function PersonnelPage() {
                             </>
                           )}
                           {historique.length > 0 && (
-                            <details style={{ fontSize: "0.8rem", color: "#52514e" }}>
+                            <details style={{ fontSize: "0.8rem", color: "var(--couleur-texte-attenue)" }}>
                               <summary>Historique ({historique.length})</summary>
                               <ul>
                                 {historique.map((anc) => (
@@ -398,7 +398,7 @@ export default async function PersonnelPage() {
 
               {documentsGroupes.length > 0 && (
                 <>
-                  <div style={{ fontSize: "0.8rem", color: "#52514e", marginTop: "0.4rem" }}>
+                  <div style={{ fontSize: "0.8rem", color: "var(--couleur-texte-attenue)", marginTop: "0.4rem" }}>
                     Documents justificatifs
                   </div>
                   <ul>
@@ -413,12 +413,12 @@ export default async function PersonnelPage() {
                           <a href={d.documentUrl} target="_blank" rel="noopener noreferrer">
                             voir le document
                           </a>{" "}
-                          <span style={{ fontSize: "0.8rem", color: "#898781" }}>
+                          <span style={{ fontSize: "0.8rem", color: "var(--couleur-texte-discret)" }}>
                             (ajouté par {d.ajoutePar.prenom} {d.ajoutePar.nom} le{" "}
                             {d.createdAt.toLocaleDateString("fr-FR")})
                           </span>
                           {historique.length > 0 && (
-                            <details style={{ fontSize: "0.8rem", color: "#52514e" }}>
+                            <details style={{ fontSize: "0.8rem", color: "var(--couleur-texte-attenue)" }}>
                               <summary>Historique ({historique.length})</summary>
                               <ul>
                                 {historique.map((anc) => (
@@ -445,7 +445,7 @@ export default async function PersonnelPage() {
 
               {p.indisponibilites.length > 0 && (
                 <>
-                  <div style={{ fontSize: "0.8rem", color: "#52514e", marginTop: "0.4rem" }}>
+                  <div style={{ fontSize: "0.8rem", color: "var(--couleur-texte-attenue)", marginTop: "0.4rem" }}>
                     Indisponibilités (historique complet)
                   </div>
                   <ul>
@@ -456,7 +456,7 @@ export default async function PersonnelPage() {
                         <li key={i.id}>
                           {i.motif} — du {i.dateDebut.toLocaleDateString("fr-FR")} au{" "}
                           {i.dateFin.toLocaleDateString("fr-FR")}
-                          {enCours && <span style={{ color: "darkorange" }}> — en cours</span>}
+                          {enCours && <span style={{ color: "var(--couleur-a-verifier)" }}> — en cours</span>}
                         </li>
                       );
                     })}
@@ -466,7 +466,7 @@ export default async function PersonnelPage() {
 
               {(p.autorisationsSignature.length > 0 || aNiveauMinimum(utilisateur.niveau, "NIVEAU_3")) && (
                 <>
-                  <div style={{ fontSize: "0.8rem", color: "#52514e", marginTop: "0.4rem" }}>
+                  <div style={{ fontSize: "0.8rem", color: "var(--couleur-texte-attenue)", marginTop: "0.4rem" }}>
                     Autorisations de signature
                     {aNiveauMinimum(utilisateur.niveau, "NIVEAU_3") && <AutoriserSignature personnelId={p.id} />}
                   </div>

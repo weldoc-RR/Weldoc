@@ -55,7 +55,7 @@ export function ConfirmerValidite({ qualificationId, personnelId }: { qualificat
   }
 
   return (
-    <div style={{ display: "inline-block", marginLeft: "0.5rem", border: "1px solid #ddd", padding: "0.5rem" }}>
+    <div style={{ display: "inline-block", marginLeft: "0.5rem", border: "1px solid var(--couleur-bordure)", padding: "0.5rem" }}>
       <p style={{ margin: "0 0 0.4rem 0", fontSize: "0.85rem" }}>
         Confirmation par essai (rien à cocher), ou en s&apos;appuyant sur des joints déjà soudés comme preuve
         d&apos;activité :

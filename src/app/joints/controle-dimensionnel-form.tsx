@@ -119,7 +119,7 @@ export function ControleDimensionnelForm({
         </select>
       </label>
       {matiere && (
-        <p style={{ fontSize: "0.9rem", color: "#0ca30c", margin: "0.4rem 0 0 0" }}>
+        <p style={{ fontSize: "0.9rem", color: "var(--couleur-conforme)", margin: "0.4rem 0 0 0" }}>
           Norme, diamètre et épaisseur préremplis depuis la matière (CCPU) de ce joint — modifiables si besoin.
         </p>
       )}
@@ -145,7 +145,7 @@ export function ControleDimensionnelForm({
           value={normeProduit}
           onChange={(e) => setNormeProduit(e.target.value)}
           readOnly={Boolean(produitDimensionnelId)}
-          style={{ display: "block", width: "100%", background: produitDimensionnelId ? "#f2f1ec" : undefined }}
+          style={{ display: "block", width: "100%", background: produitDimensionnelId ? "var(--couleur-fond-discret)" : undefined }}
         />
       </label>
       <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap", marginTop: "0.6rem" }}>
@@ -199,7 +199,7 @@ export function ControleDimensionnelForm({
         <button type="button" onClick={onAnnuler}>
           Annuler
         </button>
-        {erreur && <span style={{ color: "crimson", fontSize: "0.9rem" }}>{erreur}</span>}
+        {erreur && <span style={{ color: "var(--couleur-non-conforme)", fontSize: "0.9rem" }}>{erreur}</span>}
       </div>
     </form>
   );

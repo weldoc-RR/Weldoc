@@ -131,8 +131,8 @@ export function FicheSoudageForm({
 
   if (dejaSignee) {
     return (
-      <div style={{ border: "1px solid #ddd", padding: "0.6rem", marginTop: "0.4rem", maxWidth: 600 }}>
-        <p style={{ color: "#0ca30c", fontSize: "0.85rem" }}>✓ Fiche de suivi de soudage signée (lecture seule).</p>
+      <div style={{ border: "1px solid var(--couleur-bordure)", padding: "0.6rem", marginTop: "0.4rem", maxWidth: 600 }}>
+        <p style={{ color: "var(--couleur-conforme)", fontSize: "0.85rem" }}>✓ Fiche de suivi de soudage signée (lecture seule).</p>
         <p style={{ fontSize: "0.85rem" }}>
           Joints couverts : {fiche?.joints.map(numeroAffiche).join(", ")}
         </p>
@@ -227,7 +227,7 @@ export function FicheSoudageForm({
         <button type="button" onClick={onFermer}>
           Fermer
         </button>
-        {erreur && <span style={{ color: "crimson", fontSize: "0.9rem" }}>{erreur}</span>}
+        {erreur && <span style={{ color: "var(--couleur-non-conforme)", fontSize: "0.9rem" }}>{erreur}</span>}
       </div>
 
       <div style={{ marginTop: "0.6rem" }}>
@@ -236,7 +236,7 @@ export function FicheSoudageForm({
           modification possible ensuite :
         </p>
         {!ficheId ? (
-          <p style={{ fontSize: "0.9rem", color: "#898781" }}>Enregistrez d&apos;abord (sans signer) pour pouvoir signer.</p>
+          <p style={{ fontSize: "0.9rem", color: "var(--couleur-texte-discret)" }}>Enregistrez d&apos;abord (sans signer) pour pouvoir signer.</p>
         ) : signatureId ? (
           <button type="submit" disabled={enCours}>
             {enCours ? "..." : "Confirmer et signer"}

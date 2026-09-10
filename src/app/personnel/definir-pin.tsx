@@ -54,7 +54,7 @@ export function DefinirPin({ personnelId }: { personnelId: string }) {
       <button type="button" onClick={() => setOuvert(false)}>
         Annuler
       </button>
-      {erreur && <span style={{ color: "crimson", fontSize: "0.8rem" }}>{erreur}</span>}
+      {erreur && <span style={{ color: "var(--couleur-non-conforme)", fontSize: "0.8rem" }}>{erreur}</span>}
     </form>
   );
 }

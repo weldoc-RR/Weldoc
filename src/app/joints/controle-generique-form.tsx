@@ -125,7 +125,7 @@ export function ControleGeneriqueForm({
         <button type="button" onClick={onAnnuler}>
           Annuler
         </button>
-        {erreur && <span style={{ color: "crimson", fontSize: "0.9rem" }}>{erreur}</span>}
+        {erreur && <span style={{ color: "var(--couleur-non-conforme)", fontSize: "0.9rem" }}>{erreur}</span>}
       </div>
     </form>
   );

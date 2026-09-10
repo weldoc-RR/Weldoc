@@ -80,7 +80,7 @@ export function DeclarerReparation({
       <button type="button" onClick={() => setOuvert(false)}>
         Annuler
       </button>
-      {erreur && <span style={{ color: "crimson" }}>{erreur}</span>}
+      {erreur && <span style={{ color: "var(--couleur-non-conforme)" }}>{erreur}</span>}
     </form>
   );
 }

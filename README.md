@@ -1455,8 +1455,17 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
     réserve/levé, annexe qualifications, référentiels liés, contrôles et
     documents requis), du book photo et des PV externes — mêmes
     variables CSS que le reste de l'application plutôt que des couleurs
-    figées propres à chaque composant. Les autres pages de la liste
-    ci-dessus suivront au même rythme.
+    figées propres à chaque composant. Deuxième lot : `/joints` (tous ses
+    formulaires — ajout de joint, réception de matière, scan 3D TQC,
+    fiche de suivi de soudage, contrôles dimensionnel/visuel/ressuage...
+    — et le badge de résultat de contrôle `badge-controle.tsx`) et
+    `/personnel` (tous ses formulaires d'ajout, ainsi que les badges de
+    statut qualification/habilitation/formation sur la fiche de chaque
+    personne). Le canevas de dessin ISO au stylet (`iso-canvas.tsx`) n'en
+    fait volontairement pas partie : ses couleurs sont des couleurs de
+    stylet choisies par l'utilisateur pour dessiner, pas des couleurs
+    d'interface. Les autres pages de la liste ci-dessus suivront au même
+    rythme.
 - Une vraie interface tablette soignée sur l'ensemble de l'application —
   un premier socle vient d'être posé (`src/app/globals.css`, importé
   depuis `src/app/layout.tsx`) : boutons et champs de saisie sans style

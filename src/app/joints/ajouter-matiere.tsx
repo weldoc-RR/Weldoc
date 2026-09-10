@@ -43,7 +43,7 @@ export function AjouterMatiere({ affaires }: { affaires: Affaire[] }) {
         {alertes.length > 0 && (
           <ul style={{ margin: "0.4rem 0 0 0" }}>
             {alertes.map((a, i) => (
-              <li key={i} style={{ color: "darkorange", fontSize: "0.85rem" }}>
+              <li key={i} style={{ color: "var(--couleur-a-verifier)", fontSize: "0.85rem" }}>
                 {a}
               </li>
             ))}
@@ -92,7 +92,7 @@ export function AjouterMatiere({ affaires }: { affaires: Affaire[] }) {
   }
 
   return (
-    <form onSubmit={ajouter} style={{ display: "flex", flexDirection: "column", gap: "0.5rem", maxWidth: 480, marginBottom: "1.5rem", border: "1px solid #ddd", padding: "1rem" }}>
+    <form onSubmit={ajouter} style={{ display: "flex", flexDirection: "column", gap: "0.5rem", maxWidth: 480, marginBottom: "1.5rem", border: "1px solid var(--couleur-bordure)", padding: "1rem" }}>
       <label>
         Affaire
         <select required value={affaireId} onChange={(e) => setAffaireId(e.target.value)} style={{ display: "block", width: "100%", padding: "0.4rem" }}>
@@ -132,7 +132,7 @@ export function AjouterMatiere({ affaires }: { affaires: Affaire[] }) {
           ))}
         </datalist>
       </label>
-      <p style={{ fontSize: "0.75rem", color: "#898781", margin: "-0.3rem 0 0 0" }}>
+      <p style={{ fontSize: "0.75rem", color: "var(--couleur-texte-discret)", margin: "-0.3rem 0 0 0" }}>
         Reprendre exactement un des intitulés proposés ({NORMES_RECONNUES.join(" · ")}) pour que les critères
         dimensionnels de la bibliothèque de tolérances se déterminent automatiquement au contrôle. Toute autre
         valeur reste possible mais devra être renseignée à la main au contrôle.
@@ -201,7 +201,7 @@ export function AjouterMatiere({ affaires }: { affaires: Affaire[] }) {
           Annuler
         </button>
       </div>
-      {erreur && <p style={{ color: "crimson" }}>{erreur}</p>}
+      {erreur && <p style={{ color: "var(--couleur-non-conforme)" }}>{erreur}</p>}
     </form>
   );
 }

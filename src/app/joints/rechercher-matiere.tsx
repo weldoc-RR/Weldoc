@@ -62,11 +62,11 @@ export function RechercherMatiere({
       {resultats && (
         <div style={{ marginTop: "0.3rem" }}>
           {resultats.length === 0 ? (
-            <p style={{ color: "#898781", margin: 0 }}>Aucune matière avec ce numéro sur cette affaire.</p>
+            <p style={{ color: "var(--couleur-texte-discret)", margin: 0 }}>Aucune matière avec ce numéro sur cette affaire.</p>
           ) : (
             <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
               {resultats.map((m) => (
-                <li key={m.id} style={{ border: "1px solid #ddd", padding: "0.4rem", marginBottom: "0.3rem" }}>
+                <li key={m.id} style={{ border: "1px solid var(--couleur-bordure)", padding: "0.4rem", marginBottom: "0.3rem" }}>
                   <button
                     type="button"
                     onClick={() => {

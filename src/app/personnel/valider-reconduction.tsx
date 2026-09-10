@@ -45,8 +45,8 @@ export function ValiderReconduction({ qualificationId }: { qualificationId: stri
   }
 
   return (
-    <form onSubmit={valider} style={{ display: "block", marginTop: "0.3rem", border: "1px solid #ddd", padding: "0.5rem" }}>
-      <p style={{ fontSize: "0.8rem", color: "#898781", margin: "0 0 0.3rem 0" }}>
+    <form onSubmit={valider} style={{ display: "block", marginTop: "0.3rem", border: "1px solid var(--couleur-bordure)", padding: "0.5rem" }}>
+      <p style={{ fontSize: "0.8rem", color: "var(--couleur-texte-discret)", margin: "0 0 0.3rem 0" }}>
         Rappel : selon la plupart des référentiels, une reconduction par l&apos;activité ne remplace pas
         indéfiniment la qualification initiale — vérifiez qu&apos;un nouvel essai de qualification n&apos;est pas
         dû (périodicité propre à votre référentiel, ex. tous les 3 ans).
@@ -87,7 +87,7 @@ export function ValiderReconduction({ qualificationId }: { qualificationId: stri
         <button type="button" onClick={() => setOuvert(false)} style={{ marginLeft: "0.4rem" }}>
           Annuler
         </button>
-        {erreur && <span style={{ color: "crimson", fontSize: "0.85rem", marginLeft: "0.4rem" }}>{erreur}</span>}
+        {erreur && <span style={{ color: "var(--couleur-non-conforme)", fontSize: "0.85rem", marginLeft: "0.4rem" }}>{erreur}</span>}
       </div>
     </form>
   );

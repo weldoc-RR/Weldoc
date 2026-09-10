@@ -902,6 +902,21 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
     échéance) est un nouvel enregistrement, jamais une modification du
     précédent — même affichage "actuel + historique repliable" que les
     habilitations, regroupé par intitulé.
+  - **Résumé en tête de fiche** (voir le cahier des charges, fiche
+    personne : "Statuts visibles : valide, bientôt à échéance, expiré...")
+    : avec qualifications, habilitations, acuité visuelle et documents
+    justificatifs tous listés en détail sur la même fiche, repérer un
+    problème obligeait à tout lire. Un badge s'affiche maintenant juste
+    sous les fonctions de chaque personne — vert "✓ À jour" si rien à
+    signaler, sinon rouge "N expiré(e)/suspendu(e)" et/ou orange "N
+    bientôt à échéance" (compteurs cumulés sur les quatre catégories),
+    plus un badge rouge dédié "Acuité visuelle inapte" (un statut à part,
+    indépendant de la date d'échéance : `apte` peut être faux avec une
+    échéance encore lointaine). Seul l'enregistrement le plus récent de
+    chaque habilitation/acuité/document compte, jamais l'historique.
+    Agrégation factorisée dans `src/lib/resumeStatutsPersonnel.ts`
+    (`compterAlertesStatuts`, testé unitairement) plutôt que réécrite en
+    ligne.
   - **Droits et modifications** (voir le cahier des charges) : réservé au
     niveau 3, un bouton "Changer le niveau" par personne
     (`PATCH /api/personnel/[id]`) et, si un compte de connexion existe,

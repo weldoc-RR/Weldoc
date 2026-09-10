@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getUtilisateurConnecteServeur } from "@/lib/auth";
 import { calculerStatut } from "@/lib/statutValidite";
 import { calculerProchaineConfirmation } from "@/lib/confirmationQualification";
+import { compterAlertesStatuts } from "@/lib/resumeStatutsPersonnel";
 import { AjouterQualification } from "./ajouter-qualification";
 import { AjouterHabilitation } from "./ajouter-habilitation";
 import { AjouterFormation } from "./ajouter-formation";
@@ -116,6 +117,24 @@ export default async function PersonnelPage() {
           const acuitesGroupees = grouperActuelEtHistorique(p.acuitesVisuelles, () => "acuite");
           const documentsGroupes = grouperActuelEtHistorique(p.documentsJustificatifs, (d) => d.intitule);
 
+          // Résumé en tête de fiche (voir src/lib/resumeStatutsPersonnel.ts) :
+          // même calcul de statut que chaque liste détaillée ci-dessous,
+          // simplement agrégé pour repérer un problème sans avoir à tout
+          // lire. Seul l'enregistrement le plus récent de chaque
+          // habilitation/acuité/document compte (grouperActuelEtHistorique
+          // ci-dessus) — l'historique, lui, ne doit pas générer d'alerte.
+          const resume = compterAlertesStatuts([
+            ...p.qualifications.map((q) =>
+              q.evenements[0]?.type === "RECONDUCTION_PROPOSEE"
+                ? "EN_RENOUVELLEMENT"
+                : calculerStatut(q.dateExpiration, { suspendu: q.statut === "SUSPENDU" })
+            ),
+            ...habilitationsGroupees.map(({ actuel: h }) => calculerStatut(h.dateExpiration, { suspendu: h.statut === "SUSPENDU" })),
+            ...acuitesGroupees.map(({ actuel: t }) => calculerStatut(t.dateExpiration, { suspendu: t.statut === "SUSPENDU" })),
+            ...documentsGroupes.map(({ actuel: d }) => calculerStatut(d.dateExpiration, { suspendu: d.statut === "SUSPENDU" })),
+          ]);
+          const acuiteInapte = acuitesGroupees.some(({ actuel: t }) => !t.apte);
+
           return (
             <li key={p.id} style={{ marginBottom: "1.5rem", borderBottom: "1px solid #ddd", paddingBottom: "1rem" }}>
               <strong>
@@ -146,6 +165,60 @@ export default async function PersonnelPage() {
                 </>
               )}
               {p.fonctions.length > 0 && <div>Fonctions : {p.fonctions.map((f) => f.fonction).join(", ")}</div>}
+
+              <div style={{ marginTop: "0.3rem" }}>
+                {resume.urgentes === 0 && resume.bientotEcheance === 0 && !acuiteInapte ? (
+                  <span
+                    style={{ fontSize: "0.8rem", color: "#fff", background: "var(--couleur-conforme, #0ca30c)", borderRadius: 5, padding: "0.1rem 0.5rem" }}
+                  >
+                    ✓ À jour
+                  </span>
+                ) : (
+                  <>
+                    {resume.urgentes > 0 && (
+                      <span
+                        style={{
+                          fontSize: "0.8rem",
+                          color: "#fff",
+                          background: "var(--couleur-non-conforme, #d03b3b)",
+                          borderRadius: 5,
+                          padding: "0.1rem 0.5rem",
+                          marginRight: "0.4rem",
+                        }}
+                      >
+                        ⚠ {resume.urgentes} expiré(e)/suspendu(e)
+                      </span>
+                    )}
+                    {resume.bientotEcheance > 0 && (
+                      <span
+                        style={{
+                          fontSize: "0.8rem",
+                          color: "#10161d",
+                          background: "var(--couleur-a-verifier, #fab219)",
+                          borderRadius: 5,
+                          padding: "0.1rem 0.5rem",
+                          marginRight: "0.4rem",
+                        }}
+                      >
+                        {resume.bientotEcheance} bientôt à échéance
+                      </span>
+                    )}
+                    {acuiteInapte && (
+                      <span
+                        style={{
+                          fontSize: "0.8rem",
+                          color: "#fff",
+                          background: "var(--couleur-non-conforme, #d03b3b)",
+                          borderRadius: 5,
+                          padding: "0.1rem 0.5rem",
+                        }}
+                      >
+                        ⚠ Acuité visuelle inapte
+                      </span>
+                    )}
+                  </>
+                )}
+              </div>
 
               {p.qualifications.length > 0 && (
                 <>

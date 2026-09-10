@@ -43,16 +43,28 @@ export function OuvrirConstat({ affaireId, type, label }: { affaireId: string; t
   }
 
   return (
-    <form onSubmit={ouvrir} style={{ display: "flex", flexDirection: "column", gap: "0.5rem", maxWidth: 420, marginBottom: "1rem", border: "1px solid #ddd", padding: "1rem" }}>
-      <label>
+    <form
+      onSubmit={ouvrir}
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: "0.6rem",
+        maxWidth: 420,
+        marginBottom: "1rem",
+        border: "1px solid var(--couleur-bordure)",
+        borderRadius: 6,
+        padding: "1rem",
+      }}
+    >
+      <label style={{ fontSize: "0.95rem" }}>
         Zone concernée (optionnel)
-        <input type="text" value={zone} onChange={(e) => setZone(e.target.value)} style={{ display: "block", width: "100%", padding: "0.4rem" }} />
+        <input type="text" value={zone} onChange={(e) => setZone(e.target.value)} style={{ display: "block", width: "100%" }} />
       </label>
-      <div>
+      <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
         <button type="submit" disabled={enCours}>
           {enCours ? "Ouverture..." : "Ouvrir le constat"}
         </button>
-        <button type="button" onClick={() => setOuvert(false)} style={{ marginLeft: "0.5rem" }}>
+        <button type="button" onClick={() => setOuvert(false)}>
           Annuler
         </button>
       </div>

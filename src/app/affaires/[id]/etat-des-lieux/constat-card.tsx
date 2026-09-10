@@ -119,43 +119,43 @@ export function ConstatCard({ constat, affaireId }: { constat: ConstatVM; affair
   }
 
   return (
-    <div style={{ border: "1px solid #ddd", padding: "0.75rem", marginBottom: "1rem" }}>
-      <p style={{ fontSize: "0.8rem", color: "#898781", margin: "0 0 0.4rem 0" }}>
+    <div style={{ border: "1px solid var(--couleur-bordure)", borderRadius: 6, padding: "1rem", marginBottom: "1.25rem" }}>
+      <p style={{ fontSize: "0.9rem", color: "var(--couleur-texte-attenue)", margin: "0 0 0.5rem 0" }}>
         Rédigé par {constat.redacteur.prenom} {constat.redacteur.nom} le {new Date(constat.dateConstat).toLocaleDateString("fr-FR")}
         {constat.zone && ` — zone : ${constat.zone}`}
         {dejaSigne && <span style={{ color: "#0ca30c" }}> — ✓ signé (lecture seule)</span>}
       </p>
 
       {modeEdition ? (
-        <form onSubmit={enregistrer} style={{ display: "flex", flexDirection: "column", gap: "0.4rem", maxWidth: 520 }}>
-          <label style={{ fontSize: "0.85rem" }}>
+        <form onSubmit={enregistrer} style={{ display: "flex", flexDirection: "column", gap: "0.6rem", maxWidth: 560 }}>
+          <label style={{ fontSize: "0.95rem" }}>
             Zone concernée
-            <input type="text" value={zone} onChange={(e) => setZone(e.target.value)} style={{ display: "block", width: "100%", padding: "0.3rem" }} />
+            <input type="text" value={zone} onChange={(e) => setZone(e.target.value)} style={{ display: "block", width: "100%" }} />
           </label>
-          <label style={{ fontSize: "0.85rem" }}>
+          <label style={{ fontSize: "0.95rem" }}>
             Observations
-            <textarea value={observations} onChange={(e) => setObservations(e.target.value)} rows={2} style={{ display: "block", width: "100%", padding: "0.3rem", fontFamily: "inherit" }} />
+            <textarea value={observations} onChange={(e) => setObservations(e.target.value)} rows={3} style={{ display: "block", width: "100%", padding: "0.5rem", fontFamily: "inherit", fontSize: "1rem" }} />
           </label>
-          <label style={{ fontSize: "0.85rem" }}>
+          <label style={{ fontSize: "0.95rem" }}>
             Dégradations constatées
-            <textarea value={degradations} onChange={(e) => setDegradations(e.target.value)} rows={2} style={{ display: "block", width: "100%", padding: "0.3rem", fontFamily: "inherit" }} />
+            <textarea value={degradations} onChange={(e) => setDegradations(e.target.value)} rows={3} style={{ display: "block", width: "100%", padding: "0.5rem", fontFamily: "inherit", fontSize: "1rem" }} />
           </label>
-          <label style={{ fontSize: "0.85rem" }}>
+          <label style={{ fontSize: "0.95rem" }}>
             Documents d&apos;entrée reçus (bordereau, plan...)
-            <input type="text" value={documentsEntree} onChange={(e) => setDocumentsEntree(e.target.value)} style={{ display: "block", width: "100%", padding: "0.3rem" }} />
+            <input type="text" value={documentsEntree} onChange={(e) => setDocumentsEntree(e.target.value)} style={{ display: "block", width: "100%" }} />
           </label>
-          <div>
+          <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
             <button type="submit" disabled={enCours}>
               {enCours ? "Enregistrement..." : "Enregistrer"}
             </button>
-            <button type="button" onClick={() => setModeEdition(false)} style={{ marginLeft: "0.4rem" }}>
+            <button type="button" onClick={() => setModeEdition(false)}>
               Fermer
             </button>
           </div>
-          {erreur && <p style={{ color: "crimson", fontSize: "0.85rem" }}>{erreur}</p>}
+          {erreur && <p style={{ color: "crimson", fontSize: "0.9rem" }}>{erreur}</p>}
         </form>
       ) : (
-        <div style={{ fontSize: "0.9rem" }}>
+        <div style={{ fontSize: "0.95rem" }}>
           <p>
             <strong>Observations :</strong> {constat.observations || "—"}
           </p>
@@ -188,20 +188,20 @@ export function ConstatCard({ constat, affaireId }: { constat: ConstatVM; affair
         </ul>
       )}
       {!dejaSigne && (
-        <form onSubmit={ajouterReserve} style={{ display: "flex", gap: "0.3rem", flexWrap: "wrap", alignItems: "center", marginBottom: "0.6rem" }}>
+        <form onSubmit={ajouterReserve} style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap", alignItems: "center", marginBottom: "0.75rem" }}>
           <input
             required
             type="text"
             placeholder="Décrire la réserve"
             value={reserveDescription}
             onChange={(e) => setReserveDescription(e.target.value)}
-            style={{ flex: 1, minWidth: 200, padding: "0.3rem", fontSize: "0.85rem" }}
+            style={{ flex: 1, minWidth: 220 }}
           />
-          <label style={{ fontSize: "0.8rem" }}>
+          <label style={{ fontSize: "0.9rem", display: "flex", alignItems: "center", gap: "0.35rem" }}>
             <input type="checkbox" checked={reserveTransmise} onChange={(e) => setReserveTransmise(e.target.checked)} /> transmise au client
           </label>
           <button type="submit">Ajouter</button>
-          {erreurReserve && <span style={{ color: "crimson", fontSize: "0.8rem" }}>{erreurReserve}</span>}
+          {erreurReserve && <span style={{ color: "crimson", fontSize: "0.9rem" }}>{erreurReserve}</span>}
         </form>
       )}
       <p style={{ fontSize: "0.75rem", color: "#898781", marginTop: "-0.3rem" }}>
@@ -222,30 +222,30 @@ export function ConstatCard({ constat, affaireId }: { constat: ConstatVM; affair
         </ul>
       )}
       {!dejaSigne && (
-        <form onSubmit={ajouterPhoto} style={{ display: "flex", gap: "0.3rem", flexWrap: "wrap", alignItems: "center", marginBottom: "0.6rem" }}>
+        <form onSubmit={ajouterPhoto} style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap", alignItems: "center", marginBottom: "0.75rem" }}>
           <input
             required
             type="url"
             placeholder="Adresse de la photo"
             value={photoUrl}
             onChange={(e) => setPhotoUrl(e.target.value)}
-            style={{ flex: 1, minWidth: 200, padding: "0.3rem", fontSize: "0.85rem" }}
+            style={{ flex: 1, minWidth: 220 }}
           />
           <input
             type="text"
             placeholder="Légende (optionnel)"
             value={photoCommentaire}
             onChange={(e) => setPhotoCommentaire(e.target.value)}
-            style={{ flex: 1, minWidth: 140, padding: "0.3rem", fontSize: "0.85rem" }}
+            style={{ flex: 1, minWidth: 160 }}
           />
           <button type="submit">Ajouter</button>
-          {erreurPhoto && <span style={{ color: "crimson", fontSize: "0.8rem" }}>{erreurPhoto}</span>}
+          {erreurPhoto && <span style={{ color: "crimson", fontSize: "0.9rem" }}>{erreurPhoto}</span>}
         </form>
       )}
 
       {!dejaSigne && (
-        <div style={{ marginTop: "0.5rem" }}>
-          <p style={{ fontSize: "0.8rem", margin: "0 0 0.2rem 0" }}>
+        <div style={{ marginTop: "0.75rem" }}>
+          <p style={{ fontSize: "0.9rem", margin: "0 0 0.4rem 0" }}>
             Signer pour clore ce constat (matricule/QR + PIN) — plus aucune modification possible ensuite :
           </p>
           {signatureId ? (

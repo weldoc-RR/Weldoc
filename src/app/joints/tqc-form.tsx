@@ -96,37 +96,37 @@ export function TqcForm({ jointId, tqc, onFermer }: { jointId: string; tqc: Tqc;
   }
 
   return (
-    <form onSubmit={enregistrer} style={{ border: "1px solid #ddd", padding: "0.6rem", marginTop: "0.4rem", maxWidth: 600 }}>
-      <p style={{ fontSize: "0.75rem", color: "#898781", margin: "0 0 0.4rem 0" }}>
+    <form onSubmit={enregistrer} style={{ border: "1px solid var(--couleur-bordure)", borderRadius: 6, padding: "1rem", marginTop: "0.5rem", maxWidth: 660 }}>
+      <p style={{ fontSize: "0.85rem", color: "var(--couleur-texte-attenue)", margin: "0 0 0.4rem 0" }}>
         Dimensions mesurées et photos : voir le contrôle dimensionnel et le book photo de ce joint, déjà saisis
         ailleurs — pas de nouvelle saisie ici.
       </p>
-      <label style={{ fontSize: "0.85rem" }}>
+      <label style={{ fontSize: "0.95rem", display: "block", marginTop: "0.5rem" }}>
         Localisation
-        <input type="text" value={localisation} onChange={(e) => setLocalisation(e.target.value)} style={{ display: "block", width: "100%", padding: "0.3rem" }} />
+        <input type="text" value={localisation} onChange={(e) => setLocalisation(e.target.value)} style={{ display: "block", width: "100%" }} />
       </label>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.4rem", marginTop: "0.4rem" }}>
-        <label style={{ fontSize: "0.85rem" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.6rem", marginTop: "0.6rem" }}>
+        <label style={{ fontSize: "0.95rem" }}>
           Équipement
-          <input type="text" value={equipement} onChange={(e) => setEquipement(e.target.value)} style={{ display: "block", width: "100%", padding: "0.3rem" }} />
+          <input type="text" value={equipement} onChange={(e) => setEquipement(e.target.value)} style={{ display: "block", width: "100%" }} />
         </label>
-        <label style={{ fontSize: "0.85rem" }}>
+        <label style={{ fontSize: "0.95rem" }}>
           Support
-          <input type="text" value={support} onChange={(e) => setSupport(e.target.value)} style={{ display: "block", width: "100%", padding: "0.3rem" }} />
+          <input type="text" value={support} onChange={(e) => setSupport(e.target.value)} style={{ display: "block", width: "100%" }} />
         </label>
       </div>
-      <label style={{ fontSize: "0.85rem", display: "block", marginTop: "0.4rem" }}>
+      <label style={{ fontSize: "0.95rem", display: "block", marginTop: "0.6rem" }}>
         Écarts par rapport au prévu
-        <textarea value={ecarts} onChange={(e) => setEcarts(e.target.value)} rows={2} style={{ display: "block", width: "100%", padding: "0.3rem", fontFamily: "inherit" }} />
+        <textarea value={ecarts} onChange={(e) => setEcarts(e.target.value)} rows={3} style={{ display: "block", width: "100%", padding: "0.5rem", fontFamily: "inherit", fontSize: "1rem" }} />
       </label>
-      <label style={{ fontSize: "0.85rem", display: "block", marginTop: "0.4rem" }}>
+      <label style={{ fontSize: "0.95rem", display: "block", marginTop: "0.6rem" }}>
         Observations
-        <textarea value={observations} onChange={(e) => setObservations(e.target.value)} rows={2} style={{ display: "block", width: "100%", padding: "0.3rem", fontFamily: "inherit" }} />
+        <textarea value={observations} onChange={(e) => setObservations(e.target.value)} rows={3} style={{ display: "block", width: "100%", padding: "0.5rem", fontFamily: "inherit", fontSize: "1rem" }} />
       </label>
 
-      <label style={{ fontSize: "0.85rem", display: "block", marginTop: "0.4rem" }}>
+      <label style={{ fontSize: "0.95rem", display: "block", marginTop: "0.6rem" }}>
         ISO manuel — fond à annoter (optionnel, lien vers un schéma iso déjà hébergé)
-        <input type="text" value={isoFondUrl} onChange={(e) => setIsoFondUrl(e.target.value)} style={{ display: "block", width: "100%", padding: "0.3rem" }} />
+        <input type="text" value={isoFondUrl} onChange={(e) => setIsoFondUrl(e.target.value)} style={{ display: "block", width: "100%" }} />
       </label>
       <p style={{ fontSize: "0.75rem", color: "#898781", margin: "0.3rem 0 0.2rem 0" }}>
         Dessinez au stylet, au doigt ou à la souris directement sur le schéma (ou sur fond blanc si aucun lien
@@ -134,18 +134,18 @@ export function TqcForm({ jointId, tqc, onFermer }: { jointId: string; tqc: Tqc;
       </p>
       <IsoCanvas fondUrl={isoFondUrl || null} traits={isoTraits} onChange={setIsoTraits} />
 
-      <div style={{ marginTop: "0.5rem" }}>
+      <div style={{ marginTop: "0.75rem", display: "flex", gap: "0.5rem", flexWrap: "wrap", alignItems: "center" }}>
         <button type="submit" disabled={enCours}>
           {enCours ? "Enregistrement..." : "Enregistrer (sans signer)"}
         </button>
-        <button type="button" onClick={onFermer} style={{ marginLeft: "0.4rem" }}>
+        <button type="button" onClick={onFermer}>
           Fermer
         </button>
-        {erreur && <span style={{ color: "crimson", fontSize: "0.85rem", marginLeft: "0.4rem" }}>{erreur}</span>}
+        {erreur && <span style={{ color: "crimson", fontSize: "0.9rem" }}>{erreur}</span>}
       </div>
 
-      <div style={{ marginTop: "0.5rem" }}>
-        <p style={{ fontSize: "0.8rem", margin: "0 0 0.2rem 0" }}>
+      <div style={{ marginTop: "0.75rem" }}>
+        <p style={{ fontSize: "0.9rem", margin: "0 0 0.4rem 0" }}>
           Signer pour clore le TQC (matricule/QR + PIN) — plus aucune modification possible ensuite :
         </p>
         {signatureId ? (

@@ -1290,11 +1290,16 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   `controles-joint.tsx`) et les badges de résultat (`badge-controle.tsx`)
   ont en plus reçu un vrai passage dédié (boutons mieux espacés, bordure
   claire sur le contrôle en cours, badges agrandis) puisque ce sont les
-  boutons les plus tapés sur le terrain. Le reste de la mise en page
-  (structure des pages, tableaux denses) garde encore le style HTML
-  minimal du squelette de démonstration — à affiner page par page au fil
-  des prochains modules, sur ce même socle. Le dessin au stylet
-  fonctionne déjà (testé au doigt/stylet/souris via les événements
+  boutons les plus tapés sur le terrain. Le formulaire TQC au stylet
+  (`tqc-form.tsx`, zone de dessin `IsoCanvas` incluse) et les deux écrans
+  de prise en charge/restitution de chantier (`etat-des-lieux/`,
+  `ouvrir-constat.tsx` et `constat-card.tsx`) ont reçu le même traitement
+  (champs pleine largeur, cases à cocher agrandies, boutons d'action
+  espacés en ligne plutôt qu'alignés à coups de marges). Le reste de la
+  mise en page (structure des pages, tableaux denses) garde encore le
+  style HTML minimal du squelette de démonstration — à affiner page par
+  page au fil des prochains modules, sur ce même socle. Le dessin au
+  stylet fonctionne déjà (testé au doigt/stylet/souris via les événements
   `pointer`).
 - Les vraies valeurs de tolérances normatives, sauf l'EN 10216-2 (Tableaux
   7, 9, 11 — voir ci-dessus) : toute autre norme reste à intégrer au fil de

@@ -47,7 +47,8 @@ export default async function PlanningPage({ params }: { params: { id: string } 
   return (
     <main style={{ fontFamily: "sans-serif", padding: "2rem", maxWidth: 900 }}>
       <p>
-        <Link href="/">← Affaires</Link> · <Link href={`/affaires/${affaire.id}/dossier`}>Rapport de fin de fabrication →</Link>
+        <Link href="/">← Affaires</Link> · <Link href={`/affaires/${affaire.id}/dossier`}>Rapport de fin de fabrication →</Link> ·{" "}
+        <Link href={`/affaires/${affaire.id}/organigramme`}>Organigramme →</Link>
       </p>
       <h1>Planning — {affaire.numero}</h1>
       <p>

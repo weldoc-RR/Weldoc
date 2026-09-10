@@ -159,7 +159,8 @@ export default async function DossierPage({ params }: { params: { id: string } }
         </li>
       </ul>
       <p className="no-print" style={{ fontSize: "0.85rem" }}>
-        <Link href={`/affaires/${dossier.affaire.id}/planning`}>Voir/modifier le planning →</Link>
+        <Link href={`/affaires/${dossier.affaire.id}/planning`}>Voir/modifier le planning →</Link> ·{" "}
+        <Link href={`/affaires/${dossier.affaire.id}/organigramme`}>Vue organigramme →</Link>
       </p>
       {dossier.organigramme.equipeParFonction.length === 0 ? (
         <p>Aucune affectation active pour l&apos;instant (voir le planning).</p>

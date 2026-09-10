@@ -325,7 +325,24 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
     organigramme et l'annexe habilitations du rapport de fin de
     fabrication (section "4. Organigramme de l'intervention" de
     `/affaires/[id]/dossier`, qui affiche maintenant toute l'équipe du
-    planning et plus seulement les 3 rôles fixes de l'affaire).
+    planning et plus seulement les 3 rôles fixes de l'affaire). Logique de
+    construction factorisée dans `src/lib/organigramme.ts`
+    (`construireOrganigramme`), reprise telle quelle par la route API et
+    par la page ci-dessous plutôt que dupliquée.
+  - **Vue organigramme visuelle** (`/affaires/[id]/organigramme`, lien
+    depuis la page d'accueil, `/affaires/[id]/planning` et
+    `/affaires/[id]/dossier`) : jusqu'ici l'organigramme n'existait qu'en
+    texte (liste sur le rapport de fin de fabrication) ou en JSON brut
+    (route API ci-dessus). Cette page en donne une vraie représentation —
+    l'affaire en racine, les trois rôles (responsable, chargé d'affaires,
+    coordinateur soudage) juste en dessous, puis l'équipe chantier
+    groupée par fonction, chaque personne dans une carte avec son niveau,
+    le joint sur lequel elle est affectée le cas échéant, un badge vert
+    "présent" si son affectation est `EN_COURS`, et un badge d'alerte si
+    l'une de ses habilitations est expirée ou bientôt à échéance. Aucune
+    saisie sur cette page : tout se modifie depuis `/affaires/[id]/
+    planning` (rôles et affectations), la vue se reconstruit à chaque
+    chargement.
   - **Planning global** (`/planning`, lien depuis la page d'accueil) : la
     page `/affaires/[id]/planning` ci-dessus permet déjà d'affecter et
     détecte un conflit affaire par affaire, mais rien ne permettait

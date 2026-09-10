@@ -545,6 +545,16 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
     diagnostic : Weldoc ne dit jamais que deux problèmes sont "les mêmes",
     seulement quels critères se recoupent, à la personne qui consulte
     d'en juger la pertinence.
+  - **Notes REX** (`/affaires/[id]/notes-rex`, nouveau modèle `NoteRex`) :
+    jusqu'ici, le REX ne s'alimentait qu'après coup, à la clôture d'une
+    FNC. N'importe quel intervenant connecté (niveau 1 inclus, comme la
+    rédaction d'une fiche REX) peut maintenant noter une observation à
+    tout moment de l'affaire — un fournisseur, une matière, une méthode
+    qui pose question — sans attendre qu'une FNC existe. Une note n'est
+    jamais modifiée ni supprimée une fois postée (même principe que les
+    autres constats de ce type dans Weldoc). `GET`/`POST /api/notes-rex`,
+    lien "Voir les notes de l'affaire →" depuis chaque FNC/fiche de
+    `/rex` et depuis chaque affaire sur la page d'accueil.
 - **Dossier réglementaire** (voir le cahier des charges, "DOSSIER
   RÉGLEMENTAIRE" / "Blocage réglementaire") — distinct du rapport de fin
   de fabrication : ici, chaque exigence réglementaire (ex. "Attestation de

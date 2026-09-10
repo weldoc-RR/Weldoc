@@ -19,10 +19,13 @@ const LIBELLE_IMPACT: Record<string, string> = {
 // fournisseur/type de joint/chantier ne sont jamais ressaisis : ils
 // viennent du joint et de l'affaire de la FNC. "Identification de
 // problématiques similaires" (voir src/lib/rexSimilaire.ts) rapproche
-// maintenant chaque fiche des autres qui partagent au moins un de ces
-// cinq critères — une aide au repérage, jamais un diagnostic : Weldoc ne
-// dit jamais "c'est le même problème", seulement quels critères sont
-// communs.
+// chaque fiche des autres qui partagent au moins un de ces cinq critères
+// — une aide au repérage, jamais un diagnostic : Weldoc ne dit jamais
+// "c'est le même problème", seulement quels critères sont communs. Les
+// notes REX (/affaires/[id]/notes-rex) permettent en plus à tout
+// intervenant de noter une observation à tout moment de l'affaire, sans
+// attendre qu'une FNC existe — le lien "Voir les notes de l'affaire"
+// ci-dessous y mène pour aider à rédiger une fiche.
 export default async function RexPage({ searchParams }: { searchParams: { typeProbleme?: string } }) {
   const utilisateur = await getUtilisateurConnecteServeur();
   if (!utilisateur) {
@@ -56,7 +59,7 @@ export default async function RexPage({ searchParams }: { searchParams: { typePr
     }),
     prisma.fNC.findMany({
       where: { rex: null },
-      select: { id: true, reference: true, description: true, impact: true, affaire: { select: { numero: true } } },
+      select: { id: true, reference: true, description: true, impact: true, affaire: { select: { id: true, numero: true } } },
       orderBy: { dateCreation: "desc" },
     }),
   ]);
@@ -97,6 +100,9 @@ export default async function RexPage({ searchParams }: { searchParams: { typePr
             <li key={f.id} style={{ marginBottom: "0.6rem", border: "1px solid #ddd", padding: "0.6rem" }}>
               <strong>{f.reference}</strong> — {f.affaire.numero} — {LIBELLE_IMPACT[f.impact]}
               <div style={{ fontSize: "0.85rem", color: "#52514e" }}>{f.description}</div>
+              <p style={{ fontSize: "0.8rem", margin: "0.2rem 0" }}>
+                <Link href={`/affaires/${f.affaire.id}/notes-rex`}>Voir les notes de l&apos;affaire →</Link>
+              </p>
               <OuvrirRedactionRex fncId={f.id} />
             </li>
           ))}
@@ -154,6 +160,9 @@ export default async function RexPage({ searchParams }: { searchParams: { typePr
                     <strong>Résultat :</strong> {f.resultat}
                   </p>
                 )}
+                <p style={{ fontSize: "0.8rem", margin: "0.2rem 0" }}>
+                  <Link href={`/affaires/${f.fnc.affaire.id}/notes-rex`}>Voir les notes de l&apos;affaire →</Link>
+                </p>
                 {(() => {
                   const similitudes = similitudesParFiche.get(f.id) ?? [];
                   if (similitudes.length === 0) return null;

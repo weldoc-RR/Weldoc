@@ -65,7 +65,8 @@ export default async function HomePage() {
               · <Link href={`/affaires/${a.id}/reglementaire`}>Dossier réglementaire →</Link>{" "}
               · <Link href={`/affaires/${a.id}/planning`}>Planning →</Link>{" "}
               · <Link href={`/affaires/${a.id}/pv-externes`}>PV externes →</Link>{" "}
-              · <Link href={`/affaires/${a.id}/etat-des-lieux`}>État des lieux →</Link>
+              · <Link href={`/affaires/${a.id}/etat-des-lieux`}>État des lieux →</Link>{" "}
+              · <Link href={`/affaires/${a.id}/notes-rex`}>Notes REX →</Link>
               {avancement && (
                 <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", marginTop: "0.35rem" }}>
                   <div style={{ width: 200, height: 8, background: "#e1e0d9", borderRadius: 4, overflow: "hidden" }}>

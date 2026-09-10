@@ -82,6 +82,12 @@ model Compte {
   motDePasseHash    String
   statut            StatutCompte @default(ACTIF)
   derniereConnexion DateTime?
+  // Verrouillage automatique temporaire après plusieurs échecs de connexion
+  // consécutifs (voir src/lib/auth.ts, SEUIL_TENTATIVES_ECHOUEES) — distinct
+  // de `statut` (SUSPENDU), qui reste une décision humaine tracée. Remis à
+  // zéro dès une connexion réussie.
+  tentativesEchouees Int         @default(0)
+  verrouilleJusqua   DateTime?
   createdAt         DateTime     @default(now())
   updatedAt         DateTime     @updatedAt
 

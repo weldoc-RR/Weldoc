@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { SESSION_COOKIE_NAME, creerSession, verifierMotDePasse } from "@/lib/auth";
+import {
+  SESSION_COOKIE_NAME,
+  creerSession,
+  verifierMotDePasse,
+  compteVerrouille,
+  enregistrerEchecConnexion,
+  reinitialiserEchecsConnexion,
+} from "@/lib/auth";
 
 const LoginSchema = z.object({
   matricule: z.string().min(1),
@@ -30,8 +37,23 @@ export async function POST(req: NextRequest) {
   if (!personnel || !personnel.compte) return echec();
   if (personnel.compte.statut !== "ACTIF") return echec();
 
+  // Verrouillage temporaire après plusieurs échecs (voir src/lib/auth.ts) :
+  // message distinct du cas "identifiants invalides", volontairement plus
+  // explicite ici (l'objectif est de décourager les essais répétés, pas de
+  // masquer l'existence du compte à ce stade).
+  if (compteVerrouille(personnel.compte)) {
+    return NextResponse.json(
+      { error: "Compte temporairement verrouillé après plusieurs échecs. Réessayer dans quelques minutes." },
+      { status: 423 }
+    );
+  }
+
   const motDePasseValide = await verifierMotDePasse(motDePasse, personnel.compte.motDePasseHash);
-  if (!motDePasseValide) return echec();
+  if (!motDePasseValide) {
+    await enregistrerEchecConnexion(personnel.compte.id);
+    return echec();
+  }
+  await reinitialiserEchecsConnexion(personnel.compte.id);
 
   const { jeton, expireLe } = await creerSession(personnel.compte.id);
   await prisma.compte.update({

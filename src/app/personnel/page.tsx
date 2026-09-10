@@ -15,6 +15,7 @@ import { LIBELLE_NIVEAU } from "@/lib/niveaux";
 import { ConfirmerValidite } from "./confirmer-validite";
 import { ValiderReconduction } from "./valider-reconduction";
 import { DefinirPin } from "./definir-pin";
+import { ChangerMotDePasse } from "./changer-mot-de-passe";
 import { ChangerNiveau } from "./changer-niveau";
 import { BasculerCompte } from "./basculer-compte";
 import { AutoriserSignature } from "./autoriser-signature";
@@ -163,6 +164,9 @@ export default async function PersonnelPage() {
                   </span>
                   <DefinirPin personnelId={p.id} />
                 </>
+              )}
+              {p.compte && (p.id === utilisateur.personnelId || aNiveauMinimum(utilisateur.niveau, "NIVEAU_3")) && (
+                <ChangerMotDePasse compteId={p.compte.id} estSoiMeme={p.id === utilisateur.personnelId} />
               )}
               {p.fonctions.length > 0 && <div>Fonctions : {p.fonctions.map((f) => f.fonction).join(", ")}</div>}
 

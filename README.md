@@ -867,6 +867,23 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   jamais stockés en clair), sessions côté serveur (révocables
   immédiatement, par ex. si un compte est suspendu), vérification du
   niveau d'accès requis pour une action.
+  - **Verrouillage après échecs répétés** : après 5 mots de passe erronés
+    consécutifs sur un même compte (`Compte.tentativesEchouees`),
+    connexion refusée pendant 15 minutes (`Compte.verrouilleJusqua`),
+    plutôt que de laisser essayer indéfiniment. Distinct d'une suspension
+    de compte (décision humaine, tracée) : ce verrouillage est automatique
+    et temporaire, remis à zéro dès une connexion réussie.
+  - **Changer son mot de passe** : bouton "Changer mon mot de passe" sur
+    `/personnel` (sa propre fiche), demande le mot de passe actuel avant
+    d'enregistrer le nouveau (8 caractères minimum, comme à la création
+    du compte) — `POST /api/auth/comptes/[id]/mot-de-passe`. Pour une
+    personne de niveau 3, le même bouton apparaît "Réinitialiser le mot
+    de passe" sur la fiche de quiconque a oublié le sien, sans avoir à
+    fournir l'ancien (même principe que "Définir le code PIN" en cas
+    d'oubli). Dans les deux cas, toutes les sessions déjà ouvertes sur ce
+    compte sont révoquées (un ancien mot de passe compromis ne doit plus
+    donner accès à une session ouverte ailleurs) et l'événement est tracé
+    par l'audit trail — jamais le mot de passe lui-même.
 - `src/app/login/page.tsx` — page de connexion.
 - `src/app/page.tsx` — page d'accueil listant les affaires (accès
   réservé aux personnes connectées). Chaque affaire affiche maintenant

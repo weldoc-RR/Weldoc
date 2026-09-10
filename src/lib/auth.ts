@@ -7,6 +7,41 @@ import type { NiveauDecision } from "@prisma/client";
 export const SESSION_COOKIE_NAME = "weldoc_session";
 const SESSION_DUREE_MS = 12 * 60 * 60 * 1000; // 12h : la durée d'un poste, ajustable.
 
+// Verrouillage automatique et temporaire après plusieurs échecs de
+// connexion consécutifs sur un même compte (protection contre les essais
+// répétés de mot de passe) — distinct de `Compte.statut` (SUSPENDU), qui
+// reste une décision humaine tracée par l'audit trail. Remis à zéro dès
+// une connexion réussie.
+export const SEUIL_TENTATIVES_ECHOUEES = 5;
+const DUREE_VERROUILLAGE_MS = 15 * 60 * 1000;
+
+// Appelé après un mot de passe invalide : incrémente le compteur et pose
+// un verrouillage temporaire une fois le seuil atteint (le compteur repart
+// alors à zéro pour la fenêtre suivante).
+export async function enregistrerEchecConnexion(compteId: string): Promise<void> {
+  const compte = await prisma.compte.findUnique({ where: { id: compteId } });
+  if (!compte) return;
+
+  const nouvelleTentative = compte.tentativesEchouees + 1;
+  if (nouvelleTentative >= SEUIL_TENTATIVES_ECHOUEES) {
+    await prisma.compte.update({
+      where: { id: compteId },
+      data: { tentativesEchouees: 0, verrouilleJusqua: new Date(Date.now() + DUREE_VERROUILLAGE_MS) },
+    });
+  } else {
+    await prisma.compte.update({ where: { id: compteId }, data: { tentativesEchouees: nouvelleTentative } });
+  }
+}
+
+// Appelé après une connexion réussie : efface tout historique d'échecs.
+export async function reinitialiserEchecsConnexion(compteId: string): Promise<void> {
+  await prisma.compte.update({ where: { id: compteId }, data: { tentativesEchouees: 0, verrouilleJusqua: null } });
+}
+
+export function compteVerrouille(compte: { verrouilleJusqua: Date | null }): boolean {
+  return compte.verrouilleJusqua !== null && compte.verrouilleJusqua > new Date();
+}
+
 const ORDRE_NIVEAU: Record<NiveauDecision, number> = {
   NIVEAU_1: 1,
   NIVEAU_2: 2,
@@ -50,6 +85,16 @@ export async function creerSession(compteId: string) {
 export async function revoquerSession(jeton: string) {
   await prisma.session.updateMany({
     where: { tokenHash: empreinteJeton(jeton), revoqueLe: null },
+    data: { revoqueLe: new Date() },
+  });
+}
+
+// Révoque toutes les sessions actives d'un compte (voir POST
+// /api/auth/comptes/[id]/mot-de-passe) : après un changement de mot de
+// passe, une session déjà ouverte ailleurs ne doit pas rester valable.
+export async function revoquerToutesLesSessions(compteId: string) {
+  await prisma.session.updateMany({
+    where: { compteId, revoqueLe: null },
     data: { revoqueLe: new Date() },
   });
 }

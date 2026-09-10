@@ -60,6 +60,16 @@ export default async function JointsPage() {
             version: true,
             procede: true,
             groupeMateriaux: true,
+            // Le métal d'apport se déclare passe par passe (WpsPasse, un WPS
+            // peut en avoir plusieurs) : on retient celui de la première
+            // passe comme valeur représentative pour le tableau des joints,
+            // suffisant dans l'immense majorité des cas (même métal
+            // d'apport sur toutes les passes d'un même WPS).
+            passes: {
+              take: 1,
+              orderBy: { ordre: "asc" },
+              select: { metalApportType: true, metalApportDesignationNormalisee: true },
+            },
             epaisseurMinMm: true,
             epaisseurMaxMm: true,
             diametreMinMm: true,

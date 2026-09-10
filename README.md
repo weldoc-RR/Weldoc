@@ -1467,7 +1467,15 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   7, 9, 11 — voir ci-dessus) : toute autre norme reste à intégrer au fil de
   l'eau, au fur et à mesure qu'un utilisateur ou un expert métier avec
   l'accès licencié la fournit.
-- Le déploiement.
+- **Le déploiement effectif.** Le projet est maintenant prêt côté code
+  (voir "Déploiement en production" plus bas) : `postinstall` régénère le
+  client de base de données à chaque installation (manquait jusqu'ici —
+  aurait bloqué un déploiement Vercel, où l'environnement de build repart
+  toujours de zéro), `vercel.json` programme déjà l'envoi hebdomadaire des
+  alertes, et une vraie compilation de production (`npm run build`) a été
+  vérifiée sans erreur dans cette session. Ce qui reste à faire relève de
+  décisions propres à l'entreprise (compte Vercel, nom de domaine, qui a
+  accès) : la mise en ligne effective n'a donc pas été déclenchée.
 
 L'objectif de cette première étape était de valider que l'architecture
 (modèle de données + moteur de règles + génération de FNC automatique) tient
@@ -1546,6 +1554,78 @@ curl -X POST http://localhost:3000/api/auth/comptes \
 
 Ensuite, se connecter normalement sur http://localhost:3000/login avec ce
 matricule et ce mot de passe.
+
+## Déploiement en production
+
+Cette section explique comment mettre Weldoc en ligne pour de vrai, à
+faire quand vous serez prêt·e (elle ne change rien à ce qui tourne
+aujourd'hui). L'application est prévue pour **Vercel** (hébergement) +
+**Neon** (base de données PostgreSQL) — la même combinaison déjà utilisée
+pour développer et tester ce projet, gratuite pour démarrer. Comme le
+code est un projet Next.js standard, un autre hébergeur compatible
+Next.js fonctionnerait aussi, mais tout ce qui suit suppose Vercel.
+
+**Important — ne jamais réutiliser la base de données de développement**
+pour la production : celle utilisée jusqu'ici ne contient que des essais
+et sert à valider chaque nouveau module avant de le livrer. La production
+doit démarrer sur une base neuve et vide.
+
+1. **Créer le projet Vercel** : sur [vercel.com](https://vercel.com),
+   "Add New… → Project", puis choisir le dépôt GitHub `weldoc-RR/weldoc`
+   (une fois relié à votre compte GitHub). Vercel détecte automatiquement
+   qu'il s'agit d'un projet Next.js.
+2. **Créer la base de données de production** : dans le tableau de bord
+   du projet Vercel, Storage → Create Database → Postgres (propulsé par
+   Neon) — plus simple que de créer un compte Neon séparé, la variable
+   `DATABASE_URL` est alors renseignée automatiquement. Une base à part
+   entière, séparée de celle de développement.
+3. **Renseigner les variables d'environnement** (Project Settings →
+   Environment Variables) — voir aussi `.env.example` à la racine du
+   projet, qui explique chacune :
+   - `DATABASE_URL` — obligatoire, déjà renseignée par l'étape précédente
+     si vous avez créé la base depuis Vercel.
+   - `BLOB_READ_WRITE_TOKEN` — optionnelle, active le dépôt de fichiers
+     dans Weldoc (certificats, photos...) plutôt qu'un simple lien vers un
+     fichier déjà hébergé ailleurs. Storage → Create Database → Blob,
+     dans le même tableau de bord.
+   - `RESEND_API_KEY` et `ALERTES_EMAIL_FROM` — optionnelles, activent
+     l'envoi par email du récapitulatif hebdomadaire d'alertes (compte
+     gratuit sur [resend.com](https://resend.com)).
+   - `ANTHROPIC_API_KEY` — optionnelle, active la lecture automatique des
+     documents déposés (certificats...) — clé sur
+     [console.anthropic.com](https://console.anthropic.com).
+   - `CRON_SECRET` — optionnelle, sécurise l'appel automatique
+     hebdomadaire des alertes (voir `vercel.json`, déjà configuré pour ce
+     déclencheur) ; Vercel la renseigne lui-même si vous utilisez ses
+     tâches planifiées ("Cron Jobs"), déjà activées par la présence de
+     `vercel.json` dans ce dépôt.
+   Sans les variables optionnelles, l'application fonctionne normalement :
+   chaque fonctionnalité concernée l'indique clairement plutôt que
+   d'échouer en silence (voir le détail de chacune plus haut dans ce
+   README).
+4. **Premier déploiement** : Vercel construit et met en ligne
+   automatiquement à la création du projet (étape 1), puis à chaque
+   nouveau code poussé sur la branche par défaut du dépôt. Le projet
+   inclut déjà tout ce qu'il faut pour que ça fonctionne du premier coup
+   (`postinstall` régénère automatiquement le client de base de données à
+   chaque déploiement) — vérifié dans cette session par une vraie
+   compilation de production (`npm run build`), sans erreur.
+5. **Appliquer les migrations à la base de production** : la structure de
+   la base (tables, colonnes) doit être créée une fois sur la nouvelle
+   base, avec `npx prisma migrate deploy` (à exécuter depuis un poste qui
+   a accès à cette `DATABASE_URL` de production — Vercel ne le fait pas
+   tout seul). Applique dans l'ordre tous les changements déjà validés
+   pas à pas au fil des modules de ce projet ; sans certificat ni
+   étape technique supplémentaire propre à Weldoc.
+6. **Créer le tout premier compte** : comme en local (voir
+   "Comment le lancer" ci-dessus), les deux appels `curl` — remplacer
+   `http://localhost:3000` par l'adresse de votre déploiement Vercel.
+   Cette étape est technique (ligne de commande) : le moment venu, faites-la
+   avec Claude Code plutôt que seul·e.
+7. **Nom de domaine personnalisé** (optionnel) : Project Settings →
+   Domains, dans le tableau de bord Vercel — pour remplacer l'adresse
+   `....vercel.app` fournie par défaut par un nom de domaine propre à
+   votre entreprise.
 
 ## Prochaine étape recommandée
 

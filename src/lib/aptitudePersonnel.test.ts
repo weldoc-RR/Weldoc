@@ -7,21 +7,29 @@ vi.mock("@/lib/prisma", () => ({
   prisma: {
     qualification: { findMany: vi.fn() },
     acuiteVisuelle: { findMany: vi.fn() },
+    habilitation: { findMany: vi.fn() },
     affectation: { findFirst: vi.fn(), create: vi.fn() },
   },
 }));
 
 import { prisma } from "@/lib/prisma";
-import { verifierQualificationBloquante, verifierAcuiteVisuelleBloquante, assurerAffectation } from "./aptitudePersonnel";
+import {
+  verifierQualificationBloquante,
+  verifierAcuiteVisuelleBloquante,
+  verifierHabilitationsBloquantes,
+  assurerAffectation,
+} from "./aptitudePersonnel";
 
 const findManyQualification = prisma.qualification.findMany as unknown as ReturnType<typeof vi.fn>;
 const findManyAcuite = prisma.acuiteVisuelle.findMany as unknown as ReturnType<typeof vi.fn>;
+const findManyHabilitation = prisma.habilitation.findMany as unknown as ReturnType<typeof vi.fn>;
 const findFirstAffectation = prisma.affectation.findFirst as unknown as ReturnType<typeof vi.fn>;
 const createAffectation = prisma.affectation.create as unknown as ReturnType<typeof vi.fn>;
 
 beforeEach(() => {
   findManyQualification.mockReset();
   findManyAcuite.mockReset();
+  findManyHabilitation.mockReset();
   findFirstAffectation.mockReset();
   createAffectation.mockReset();
 });
@@ -90,6 +98,39 @@ describe("verifierAcuiteVisuelleBloquante", () => {
     findManyAcuite.mockResolvedValue([{ apte: true, dateExpiration: new Date("2099-01-01") }]);
     const resultat = await verifierAcuiteVisuelleBloquante("p1");
     expect(resultat.bloque).toBe(false);
+  });
+});
+
+describe("verifierHabilitationsBloquantes", () => {
+  it("ne bloque jamais une personne sans aucune habilitation enregistrée (additif)", async () => {
+    findManyHabilitation.mockResolvedValue([]);
+    const resultat = await verifierHabilitationsBloquantes("p1");
+    expect(resultat.bloque).toBe(false);
+  });
+
+  it("ne bloque pas quand toutes les habilitations enregistrées sont valides", async () => {
+    findManyHabilitation.mockResolvedValue([
+      { intitule: "Accès site", statut: "VALIDE", dateExpiration: new Date("2099-01-01") },
+      { intitule: "CACES", statut: "VALIDE", dateExpiration: null },
+    ]);
+    const resultat = await verifierHabilitationsBloquantes("p1");
+    expect(resultat.bloque).toBe(false);
+  });
+
+  it("bloque dès qu'une seule habilitation est expirée, même si les autres sont valides", async () => {
+    findManyHabilitation.mockResolvedValue([
+      { intitule: "Accès site", statut: "VALIDE", dateExpiration: new Date("2099-01-01") },
+      { intitule: "Radioprotection", statut: "VALIDE", dateExpiration: new Date("2000-01-01") },
+    ]);
+    const resultat = await verifierHabilitationsBloquantes("p1");
+    expect(resultat.bloque).toBe(true);
+    expect(resultat.motif).toMatch(/Radioprotection/);
+  });
+
+  it("bloque quand une habilitation est suspendue, même non expirée", async () => {
+    findManyHabilitation.mockResolvedValue([{ intitule: "CACES", statut: "SUSPENDU", dateExpiration: new Date("2099-01-01") }]);
+    const resultat = await verifierHabilitationsBloquantes("p1");
+    expect(resultat.bloque).toBe(true);
   });
 });
 

@@ -63,6 +63,31 @@ export async function verifierAcuiteVisuelleBloquante(personnelId: string): Prom
   };
 }
 
+// Même principe pour les habilitations (accès site, radioprotection,
+// CACES...) : à la différence des qualifications (où plusieurs
+// qualifications du même type sont des preuves alternatives — une seule
+// valide suffit), chaque habilitation est une exigence indépendante des
+// autres, donc TOUTES celles enregistrées pour cette personne doivent
+// être valides, pas seulement une au choix. Une personne sans aucune
+// habilitation enregistrée n'est jamais bloquée (rien à vérifier).
+export async function verifierHabilitationsBloquantes(personnelId: string): Promise<BlocageAptitude> {
+  const habilitations = await prisma.habilitation.findMany({ where: { personnelId } });
+  if (habilitations.length === 0) return { bloque: false };
+
+  const habilitationInvalide = habilitations.find((h) => {
+    const statut = calculerStatut(h.dateExpiration, { suspendu: h.statut === "SUSPENDU" });
+    return statut === "EXPIRE" || statut === "SUSPENDU";
+  });
+  if (!habilitationInvalide) return { bloque: false };
+
+  return {
+    bloque: true,
+    motif:
+      `Habilitation "${habilitationInvalide.intitule}" expirée ou suspendue pour cette personne — ` +
+      "action bloquée, voir sa fiche personnel.",
+  };
+}
+
 // Droits contextuels — "contexte de l'affaire" (voir le cahier des
 // charges, "DROITS ET MODIFICATIONS" : "droits définis par... le contexte
 // de l'affaire") : plutôt que d'exiger une affectation planifiée à
@@ -106,10 +131,13 @@ export async function assurerAffectation(
 }
 
 // Les vérifications requises avant un contrôle CND (VT/PT/MT/RT/UT) :
-// qualification CND et acuité visuelle. Utilisé par les cinq routes de
-// contrôle CND pour éviter de dupliquer cet enchaînement cinq fois.
+// qualification CND, acuité visuelle et habilitations. Utilisé par les
+// cinq routes de contrôle CND pour éviter de dupliquer cet enchaînement
+// cinq fois.
 export async function verifierAptitudeCND(personnelId: string): Promise<BlocageAptitude> {
   const qualif = await verifierQualificationBloquante(personnelId, "CND");
   if (qualif.bloque) return qualif;
-  return verifierAcuiteVisuelleBloquante(personnelId);
+  const acuite = await verifierAcuiteVisuelleBloquante(personnelId);
+  if (acuite.bloque) return acuite;
+  return verifierHabilitationsBloquantes(personnelId);
 }

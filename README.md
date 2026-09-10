@@ -671,27 +671,36 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   reconduction proposée et non encore validée apparaît en alerte
   (`/alertes`, récapitulatif hebdomadaire) tant qu'elle attend une
   décision.
-- `src/lib/aptitudePersonnel.ts` — **qualification/acuité visuelle
-  bloquante**, cette fois-ci (voir le cahier des charges : "détecter" une
-  qualification expirée doit "bloquer l'intervenant", pas seulement le
-  signaler). Jusqu'ici, dans toute l'application, une qualification
-  expirée n'était jamais qu'un signalement (`/alertes`) ; ce fichier ajoute
-  la seule vérification qui empêche réellement une action :
+- `src/lib/aptitudePersonnel.ts` — **qualification/acuité visuelle/
+  habilitations bloquantes**, cette fois-ci (voir le cahier des charges :
+  "détecter" une qualification expirée doit "bloquer l'intervenant", pas
+  seulement le signaler). Jusqu'ici, dans toute l'application, une
+  qualification expirée n'était jamais qu'un signalement (`/alertes`) ; ce
+  fichier ajoute la seule vérification qui empêche réellement une action :
   - `POST /api/joints` refuse (403) de désigner un soudeur dont plus
     aucune qualification soudage n'est valide (toutes expirées ou
-    suspendues).
+    suspendues), ou dont une habilitation enregistrée est expirée/
+    suspendue.
   - `POST /api/controles-visuels`, `-ressuage`, `-magnetoscopie`,
     `-radiographie`, `-ultrasons` refusent (403) qu'une personne sans
-    qualification CND valide, ou sans acuité visuelle valide (non apte ou
-    test expiré), enregistre un contrôle.
+    qualification CND valide, sans acuité visuelle valide (non apte ou
+    test expiré), ou avec une habilitation expirée/suspendue, enregistre
+    un contrôle.
   - **Comportement volontairement additif**, comme les autres
     vérifications du même genre (`MatierePrevue`, `ControlesRequis`) :
-    une personne qui n'a **aucune** qualification/acuité visuelle
-    enregistrée n'est jamais bloquée (rien à vérifier) — seule une
-    personne qui en a déjà eu, mais dont plus aucune n'est valide
-    aujourd'hui, l'est. Le signalement "bientôt à échéance" reste sur
-    `/alertes`, en amont, pour laisser le temps de requalifier quelqu'un
-    avant que ça ne devienne bloquant.
+    une personne qui n'a **aucune** qualification/acuité visuelle/
+    habilitation enregistrée n'est jamais bloquée (rien à vérifier) —
+    seule une personne qui en a déjà eu, mais dont plus aucune n'est
+    valide aujourd'hui, l'est. Le signalement "bientôt à échéance" reste
+    sur `/alertes`, en amont, pour laisser le temps de requalifier
+    quelqu'un avant que ça ne devienne bloquant.
+  - **Nuance entre qualifications et habilitations** : plusieurs
+    qualifications du même type sont des preuves alternatives (une seule
+    valide suffit — ex. deux qualifications soudage, l'une expirée,
+    l'autre pas, ne bloquent rien). Les habilitations, elles, sont des
+    exigences indépendantes qui ne se substituent pas les unes aux
+    autres : **toutes** celles enregistrées doivent être valides — une
+    seule expirée bloque, même si les autres sont valides.
   - Cette vérification ne sait pas si la qualification couvre précisément
     la méthode/le procédé demandé (contrairement à `verifierQS.ts` pour le
     rapprochement WPS/qualification soudage) : elle vérifie seulement

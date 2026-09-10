@@ -1279,6 +1279,13 @@ model Photo {
   etatDesLieuxId String?
   url         String
   commentaire String?
+  // Annotation graphique à main levée par-dessus la photo (voir le cahier
+  // des charges, "BOOK PHOTO" : "annotables") — même mécanisme que l'ISO
+  // manuel du TQC (voir IsoTrait dans src/app/joints/iso-canvas.tsx) :
+  // des tracés vectoriels en coordonnées relatives (0..1), jamais une
+  // image figée, pour rester modifiables à tout moment (le book photo n'a
+  // pas de notion de signature contrairement au TQC).
+  annotations Json?
   auteur      Personnel @relation("AuteurPhoto", fields: [auteurId], references: [id])
   auteurId    String
   dateAjout   DateTime  @default(now())

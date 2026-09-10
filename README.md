@@ -625,6 +625,14 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
     et rattachement optionnel à un joint/une phase/une FNC). Lien depuis
     la page d'accueil et depuis le rapport de fin de fabrication (qui
     affiche aussi le nombre de photos).
+  - **Photos "annotables"** (voir le cahier des charges, "BOOK PHOTO") :
+    chaque photo peut maintenant être annotée au stylet/doigt/souris,
+    directement par-dessus l'image — même mécanisme que l'ISO manuel du
+    TQC (`IsoCanvas`, voir `src/app/joints/iso-canvas.tsx`), réutilisé tel
+    quel. Nouveau champ `Photo.annotations` (tracés vectoriels, jamais une
+    image figée), `PATCH /api/photos/[id]`. Contrairement au TQC, le book
+    photo n'a pas de notion de signature : une annotation reste
+    modifiable à tout moment, par n'importe quelle personne connectée.
 - `src/lib/planning.ts` — la vérification avant affectation. **Limite
   assumée** : la correspondance fonction → type de qualification requis
   (ex. "soudeur" → qualification SOUDAGE) est une liste en dur, pas une

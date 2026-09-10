@@ -3,13 +3,21 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getUtilisateurConnecteServeur } from "@/lib/auth";
 import { AjouterPhoto } from "./ajouter-photo";
+import { AnnoterPhoto } from "./annoter-photo";
+import type { IsoTrait } from "@/app/joints/iso-canvas";
 
 export const dynamic = "force-dynamic";
+
+function traitsDepuis(annotations: unknown): IsoTrait[] {
+  return Array.isArray(annotations) ? (annotations as IsoTrait[]) : [];
+}
 
 // Book photo (voir le cahier des charges) : toutes les photos d'une
 // affaire, horodatées, rattachées optionnellement à une phase/un joint/une
 // FNC — utilisées pour la prise en charge, le suivi, les contrôles, les
-// FNC, le TQC et la restitution.
+// FNC, le TQC et la restitution. "Annotables" (voir le cahier des
+// charges) : chaque photo peut être annotée au stylet (voir
+// annoter-photo.tsx), même mécanisme que l'ISO manuel du TQC.
 export default async function PhotosAffairePage({ params }: { params: { id: string } }) {
   const utilisateur = await getUtilisateurConnecteServeur();
   if (!utilisateur) {
@@ -67,6 +75,7 @@ export default async function PhotosAffairePage({ params }: { params: { id: stri
                 {p.phase && ` — ${p.phase.nom}`}
                 {p.fnc && ` — ${p.fnc.reference}`}
               </p>
+              <AnnoterPhoto photoId={p.id} url={p.url} annotations={traitsDepuis(p.annotations)} />
             </li>
           ))}
         </ul>

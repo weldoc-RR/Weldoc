@@ -18,12 +18,9 @@ export default async function AvancementPage() {
   );
 
   return (
-    <main style={{ fontFamily: "sans-serif", padding: "2rem" }}>
-      <p>
-        <Link href="/">← Affaires</Link>
-      </p>
-      <h1>Weldoc — Avancement</h1>
-      <p>
+    <main style={{ padding: "2rem" }}>
+      <h1 style={{ marginBottom: "0.25rem" }}>Avancement</h1>
+      <p style={{ color: "var(--couleur-texte-attenue)", marginTop: 0 }}>
         Pourcentage d&apos;avancement de chaque affaire, calculé à partir des phases du séquencement (terminées sur
         applicables). Cliquez sur une affaire pour le détail par séquence.
       </p>

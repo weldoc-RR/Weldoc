@@ -80,12 +80,9 @@ export default async function RexPage({ searchParams }: { searchParams: { typePr
   const fichesParId = new Map(fichesRex.map((f) => [f.id, f]));
 
   return (
-    <main style={{ fontFamily: "sans-serif", padding: "2rem" }}>
-      <p>
-        <Link href="/">← Affaires</Link>
-      </p>
-      <h1>Weldoc — Retour d&apos;expérience (REX)</h1>
-      <p style={{ fontSize: "0.9rem", color: "#52514e" }}>
+    <main style={{ padding: "2rem" }}>
+      <h1 style={{ marginBottom: "0.25rem" }}>Retour d&apos;expérience (REX)</h1>
+      <p style={{ fontSize: "0.9rem", color: "var(--couleur-texte-attenue)", marginTop: 0 }}>
         Une fiche REX par FNC documentée : type de problème, origine, cause, solution, résultat. Le matériau, le
         procédé, le fournisseur, le type de joint et le chantier se lisent directement sur le joint et l&apos;affaire
         de la FNC, jamais ressaisis ici.

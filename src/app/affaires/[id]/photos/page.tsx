@@ -45,12 +45,12 @@ export default async function PhotosAffairePage({ params }: { params: { id: stri
   }
 
   return (
-    <main style={{ fontFamily: "sans-serif", padding: "2rem", maxWidth: 900 }}>
+    <main style={{ padding: "2rem", maxWidth: 900 }}>
       <p>
-        <Link href="/">← Affaires</Link> · <Link href={`/affaires/${affaire.id}/dossier`}>Rapport de fin de fabrication →</Link>
+        <Link href={`/affaires/${affaire.id}/dossier`}>Rapport de fin de fabrication →</Link>
       </p>
-      <h1>Book photo — {affaire.numero}</h1>
-      <p>
+      <h1 style={{ marginBottom: "0.25rem" }}>Book photo — {affaire.numero}</h1>
+      <p style={{ color: "var(--couleur-texte-attenue)", marginTop: 0 }}>
         {affaire.client} / {affaire.projet}
       </p>
 

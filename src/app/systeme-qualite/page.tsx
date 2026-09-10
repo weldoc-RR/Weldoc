@@ -43,12 +43,12 @@ export default async function SystemeQualitePage() {
   const indicateurs = await calculerIndicateursQualite();
 
   return (
-    <main style={{ fontFamily: "sans-serif", padding: "2rem", maxWidth: 1000 }}>
+    <main style={{ padding: "2rem", maxWidth: 1000 }}>
       <p>
-        <Link href="/">← Accueil</Link> · <Link href="/audit">Audit trail →</Link>
+        <Link href="/audit">Audit trail →</Link>
       </p>
-      <h1>Weldoc — Système qualité</h1>
-      <p style={{ fontSize: "0.9rem", color: "#52514e", maxWidth: 700 }}>
+      <h1 style={{ marginBottom: "0.25rem" }}>Système qualité</h1>
+      <p style={{ fontSize: "0.9rem", color: "var(--couleur-texte-attenue)", maxWidth: 700 }}>
         Preuves structurées pour un audit ISO 9001 (maîtrise documentaire, traçabilité, preuves de compétence,
         FNC/actions correctives, contrôles, validations), rassemblées à partir des modules déjà existants — rien
         n&apos;est recalculé après coup, et Weldoc ne certifie jamais l&apos;entreprise lui-même.

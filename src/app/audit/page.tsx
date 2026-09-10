@@ -31,12 +31,9 @@ export default async function AuditTrailPage({ searchParams }: { searchParams: {
   const personnelParId = new Map(personnel.map((p) => [p.id, p]));
 
   return (
-    <main style={{ fontFamily: "sans-serif", padding: "2rem", maxWidth: 1000 }}>
-      <p>
-        <Link href="/">← Accueil</Link>
-      </p>
-      <h1>Audit trail</h1>
-      <p style={{ fontSize: "0.85rem", color: "#898781" }}>
+    <main style={{ padding: "2rem", maxWidth: 1000 }}>
+      <h1 style={{ marginBottom: "0.25rem" }}>Audit trail</h1>
+      <p style={{ fontSize: "0.85rem", color: "var(--couleur-texte-discret)" }}>
         Historique des modifications sensibles de l&apos;application (200 plus récentes) : qui, quand, ancienne et
         nouvelle valeur, motif si renseigné. Rien n&apos;est jamais supprimé ici.
         {(entite || entiteId) && (

@@ -573,27 +573,20 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
     d'une affaire (statut actuel en couleur, historique repliable) et
     formulaire d'ajout. Lien depuis la page d'accueil et le rapport de
     fin de fabrication (qui affiche aussi le nombre de points).
-  - Deux tableaux compilés automatiquement en haut de cette page, à partir
-    de ce qui est déjà enregistré (voir
-    `src/lib/contenuDossierReglementaire.ts`) : **volontairement, cette
-    page ne porte pas les rôles de l'affaire ni n'alimente le rapport de
-    fin de fabrication — ce n'est pas son rôle, seul l'organigramme
-    ci-dessus s'en charge**.
-    - **Joints et procès-verbaux** : pour chaque joint de l'affaire, sa
-      fiche technique de suivi de soudage (FTS) et le "N° de PV" déjà
-      saisi sur chacun des cinq contrôles CND à indications (VT/PT/MT/RT/
-      UT — voir `ConditionsExamenSchema` dans `src/lib/controles.ts`), plus
-      un badge pour le résultat du contrôle dimensionnel (DIM, qui n'a pas
-      de numéro de PV). Rien n'est ressaisi : c'est un nouvel affichage des
-      contrôles déjà enregistrés sur `/joints`.
-    - **Rapport COFREND des intervenants** : les personnes ayant réalisé au
-      moins un des cinq contrôles CND sur un joint de l'affaire (le
-      périmètre réel de la certification COFREND — le contrôle
-      dimensionnel et le soudage en sont volontairement exclus, ce sont
-      d'autres référentiels), avec leurs qualifications CND déjà
-      enregistrées sur leur fiche personnel (`Qualification.type ===
-      "CND"`). Purement indicatif : Weldoc ne juge jamais si une
-      qualification couvre réellement telle intervention.
+  - **Joints et procès-verbaux** : un tableau compilé automatiquement en
+    haut de cette page, à partir de ce qui est déjà enregistré (voir
+    `src/lib/contenuDossierReglementaire.ts`) : pour chaque joint de
+    l'affaire, sa fiche technique de suivi de soudage (FTS) et le "N° de
+    PV" déjà saisi sur chacun des cinq contrôles CND à indications
+    (VT/PT/MT/RT/UT — voir `ConditionsExamenSchema` dans
+    `src/lib/controles.ts`), plus un badge pour le résultat du contrôle
+    dimensionnel (DIM, qui n'a pas de numéro de PV). Rien n'est ressaisi :
+    c'est un nouvel affichage des contrôles déjà enregistrés sur `/joints`.
+    **Volontairement, cette page ne porte pas les rôles de l'affaire (voir
+    l'organigramme plus haut) ni un rapport qualifications/COFREND des
+    intervenants** : cette vérification est déjà faite en amont, au moment
+    où la personne réalise le contrôle (voir `/alertes`, "qualifications"/
+    "habilitations") — la reprendre une deuxième fois ici ferait doublon.
 - Modèle `Photo` — "book photo" du cahier des charges : photos horodatées
   rattachées à une affaire et, optionnellement, à une phase/un joint/une
   FNC précis. `url` reste du texte libre pour l'instant (comme

@@ -8,8 +8,7 @@ import { ReferentielsAffaire } from "./referentiels-affaire";
 import { ControlesRequis } from "./controles-requis";
 import { DocumentsRequis } from "./documents-requis";
 import { JointsPV } from "./joints-pv";
-import { IntervenantsCND } from "./intervenants-cnd";
-import { lignesJointsPV, intervenantsCND } from "@/lib/contenuDossierReglementaire";
+import { lignesJointsPV } from "@/lib/contenuDossierReglementaire";
 
 export const dynamic = "force-dynamic";
 
@@ -19,19 +18,21 @@ export const dynamic = "force-dynamic";
 // uniquement par ce que le cahier des charges prévoit pour ce document
 // (les PV déjà enregistrés, pas les rôles de l'affaire, qui relèvent de
 // l'organigramme) : le tableau des joints avec leurs FTS et PV (voir
-// src/lib/contenuDossierReglementaire.ts), le rapport COFREND des
-// intervenants CND, les référentiels applicables, et le suivi des
-// exigences réglementaires individuelles, avec historique de statut tracé
-// (src/lib/dossierReglementaire.ts). Un point BLOQUANT empêche
-// l'avancement de la phase concernée et la validation finale du rapport
-// de fin de fabrication.
+// src/lib/contenuDossierReglementaire.ts), les référentiels applicables,
+// et le suivi des exigences réglementaires individuelles, avec historique
+// de statut tracé (src/lib/dossierReglementaire.ts). Pas de rapport
+// qualifications/COFREND ici : cette vérification est faite en amont, au
+// moment où la personne réalise le contrôle (voir /alertes,
+// "qualifications"/"habilitations"), pas reprise une deuxième fois ici.
+// Un point BLOQUANT empêche l'avancement de la phase concernée et la
+// validation finale du rapport de fin de fabrication.
 export default async function DossierReglementairePage({ params }: { params: { id: string } }) {
   const utilisateur = await getUtilisateurConnecteServeur();
   if (!utilisateur) {
     redirect("/login");
   }
 
-  const [affaire, points, joints, phases, tousReferentiels, liensReferentiels, lignesPV, intervenants] = await Promise.all([
+  const [affaire, points, joints, phases, tousReferentiels, liensReferentiels, lignesPV] = await Promise.all([
     prisma.affaire.findUnique({ where: { id: params.id } }),
     prisma.pointReglementaire.findMany({
       where: { affaireId: params.id },
@@ -50,7 +51,6 @@ export default async function DossierReglementairePage({ params }: { params: { i
     prisma.referentiel.findMany({ orderBy: { code: "asc" } }),
     prisma.affaireReferentiel.findMany({ where: { affaireId: params.id }, include: { referentiel: true } }),
     lignesJointsPV(params.id),
-    intervenantsCND(params.id),
   ]);
   if (!affaire) {
     notFound();
@@ -80,13 +80,6 @@ export default async function DossierReglementairePage({ params }: { params: { i
         joint — rien n&apos;est ressaisi ici.
       </p>
       <JointsPV lignes={lignesPV} />
-
-      <h2 style={{ fontSize: "1.1rem", marginTop: "1.5rem" }}>Rapport COFREND des intervenants</h2>
-      <p style={{ fontSize: "0.85rem", color: "#898781", margin: "0 0 0.5rem 0" }}>
-        Personnes ayant réalisé un contrôle CND (VT/PT/MT/RT/UT) sur un joint de cette affaire, avec leurs
-        qualifications CND déjà enregistrées sur leur fiche personnel.
-      </p>
-      <IntervenantsCND intervenants={intervenants} />
 
       <ReferentielsAffaire
         affaireId={affaire.id}

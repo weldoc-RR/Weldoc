@@ -7,6 +7,7 @@ import { PointReglementaireCarte } from "./point-reglementaire";
 import { ReferentielsAffaire } from "./referentiels-affaire";
 import { ControlesRequis } from "./controles-requis";
 import { DocumentsRequis } from "./documents-requis";
+import { RolesAffaire } from "./roles-affaire";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +24,7 @@ export default async function DossierReglementairePage({ params }: { params: { i
     redirect("/login");
   }
 
-  const [affaire, points, joints, phases, tousReferentiels, liensReferentiels] = await Promise.all([
+  const [affaire, points, joints, phases, tousReferentiels, liensReferentiels, personnel] = await Promise.all([
     prisma.affaire.findUnique({ where: { id: params.id } }),
     prisma.pointReglementaire.findMany({
       where: { affaireId: params.id },
@@ -41,12 +42,14 @@ export default async function DossierReglementairePage({ params }: { params: { i
     prisma.phase.findMany({ where: { sequence: { affaireId: params.id } }, select: { id: true, nom: true } }),
     prisma.referentiel.findMany({ orderBy: { code: "asc" } }),
     prisma.affaireReferentiel.findMany({ where: { affaireId: params.id }, include: { referentiel: true } }),
+    prisma.personnel.findMany({ orderBy: [{ nom: "asc" }, { prenom: "asc" }], select: { id: true, nom: true, prenom: true } }),
   ]);
   if (!affaire) {
     notFound();
   }
 
   const peutDebloquer = aNiveauMinimum(utilisateur.niveau, "NIVEAU_3");
+  const peutModifierRoles = aNiveauMinimum(utilisateur.niveau, "NIVEAU_2");
 
   return (
     <main style={{ fontFamily: "sans-serif", padding: "2rem", maxWidth: 900 }}>
@@ -63,6 +66,18 @@ export default async function DossierReglementairePage({ params }: { params: { i
         du rapport de fin de fabrication, tant qu&apos;il n&apos;est pas levé (passage en &laquo;&nbsp;déblocage
         autorisé&nbsp;&raquo;, réservé au niveau 3 et signé).
       </p>
+
+      {peutModifierRoles && (
+        <RolesAffaire
+          affaireId={affaire.id}
+          personnel={personnel}
+          valeurs={{
+            responsableId: affaire.responsableId,
+            chargeAffairesId: affaire.chargeAffairesId,
+            coordinateurSoudageId: affaire.coordinateurSoudageId,
+          }}
+        />
+      )}
 
       <ReferentielsAffaire
         affaireId={affaire.id}

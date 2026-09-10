@@ -130,7 +130,13 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
     charge → en fabrication → terminée → expédiée), pour un suivi de
     traçabilité tout au long de l'activité
   - `PATCH /api/affaires` — modifier ces rôles après coup (niveau 2
-    minimum) ; ils alimentent l'organigramme (voir plus bas)
+    minimum) ; ils alimentent l'organigramme (voir plus bas). Section
+    "Rôles de l'affaire" sur `/affaires/[id]/reglementaire` (visible à
+    partir du niveau 2) : trois listes déroulantes (responsable, chargé
+    d'affaires, coordinateur soudage) alimentées par le personnel déjà
+    enregistré, enregistrées immédiatement à chaque changement — jusqu'ici
+    ces rôles n'étaient saisissables qu'à la création de l'affaire, sans
+    aucun moyen de les corriger ou de les désigner après coup
   - `POST /api/sequences`, `POST /api/phases` — ajouter une séquence
     au-delà des 5 par défaut, ou une phase à une séquence (niveau 2
     minimum)

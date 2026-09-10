@@ -1076,26 +1076,30 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   `src/lib/signature.ts`).
   - **Tableau des joints (tuyauterie)** (`tableau-tuyauterie.tsx`) :
     au-dessus des fiches détaillées de chaque affaire, un vrai tableau —
-    une ligne par joint, colonnes ligne/spool, type de joint, DN,
-    diamètre, épaisseur, matière, groupe matériaux, WPS, métal d'apport,
-    QMOS, QS et soudeur — pour voir d'un coup d'œil les caractéristiques
-    de la tuyauterie de toute une affaire, plutôt que d'ouvrir chaque
-    fiche une par une. Colonnes alignées sur un vrai tableau de suivi
-    soudage/CND de chantier fourni en exemple par l'utilisateur : le
-    format (une ligne par joint, groupe/WPS/QMOS/QS/métal d'apport côte à
-    côte) et jusqu'à la numérotation M800/M801... s'y retrouvent déjà
-    telles quelles. Rien de nouveau à saisir : chaque colonne reprend une
-    donnée déjà enregistrée ailleurs (matière/CCPU, WPS de la
-    bibliothèque — le métal d'apport et le groupe matériaux viennent de
-    la première passe du WPS lié, `WpsPasse`, seule source qui les porte
-    déjà) — jamais ressaisis ni dupliqués. Vue en plus, les fiches
-    détaillées avec les contrôles restent inchangées juste en dessous.
-    Plusieurs colonnes de cet exemple (repère sur le croquis isométrique,
-    catégorie de risque/construction ESP, fluide, suivi des
-    approvisionnements manchettes/CAPS...) ne sont pas encore reprises :
-    aucun champ Weldoc ne les porte aujourd'hui, et certains codes du
-    document (BRT, catégories "z"/"Cat Con") demandent une confirmation
-    de leur sens exact avant de les modéliser plutôt que d'être devinés.
+    une ligne par joint, colonnes repère sur croquis, ligne/spool, type
+    de joint, DN, diamètre, épaisseur, matière, groupe matériaux, WPS,
+    métal d'apport, QMOS, QS et soudeur — pour voir d'un coup d'œil les
+    caractéristiques de la tuyauterie de toute une affaire, plutôt que
+    d'ouvrir chaque fiche une par une. Colonnes alignées sur un vrai
+    tableau de suivi soudage/CND de chantier fourni en exemple par
+    l'utilisateur : le format (une ligne par joint, groupe/WPS/QMOS/QS/
+    métal d'apport côte à côte) et jusqu'à la numérotation M800/M801...
+    s'y retrouvent déjà telles quelles. Presque rien de nouveau à
+    saisir : chaque colonne reprend une donnée déjà enregistrée ailleurs
+    (matière/CCPU, WPS de la bibliothèque — le métal d'apport et le
+    groupe matériaux viennent de la première passe du WPS lié,
+    `WpsPasse`, seule source qui les porte déjà), sauf le **repère sur
+    croquis** (`Joint.repereCroquis`, ex. "R", "N14", "DZ vers SVA" — la
+    position du joint sur le plan isométrique de l'affaire), nouveau
+    champ texte libre saisi une seule fois à la création du joint
+    (`+ Créer un joint`, `/joints`) comme ligne/spool/DN. Vue en plus,
+    les fiches détaillées avec les contrôles restent inchangées juste en
+    dessous. Plusieurs colonnes de l'exemple fourni (catégorie de
+    risque/construction ESP, fluide, suivi des approvisionnements
+    manchettes/CAPS...) ne sont pas encore reprises : aucun champ Weldoc
+    ne les porte aujourd'hui, et certains codes du document (BRT,
+    catégories "z"/"Cat Con") demandent une confirmation de leur sens
+    exact avant de les modéliser plutôt que d'être devinés.
   - Les cinq contrôles à indications (VT, PT, MT, RT, UT) portent aussi une
     section facultative, repliée par défaut ("N° de PV, critères
     d'acceptation et conditions d'examen") — `ConditionsExamenSchema` dans

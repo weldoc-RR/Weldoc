@@ -18,6 +18,7 @@ const CreateJointSchema = z.object({
   spool: z.string().optional(),
   typeJoint: z.string().optional(),
   dn: z.string().optional(),
+  repereCroquis: z.string().optional(),
   diametre: z.number().optional(),
   epaisseur: z.number().optional(),
   matiereId: z.string().optional(),

@@ -6,6 +6,7 @@ type JointTuyauterie = {
   spool: string | null;
   typeJoint: string | null;
   dn: string | null;
+  repereCroquis: string | null;
   diametre: number | null;
   epaisseur: number | null;
   matiere: { designation: string; nuance: string; diametre: number | null; epaisseur: number | null } | null;
@@ -40,6 +41,7 @@ export function TableauTuyauterie({ joints }: { joints: JointTuyauterie[] }) {
           <tr>
             {[
               "Joint",
+              "Repère",
               "Ligne / spool",
               "Type",
               "DN",
@@ -78,6 +80,7 @@ export function TableauTuyauterie({ joints }: { joints: JointTuyauterie[] }) {
             return (
               <tr key={j.id} style={{ borderBottom: "1px solid var(--couleur-fond-discret)" }}>
                 <td style={{ padding: "0.4rem 0.6rem", fontWeight: 600 }}>{numeroAffiche}</td>
+                <td style={{ padding: "0.4rem 0.6rem" }}>{j.repereCroquis || "—"}</td>
                 <td style={{ padding: "0.4rem 0.6rem" }}>
                   {j.ligne || "—"}
                   {j.spool && ` / ${j.spool}`}

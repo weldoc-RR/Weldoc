@@ -28,6 +28,7 @@ export function AjouterJoint({
   const [ligne, setLigne] = useState("");
   const [typeJoint, setTypeJoint] = useState("");
   const [dn, setDn] = useState("");
+  const [repereCroquis, setRepereCroquis] = useState("");
   const [matiereId, setMatiereId] = useState("");
   const [pieceId, setPieceId] = useState("");
   const [soudeurId, setSoudeurId] = useState("");
@@ -52,6 +53,7 @@ export function AjouterJoint({
         ligne: ligne || undefined,
         typeJoint: typeJoint || undefined,
         dn: dn || undefined,
+        repereCroquis: repereCroquis || undefined,
         matiereId: matiereId || undefined,
         pieceId: pieceId || undefined,
         soudeurId: soudeurId || undefined,
@@ -68,6 +70,7 @@ export function AjouterJoint({
     setLigne("");
     setTypeJoint("");
     setDn("");
+    setRepereCroquis("");
     setMatiereId("");
     setPieceId("");
     setSoudeurId("");
@@ -114,6 +117,16 @@ export function AjouterJoint({
       <label>
         DN (optionnel)
         <input type="text" value={dn} onChange={(e) => setDn(e.target.value)} style={{ display: "block", width: "100%", padding: "0.4rem" }} />
+      </label>
+      <label>
+        Repère sur croquis (optionnel)
+        <input
+          type="text"
+          value={repereCroquis}
+          onChange={(e) => setRepereCroquis(e.target.value)}
+          placeholder="ex. R, N14, DZ vers SVA..."
+          style={{ display: "block", width: "100%", padding: "0.4rem" }}
+        />
       </label>
       <RechercherMatiere affaireId={affaireId} onTrouvee={setMatiereId} />
       <label>

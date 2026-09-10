@@ -653,6 +653,11 @@ model Joint {
   spool           String?
   typeJoint       String?
   dn              String?
+  // Repère du joint sur le plan isométrique/croquis de tuyauterie (ex.
+  // "R", "N14", "DZ vers SVA" — voir le cahier des charges, TQC : "ISO
+  // manuel sur tablette... localisation des soudures"). Texte libre, la
+  // codification du repère dépend du plan/croquis de chaque affaire.
+  repereCroquis   String?
   diametre        Float?
   epaisseur       Float?
   matiere         Matiere? @relation(fields: [matiereId], references: [id])

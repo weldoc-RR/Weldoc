@@ -78,9 +78,9 @@ export default async function EtatDesLieuxPage({ params }: { params: { id: strin
   }
 
   return (
-    <main style={{ fontFamily: "sans-serif", padding: "2rem", maxWidth: 900 }}>
+    <main style={{ padding: "2rem", maxWidth: 900 }}>
       <p>
-        <Link href="/">← Affaires</Link> · <Link href={`/affaires/${affaire.id}/dossier`}>Rapport de fin de fabrication →</Link>{" "}
+        <Link href={`/affaires/${affaire.id}/dossier`}>Rapport de fin de fabrication →</Link>{" "}
         · <Link href={`/affaires/${affaire.id}/photos`}>Book photo →</Link>
       </p>
       <h1>État des lieux — {affaire.numero}</h1>
@@ -92,9 +92,9 @@ export default async function EtatDesLieuxPage({ params }: { params: { id: strin
       <Section titre="2. Restitution (fin d'intervention)" liste={restitution} type="RESTITUTION" label="Ouvrir le constat de restitution" />
 
       {derniereePriseEnCharge && derniereRestitution && (
-        <section style={{ border: "1px solid #ddd", padding: "0.75rem" }}>
+        <section style={{ border: "1px solid var(--couleur-bordure)", padding: "0.75rem" }}>
           <h2>3. Comparaison avant / après</h2>
-          <p style={{ fontSize: "0.85rem", color: "#898781" }}>
+          <p style={{ fontSize: "0.85rem", color: "var(--couleur-texte-discret)" }}>
             Utile pour justifier qu'une dégradation était déjà présente avant l&apos;intervention.
           </p>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", fontSize: "0.9rem" }}>

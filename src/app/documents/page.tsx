@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getUtilisateurConnecteServeur, aNiveauMinimum } from "@/lib/auth";
 import { annoterStatutProcedures, type StatutAffichageProcedure } from "@/lib/procedures";
@@ -15,9 +14,9 @@ const LIBELLE_STATUT: Record<StatutAffichageProcedure, string> = {
   RETIREE: "Retirée",
 };
 const COULEUR_STATUT: Record<StatutAffichageProcedure, string> = {
-  EN_VIGUEUR: "#0ca30c",
-  ANCIENNE_VERSION: "#898781",
-  RETIREE: "#d03b3b",
+  EN_VIGUEUR: "var(--couleur-conforme)",
+  ANCIENNE_VERSION: "var(--couleur-texte-discret)",
+  RETIREE: "var(--couleur-non-conforme)",
 };
 
 function BadgeStatut({ statut }: { statut: StatutAffichageProcedure }) {
@@ -66,12 +65,9 @@ export default async function DocumentsExternesPage() {
   const peutValider = aNiveauMinimum(utilisateur.niveau, "NIVEAU_3");
 
   return (
-    <main style={{ fontFamily: "sans-serif", padding: "2rem" }}>
-      <p>
-        <Link href="/">← Affaires</Link>
-      </p>
-      <h1>Weldoc — Documents externes</h1>
-      <p style={{ fontSize: "0.9rem", color: "#52514e" }}>
+    <main style={{ padding: "2rem" }}>
+      <h1>Documents externes</h1>
+      <p style={{ fontSize: "0.9rem", color: "var(--couleur-texte-attenue)" }}>
         Documents de fournisseurs, sous-traitants, prestataires CND ou traitement thermique, organismes externes.
         Un même document se relie à plusieurs affaires/joints/phases/FNC/personnel/équipements plutôt que d&apos;être
         réimporté pour chaque usage. Une nouvelle révision (Rev 1, Rev 2...) ne remplace jamais la précédente.
@@ -91,12 +87,12 @@ export default async function DocumentsExternesPage() {
       ) : (
         <ul style={{ listStyle: "none", padding: 0 }}>
           {documentsAnnotes.map((d) => (
-            <li key={d.id} style={{ marginBottom: "1rem", border: "1px solid #ddd", padding: "0.75rem" }}>
+            <li key={d.id} style={{ marginBottom: "1rem", border: "1px solid var(--couleur-bordure)", padding: "0.75rem" }}>
               <strong>{d.reference}</strong> ({d.version}) — {d.titre}
               {d.categorie && ` — ${d.categorie}`}
               <BadgeStatut statut={d.statutAffiche} />
               <RetirerProcedure endpoint="/api/documents-externes" id={d.id} retiree={d.retiree} />
-              <div style={{ fontSize: "0.85rem", color: "#52514e", marginTop: "0.2rem" }}>
+              <div style={{ fontSize: "0.85rem", color: "var(--couleur-texte-attenue)", marginTop: "0.2rem" }}>
                 Importé par {d.importePar.prenom} {d.importePar.nom} le {d.dateImport.toLocaleDateString("fr-FR")}
                 {d.dateDocument && ` — document daté du ${d.dateDocument.toLocaleDateString("fr-FR")}`} —{" "}
                 <a href={d.url} target="_blank" rel="noopener noreferrer">
@@ -104,7 +100,7 @@ export default async function DocumentsExternesPage() {
                 </a>
               </div>
               {(d.affaires.length > 0 || d.joints.length > 0 || d.phases.length > 0 || d.fncs.length > 0 || d.personnel.length > 0 || d.outils.length > 0) && (
-                <div style={{ fontSize: "0.8rem", color: "#898781", marginTop: "0.2rem" }}>
+                <div style={{ fontSize: "0.8rem", color: "var(--couleur-texte-discret)", marginTop: "0.2rem" }}>
                   {d.affaires.length > 0 && <>Affaires : {d.affaires.map((a) => a.numero).join(", ")} — </>}
                   {d.joints.length > 0 && (
                     <>Joints : {d.joints.map((j) => (j.indiceReparation > 0 ? `${j.numero} R${j.indiceReparation}` : j.numero)).join(", ")} — </>
@@ -116,7 +112,7 @@ export default async function DocumentsExternesPage() {
                 </div>
               )}
               {d.valideConclusion ? (
-                <p style={{ fontSize: "0.85rem", color: d.valideConclusion === "CONFORME" ? "#0ca30c" : "crimson", marginTop: "0.3rem" }}>
+                <p style={{ fontSize: "0.85rem", color: d.valideConclusion === "CONFORME" ? "var(--couleur-conforme)" : "var(--couleur-non-conforme)", marginTop: "0.3rem" }}>
                   Validé par {d.validePar?.prenom} {d.validePar?.nom} le {d.dateValidation?.toLocaleDateString("fr-FR")} —{" "}
                   {d.valideConclusion === "CONFORME" ? "conforme" : "non conforme"}
                   {d.valideCommentaire && ` — ${d.valideCommentaire}`}
@@ -124,7 +120,7 @@ export default async function DocumentsExternesPage() {
               ) : peutValider ? (
                 <ValiderDocumentExterne documentId={d.id} />
               ) : (
-                <p style={{ fontSize: "0.85rem", color: "#898781", marginTop: "0.3rem" }}>Pas encore validé (réservé au niveau 3).</p>
+                <p style={{ fontSize: "0.85rem", color: "var(--couleur-texte-discret)", marginTop: "0.3rem" }}>Pas encore validé (réservé au niveau 3).</p>
               )}
             </li>
           ))}

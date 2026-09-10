@@ -55,12 +55,12 @@ export default async function ProductivitePage() {
   const statistiques = calculerStatistiquesTempsParWps(wpsList, tempsReel, tempsPrevu);
 
   return (
-    <main style={{ fontFamily: "sans-serif", padding: "2rem" }}>
+    <main style={{ padding: "2rem" }}>
       <p>
-        <Link href="/">← Affaires</Link> · <Link href="/procedures">WPS/DMOS →</Link>
+        <Link href="/procedures">WPS/DMOS →</Link>
       </p>
-      <h1>Weldoc — Temps et productivité</h1>
-      <p style={{ fontSize: "0.9rem", color: "#52514e", maxWidth: 700 }}>
+      <h1>Temps et productivité</h1>
+      <p style={{ fontSize: "0.9rem", color: "var(--couleur-texte-attenue)", maxWidth: 700 }}>
         Temps théorique (barème saisi sur le WPS), temps prévu (planifié sur une affectation liée à un joint) et
         temps réel (fiche technique de suivi de soudage, une fois signée). Les statistiques sont calculées par WPS
         — c&apos;est la configuration comparable retenue (procédé, domaine) — et jamais par soudeur : Weldoc
@@ -73,7 +73,7 @@ export default async function ProductivitePage() {
         <div style={{ overflowX: "auto" }}>
           <table style={{ borderCollapse: "collapse", marginTop: "1rem" }}>
             <thead>
-              <tr style={{ textAlign: "left", borderBottom: "2px solid #ddd" }}>
+              <tr style={{ textAlign: "left", borderBottom: "2px solid var(--couleur-bordure)" }}>
                 <th style={{ padding: "0.4rem 1rem 0.4rem 0" }}>WPS</th>
                 <th style={{ padding: "0.4rem 1rem" }}>Théorique</th>
                 <th style={{ padding: "0.4rem 1rem" }}>Prévu (médiane)</th>
@@ -84,14 +84,14 @@ export default async function ProductivitePage() {
             </thead>
             <tbody>
               {statistiques.map((s) => (
-                <tr key={s.wpsId} style={{ borderBottom: "1px solid #eee" }}>
+                <tr key={s.wpsId} style={{ borderBottom: "1px solid var(--couleur-bordure)" }}>
                   <td style={{ padding: "0.4rem 1rem 0.4rem 0", whiteSpace: "nowrap" }}>
                     {s.reference} ({s.version})
                   </td>
                   <td style={{ padding: "0.4rem 1rem" }}>{formatMin(s.tempsTheoriqueMin)}</td>
                   <td style={{ padding: "0.4rem 1rem" }}>{formatMin(s.medianePrevueMin)}</td>
                   <td style={{ padding: "0.4rem 1rem", fontWeight: "bold" }}>{formatMin(s.medianeReelleMin)}</td>
-                  <td style={{ padding: "0.4rem 1rem", color: "#52514e" }}>
+                  <td style={{ padding: "0.4rem 1rem", color: "var(--couleur-texte-attenue)" }}>
                     {s.p25ReelMin !== null && s.p75ReelMin !== null
                       ? `${Math.round(s.p25ReelMin)}–${Math.round(s.p75ReelMin)} min`
                       : "—"}

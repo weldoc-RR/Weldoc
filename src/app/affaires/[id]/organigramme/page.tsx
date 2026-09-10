@@ -86,9 +86,8 @@ export default async function OrganigrammePage({ params }: { params: { id: strin
   ];
 
   return (
-    <main style={{ fontFamily: "sans-serif", padding: "2rem" }}>
+    <main style={{ padding: "2rem" }}>
       <p>
-        <Link href="/">← Affaires</Link> ·{" "}
         <Link href={`/affaires/${organigramme.affaire.id}/dossier`}>Rapport de fin de fabrication →</Link> ·{" "}
         <Link href={`/affaires/${organigramme.affaire.id}/planning`}>Voir/modifier le planning →</Link>
       </p>

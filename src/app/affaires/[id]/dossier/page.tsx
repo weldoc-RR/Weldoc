@@ -39,10 +39,10 @@ export default async function DossierPage({ params }: { params: { id: string } }
   const diffusionsExternes = dossier.rfi.diffusions.filter((d) => d.portee === "EXTERNE");
 
   return (
-    <main style={{ fontFamily: "sans-serif", padding: "2rem", maxWidth: 900 }}>
+    <main style={{ padding: "2rem", maxWidth: 900 }}>
       <style>{`@media print { .no-print { display: none; } }`}</style>
       <p className="no-print">
-        <Link href="/">← Affaires</Link> · <Link href={`/avancement/${dossier.affaire.id}`}>Avancement détaillé →</Link> ·{" "}
+        <Link href={`/avancement/${dossier.affaire.id}`}>Avancement détaillé →</Link> ·{" "}
         <Link href={`/affaires/${dossier.affaire.id}/photos`}>Book photo ({dossier.photosCount}) →</Link> ·{" "}
         <Link href={`/affaires/${dossier.affaire.id}/reglementaire`}>
           Dossier réglementaire ({dossier.pointsReglementairesCount}) →
@@ -80,7 +80,7 @@ export default async function DossierPage({ params }: { params: { id: string } }
           <thead>
             <tr>
               {["Ind.", "Date", "Nature des évolutions", "Rédacteur(s)", "Vérificateur(s)", "Approbateur(s)"].map((h) => (
-                <th key={h} style={{ textAlign: "left", borderBottom: "1px solid #ccc", padding: "0.2rem 0.4rem" }}>
+                <th key={h} style={{ textAlign: "left", borderBottom: "1px solid var(--couleur-bordure)", padding: "0.2rem 0.4rem" }}>
                   {h}
                 </th>
               ))}
@@ -174,10 +174,10 @@ export default async function DossierPage({ params }: { params: { id: string } }
               {groupe.personnes.map((p, i) => (
                 <li key={i}>
                   {p.prenom} {p.nom}
-                  {p.present && <span style={{ color: "#0ca30c" }}> (présent)</span>}
+                  {p.present && <span style={{ color: "var(--couleur-conforme)" }}> (présent)</span>}
                   {p.codes && ` — codes : ${p.codes}`}
                   {p.habilitationsExpirees > 0 && (
-                    <span style={{ color: "crimson" }}> — {p.habilitationsExpirees} habilitation(s) expirée(s)</span>
+                    <span style={{ color: "var(--couleur-non-conforme)" }}> — {p.habilitationsExpirees} habilitation(s) expirée(s)</span>
                   )}
                 </li>
               ))}
@@ -233,7 +233,7 @@ export default async function DossierPage({ params }: { params: { id: string } }
             <li key={f.id}>
               <strong>{f.reference}</strong>
               {f.jointNumero && ` (${f.jointNumero})`} — {f.description} — impact {f.impact.toLowerCase()} —{" "}
-              <span style={{ color: f.statut === "CLOTUREE" ? "inherit" : "crimson" }}>{f.statut.toLowerCase()}</span>
+              <span style={{ color: f.statut === "CLOTUREE" ? "inherit" : "var(--couleur-non-conforme)" }}>{f.statut.toLowerCase()}</span>
               {f.traitement && ` — traitement : ${LIBELLE_TRAITEMENT[f.traitement]}`}
             </li>
           ))}
@@ -272,7 +272,7 @@ export default async function DossierPage({ params }: { params: { id: string } }
           <thead>
             <tr>
               {["Catégorie", "Nombre", "Localisation", "Observations"].map((h) => (
-                <th key={h} style={{ textAlign: "left", borderBottom: "1px solid #ccc", padding: "0.2rem 0.4rem" }}>
+                <th key={h} style={{ textAlign: "left", borderBottom: "1px solid var(--couleur-bordure)", padding: "0.2rem 0.4rem" }}>
                   {h}
                 </th>
               ))}
@@ -317,7 +317,7 @@ export default async function DossierPage({ params }: { params: { id: string } }
         <strong>8.3. Mesures correctives pour l&apos;intervention suivante :</strong> {bilan?.mesuresCorrectivesSuivantes || "—"}
       </p>
 
-      <p style={{ fontSize: "0.8rem", color: "#898781" }}>
+      <p style={{ fontSize: "0.8rem", color: "var(--couleur-texte-discret)" }}>
         Les annexes (organigrammes détaillés, dossier de réalisation de travaux, documents divers) ne sont pas
         encore toutes gérées dans Weldoc — voir le book photo, le dossier réglementaire, les PV externes et
         l&apos;état des lieux ci-dessus en attendant.
@@ -340,10 +340,10 @@ export default async function DossierPage({ params }: { params: { id: string } }
             <li key={p.id}>
               {p.prenom} {p.nom} — {p.roles.join(", ")}
               {p.qualificationsExpirees > 0 && (
-                <span style={{ color: "darkorange" }}> — {p.qualificationsExpirees} qualification(s) expirée(s)</span>
+                <span style={{ color: "var(--couleur-a-verifier)" }}> — {p.qualificationsExpirees} qualification(s) expirée(s)</span>
               )}
               {p.qualificationsSuspendues > 0 && (
-                <span style={{ color: "crimson" }}> — {p.qualificationsSuspendues} qualification(s) suspendue(s)</span>
+                <span style={{ color: "var(--couleur-non-conforme)" }}> — {p.qualificationsSuspendues} qualification(s) suspendue(s)</span>
               )}
             </li>
           ))}
@@ -385,7 +385,7 @@ export default async function DossierPage({ params }: { params: { id: string } }
           <thead>
             <tr>
               {["Joint", "Type", "Soudeur", "WPS", "Contrôles"].map((h) => (
-                <th key={h} style={{ textAlign: "left", borderBottom: "1px solid #ccc", padding: "0.3rem 0.5rem" }}>
+                <th key={h} style={{ textAlign: "left", borderBottom: "1px solid var(--couleur-bordure)", padding: "0.3rem 0.5rem" }}>
                   {h}
                 </th>
               ))}
@@ -416,17 +416,17 @@ export default async function DossierPage({ params }: { params: { id: string } }
 
       <h3>Éléments manquants signalés</h3>
       {dossier.elementsManquants.length === 0 ? (
-        <p style={{ color: "#0ca30c" }}>Rien à signaler.</p>
+        <p style={{ color: "var(--couleur-conforme)" }}>Rien à signaler.</p>
       ) : (
         <ul>
           {dossier.elementsManquants.map((e, i) => (
-            <li key={i} style={{ color: e.gravite === "BLOQUANT" ? "crimson" : "darkorange" }}>
+            <li key={i} style={{ color: e.gravite === "BLOQUANT" ? "var(--couleur-non-conforme)" : "var(--couleur-a-verifier)" }}>
               {e.texte}
             </li>
           ))}
         </ul>
       )}
-      <p style={{ fontSize: "0.8rem", color: "#898781" }}>
+      <p style={{ fontSize: "0.8rem", color: "var(--couleur-texte-discret)" }}>
         Signalement à titre indicatif : Weldoc ne se substitue pas à un organisme réglementaire ou une certification
         externe, et ne décide jamais seul de la conformité réglementaire.
       </p>
@@ -438,21 +438,21 @@ export default async function DossierPage({ params }: { params: { id: string } }
           {dossier.validation.dateSignature.toLocaleDateString("fr-FR")}.
         </p>
       ) : dossier.pointsReglementairesBloquants.length > 0 ? (
-        <p style={{ fontSize: "0.85rem", color: "#d03b3b" }}>
+        <p style={{ fontSize: "0.85rem", color: "var(--couleur-non-conforme)" }}>
           Validation impossible : {dossier.pointsReglementairesBloquants.length} point(s) réglementaire(s)
           bloquant(s) restent à lever (
           <Link href={`/affaires/${dossier.affaire.id}/reglementaire`}>voir le dossier réglementaire</Link>).
         </p>
       ) : aNiveauMinimum(utilisateur.niveau, "NIVEAU_3") ? (
         <div className="no-print">
-          <p style={{ fontSize: "0.85rem", color: "#52514e" }}>
+          <p style={{ fontSize: "0.85rem", color: "var(--couleur-texte-attenue)" }}>
             Réservé au niveau 3. Signer ci-dessous enregistre la validation (personne, date, signature) — Weldoc ne
             valide jamais seul.
           </p>
           <ValiderRapport affaireId={dossier.affaire.id} />
         </div>
       ) : (
-        <p style={{ fontSize: "0.85rem", color: "#898781" }}>Pas encore validé (réservé au niveau 3).</p>
+        <p style={{ fontSize: "0.85rem", color: "var(--couleur-texte-discret)" }}>Pas encore validé (réservé au niveau 3).</p>
       )}
     </main>
   );

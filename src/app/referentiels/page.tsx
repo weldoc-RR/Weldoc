@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getUtilisateurConnecteServeur } from "@/lib/auth";
 import { AjouterReferentiel } from "./ajouter-referentiel";
@@ -22,12 +21,9 @@ export default async function ReferentielsPage() {
   const referentiels = await prisma.referentiel.findMany({ orderBy: { code: "asc" } });
 
   return (
-    <main style={{ fontFamily: "sans-serif", padding: "2rem" }}>
-      <p>
-        <Link href="/">← Affaires</Link>
-      </p>
-      <h1>Weldoc — Référentiels</h1>
-      <p style={{ fontSize: "0.85rem", color: "#52514e", maxWidth: 640 }}>
+    <main style={{ padding: "2rem" }}>
+      <h1>Référentiels</h1>
+      <p style={{ fontSize: "0.85rem", color: "var(--couleur-texte-attenue)", maxWidth: 640 }}>
         Codes de norme utilisés par l&apos;entreprise (ex. EN 13480, ASME B31.3, EN ISO 9606-1) — à lier ensuite à
         une affaire (dossier réglementaire), une qualification ou un produit de la bibliothèque dimensionnelle.
       </p>
@@ -41,7 +37,7 @@ export default async function ReferentielsPage() {
           <thead>
             <tr>
               {["Code", "Domaine", "Édition/version"].map((h) => (
-                <th key={h} style={{ textAlign: "left", borderBottom: "1px solid #ccc", padding: "0.3rem 0.6rem" }}>
+                <th key={h} style={{ textAlign: "left", borderBottom: "1px solid var(--couleur-bordure)", padding: "0.3rem 0.6rem" }}>
                   {h}
                 </th>
               ))}

@@ -49,11 +49,8 @@ export default async function PiecesPage() {
   ]);
 
   return (
-    <main style={{ fontFamily: "sans-serif", padding: "2rem" }}>
-      <p>
-        <Link href="/">← Affaires</Link>
-      </p>
-      <h1>Weldoc — Pièces (atelier)</h1>
+    <main style={{ padding: "2rem" }}>
+      <h1>Pièces (atelier)</h1>
       <p>
         Prise en charge de pièces au fil de l&apos;eau, avec suivi de traçabilité tout au long de la fabrication.
       </p>
@@ -67,7 +64,7 @@ export default async function PiecesPage() {
       ) : (
         <ul style={{ listStyle: "none", padding: 0 }}>
           {pieces.map((p) => (
-            <li key={p.id} style={{ marginBottom: "1rem", borderBottom: "1px solid #ddd", paddingBottom: "0.75rem" }}>
+            <li key={p.id} style={{ marginBottom: "1rem", borderBottom: "1px solid var(--couleur-bordure)", paddingBottom: "0.75rem" }}>
               <strong>{p.reference}</strong>
               {p.designation && ` — ${p.designation}`} — {p.affaire.numero} ({p.affaire.client}) —{" "}
               {LIBELLE_STATUT[p.statut]}

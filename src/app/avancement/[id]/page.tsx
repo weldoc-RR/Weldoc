@@ -89,7 +89,7 @@ export default async function AvancementAffairePage({ params }: { params: { id: 
   }));
 
   return (
-    <main style={{ fontFamily: "sans-serif", padding: "2rem" }}>
+    <main style={{ padding: "2rem" }}>
       <p>
         <Link href="/avancement">← Avancement</Link>
       </p>
@@ -99,20 +99,20 @@ export default async function AvancementAffairePage({ params }: { params: { id: 
 
       <div style={{ display: "flex", alignItems: "baseline", gap: "1rem", margin: "1rem 0" }}>
         <span style={{ fontSize: "2.5rem", fontWeight: "bold" }}>{avancement.pourcentageGlobal}%</span>
-        <span style={{ color: "#52514e" }}>des phases applicables du dossier de fabrication sont terminées</span>
+        <span style={{ color: "var(--couleur-texte-attenue)" }}>des phases applicables du dossier de fabrication sont terminées</span>
       </div>
 
-      <div style={{ display: "flex", gap: "2rem", marginBottom: "0.5rem", color: "#52514e", flexWrap: "wrap" }}>
+      <div style={{ display: "flex", gap: "2rem", marginBottom: "0.5rem", color: "var(--couleur-texte-attenue)", flexWrap: "wrap" }}>
         <div>
-          <strong style={{ color: "#0b0b0b" }}>{avancement.joints.total}</strong> joint(s)
+          <strong style={{ color: "var(--couleur-texte)" }}>{avancement.joints.total}</strong> joint(s)
           {avancement.joints.reparations > 0 && <> ({avancement.joints.reparations} réparation(s))</>}
         </div>
         <div>
-          <strong style={{ color: "#0b0b0b" }}>{avancement.joints.controlesDimensionnelsConformes}</strong> joint(s)
+          <strong style={{ color: "var(--couleur-texte)" }}>{avancement.joints.controlesDimensionnelsConformes}</strong> joint(s)
           avec contrôle dimensionnel conforme
         </div>
         <div>
-          <strong style={{ color: avancement.fnc.ouvertes > 0 ? "#d03b3b" : "#0b0b0b" }}>
+          <strong style={{ color: avancement.fnc.ouvertes > 0 ? "var(--couleur-non-conforme)" : "var(--couleur-texte)" }}>
             {avancement.fnc.ouvertes}
           </strong>{" "}
           FNC ouverte(s) sur {avancement.fnc.total}
@@ -122,23 +122,23 @@ export default async function AvancementAffairePage({ params }: { params: { id: 
       <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "1.5rem" }}>
         {avancement.joints.prevus !== null ? (
           <>
-            <div style={{ width: 240, height: 10, background: "#e1e0d9", borderRadius: 5, overflow: "hidden" }}>
+            <div style={{ width: 240, height: 10, background: "var(--couleur-fond-discret)", borderRadius: 5, overflow: "hidden" }}>
               <div
                 style={{
                   width: `${Math.min(100, avancement.joints.pourcentageJoints ?? 0)}%`,
                   height: "100%",
-                  background: "#0086c9",
+                  background: "var(--couleur-primaire)",
                 }}
               />
             </div>
-            <span style={{ color: "#52514e" }}>
-              <strong style={{ color: "#0b0b0b" }}>{avancement.joints.soudes}</strong> joint(s) soudé(s) sur{" "}
-              <strong style={{ color: "#0b0b0b" }}>{avancement.joints.prevus}</strong> prévu(s) (
+            <span style={{ color: "var(--couleur-texte-attenue)" }}>
+              <strong style={{ color: "var(--couleur-texte)" }}>{avancement.joints.soudes}</strong> joint(s) soudé(s) sur{" "}
+              <strong style={{ color: "var(--couleur-texte)" }}>{avancement.joints.prevus}</strong> prévu(s) (
               {avancement.joints.pourcentageJoints}%)
             </span>
           </>
         ) : (
-          <span style={{ color: "#898781" }}>Nombre de joints prévus non saisi</span>
+          <span style={{ color: "var(--couleur-texte-discret)" }}>Nombre de joints prévus non saisi</span>
         )}
         <DefinirJointsPrevus affaireId={affaire.id} valeurActuelle={affaire.nombreJointsPrevus} />
       </div>
@@ -156,7 +156,7 @@ export default async function AvancementAffairePage({ params }: { params: { id: 
                 <td style={{ padding: "0.4rem 1rem" }}>
                   <BarreSequence avancement={s} />
                 </td>
-                <td style={{ padding: "0.4rem 0", whiteSpace: "nowrap", color: "#52514e" }}>
+                <td style={{ padding: "0.4rem 0", whiteSpace: "nowrap", color: "var(--couleur-texte-attenue)" }}>
                   {s.pourcentage}% ({s.terminees}/{s.totalPhases - s.nonApplicables})
                   {s.enCours > 0 && <>, {s.enCours} en cours</>}
                   {s.nonApplicables > 0 && <>, {s.nonApplicables} non applicable(s)</>}
@@ -175,7 +175,7 @@ export default async function AvancementAffairePage({ params }: { params: { id: 
       />
 
       <h2 style={{ marginTop: "2rem" }}>Phases</h2>
-      <p style={{ fontSize: "0.85rem", color: "#52514e" }}>
+      <p style={{ fontSize: "0.85rem", color: "var(--couleur-texte-attenue)" }}>
         Fait avancer chaque phase et lui relie, si besoin, la procédure interne applicable (voir{" "}
         <Link href="/procedures">la bibliothèque de procédures</Link>). Pour clore une phase réalisée, la cocher
         puis signer (QR/PIN) plutôt que de changer son statut manuellement.

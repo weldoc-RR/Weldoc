@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getUtilisateurConnecteServeur } from "@/lib/auth";
 import { calculerStatutConsommable, type StatutAffichageConsommable } from "@/lib/statutConsommable";
@@ -13,9 +12,9 @@ const LIBELLE_STATUT: Record<StatutAffichageConsommable, string> = {
   PERIME: "Périmé",
 };
 const COULEUR_STATUT: Record<StatutAffichageConsommable, string> = {
-  VALIDE: "#0ca30c",
-  BIENTOT_ECHEANCE: "#fab219",
-  PERIME: "#d03b3b",
+  VALIDE: "var(--couleur-conforme)",
+  BIENTOT_ECHEANCE: "var(--couleur-a-verifier)",
+  PERIME: "var(--couleur-non-conforme)",
 };
 
 function BadgeStatut({ statut }: { statut: StatutAffichageConsommable }) {
@@ -23,7 +22,7 @@ function BadgeStatut({ statut }: { statut: StatutAffichageConsommable }) {
     <span
       style={{
         fontSize: "0.8rem",
-        color: statut === "BIENTOT_ECHEANCE" ? "#10161d" : "#fff",
+        color: statut === "BIENTOT_ECHEANCE" ? "var(--couleur-texte)" : "#fff",
         background: COULEUR_STATUT[statut],
         borderRadius: 5,
         padding: "0.2rem 0.5rem",
@@ -49,11 +48,8 @@ export default async function ConsommablesPage() {
   const consommables = await prisma.consommableCND.findMany({ orderBy: [{ type: "asc" }, { fabricant: "asc" }] });
 
   return (
-    <main style={{ fontFamily: "sans-serif", padding: "2rem" }}>
-      <p>
-        <Link href="/">← Affaires</Link>
-      </p>
-      <h1>Weldoc — Consommables CND</h1>
+    <main style={{ padding: "2rem" }}>
+      <h1>Consommables CND</h1>
       <ConsommableForm />
       {consommables.length === 0 ? (
         <p>Aucun consommable enregistré pour l&apos;instant.</p>
@@ -62,7 +58,7 @@ export default async function ConsommablesPage() {
           <thead>
             <tr>
               {["Type", "Fabricant", "Référence", "Lot", "Péremption", "Statut", "Certificat"].map((h) => (
-                <th key={h} style={{ textAlign: "left", borderBottom: "1px solid #ccc", padding: "0.3rem 0.6rem" }}>
+                <th key={h} style={{ textAlign: "left", borderBottom: "1px solid var(--couleur-bordure)", padding: "0.3rem 0.6rem" }}>
                   {h}
                 </th>
               ))}

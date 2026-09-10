@@ -1431,17 +1431,25 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   - Appliqué aux écrans les plus utilisés (accueil, `/joints`,
     `/personnel`, puis `/planning`, `/alertes`, `/procedures`, le dossier
     réglementaire, le book photo et les PV externes d'une affaire,
-    `/avancement`, `/rex`, `/systeme-qualite` et `/audit`) : titres,
-    intitulés d'en-tête et cartes retintés avec la nouvelle palette. Sur
-    les pages propres à une affaire (dossier réglementaire, book photo,
+    `/avancement`, `/rex`, `/systeme-qualite` et `/audit`, puis enfin les
+    dernières pages secondaires : le rapport de fin de fabrication,
+    l'état des lieux, les notes REX, l'organigramme et le planning d'une
+    affaire, le détail par affaire de `/avancement`, `/charte`,
+    `/consommables`, `/documents`, `/pieces`, `/productivite` et
+    `/referentiels`) : titres, intitulés d'en-tête et cartes retintés
+    avec la nouvelle palette — y compris, sur cette dernière série de
+    pages, les couleurs internes au contenu détaillé (badges de statut,
+    textes atténués, bordures de tableau), désormais reprises depuis les
+    variables CSS communes plutôt qu'en couleurs figées en dur. Sur les
+    pages propres à une affaire (dossier réglementaire, book photo,
     PV externes...), le "← Affaires" de tête a été retiré (l'en-tête
     commun couvre déjà ce retour) mais les liens vers les autres écrans
     de la même affaire (rapport de fin de fabrication...) restent, eux,
     indispensables et ont été conservés — même principe pour "→ Audit
-    trail" sur `/systeme-qualite`. Le contenu détaillé de chaque page
-    (formulaires, tableaux) garde encore ses couleurs d'origine — à
-    reprendre progressivement, page par page, comme pour le socle
-    tactile ci-dessous plutôt que dans une seule passe.
+    trail" sur `/systeme-qualite`. Le contenu détaillé des pages plus
+    anciennes de cette liste (formulaires, tableaux) garde encore ses
+    couleurs d'origine — à reprendre progressivement, comme pour le
+    socle tactile ci-dessous plutôt que dans une seule passe.
 - Une vraie interface tablette soignée sur l'ensemble de l'application —
   un premier socle vient d'être posé (`src/app/globals.css`, importé
   depuis `src/app/layout.tsx`) : boutons et champs de saisie sans style

@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
 import { IndicationSchema, ConditionsExamenSchema, calculerResultat, extraireConditionsExamen } from "@/lib/controles";
 import { avancerFNCApresControleConforme } from "@/lib/remiseEnConformite";
+import { verifierAptitudeCND } from "@/lib/aptitudePersonnel";
 
 const CreateControleVisuelSchema = z
   .object({
@@ -47,6 +48,11 @@ export async function POST(req: NextRequest) {
   const joint = await prisma.joint.findUnique({ where: { id: jointId } });
   if (!joint) {
     return NextResponse.json({ error: "Joint introuvable." }, { status: 404 });
+  }
+
+  const blocage = await verifierAptitudeCND(auth.utilisateur.personnelId);
+  if (blocage.bloque) {
+    return NextResponse.json({ error: blocage.motif }, { status: 403 });
   }
 
   const resultat = calculerResultat(indications);

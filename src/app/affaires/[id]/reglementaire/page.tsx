@@ -8,7 +8,8 @@ import { ReferentielsAffaire } from "./referentiels-affaire";
 import { ControlesRequis } from "./controles-requis";
 import { DocumentsRequis } from "./documents-requis";
 import { JointsPV } from "./joints-pv";
-import { lignesJointsPV } from "@/lib/contenuDossierReglementaire";
+import { AnnexeIntervenants } from "./annexe-intervenants";
+import { lignesJointsPV, annexeIntervenants } from "@/lib/contenuDossierReglementaire";
 
 export const dynamic = "force-dynamic";
 
@@ -17,14 +18,14 @@ export const dynamic = "force-dynamic";
 // de fabrication (compilation globale, /affaires/[id]/dossier). Alimenté
 // uniquement par ce que le cahier des charges prévoit pour ce document
 // (les PV déjà enregistrés, pas les rôles de l'affaire, qui relèvent de
-// l'organigramme) : le tableau des joints avec leurs FTS et PV (voir
-// src/lib/contenuDossierReglementaire.ts), les référentiels applicables,
-// et le suivi des exigences réglementaires individuelles, avec historique
-// de statut tracé (src/lib/dossierReglementaire.ts). Pas de rapport
-// qualifications/COFREND ici : cette vérification est faite en amont, au
-// moment où la personne réalise le contrôle (voir /alertes,
-// "qualifications"/"habilitations"), pas reprise une deuxième fois ici.
-// Un point BLOQUANT empêche l'avancement de la phase concernée et la
+// l'organigramme) : le tableau des joints avec leurs FTS et PV, une annexe
+// "Qualifications et aptitudes des intervenants" (voir
+// src/lib/contenuDossierReglementaire.ts — archive l'état au moment de la
+// compilation, la vérification elle-même ayant déjà bloqué l'action en
+// amont si besoin, voir src/lib/aptitudePersonnel.ts), les référentiels
+// applicables, et le suivi des exigences réglementaires individuelles,
+// avec historique de statut tracé (src/lib/dossierReglementaire.ts). Un
+// point BLOQUANT empêche l'avancement de la phase concernée et la
 // validation finale du rapport de fin de fabrication.
 export default async function DossierReglementairePage({ params }: { params: { id: string } }) {
   const utilisateur = await getUtilisateurConnecteServeur();
@@ -32,7 +33,7 @@ export default async function DossierReglementairePage({ params }: { params: { i
     redirect("/login");
   }
 
-  const [affaire, points, joints, phases, tousReferentiels, liensReferentiels, lignesPV] = await Promise.all([
+  const [affaire, points, joints, phases, tousReferentiels, liensReferentiels, lignesPV, intervenants] = await Promise.all([
     prisma.affaire.findUnique({ where: { id: params.id } }),
     prisma.pointReglementaire.findMany({
       where: { affaireId: params.id },
@@ -51,6 +52,7 @@ export default async function DossierReglementairePage({ params }: { params: { i
     prisma.referentiel.findMany({ orderBy: { code: "asc" } }),
     prisma.affaireReferentiel.findMany({ where: { affaireId: params.id }, include: { referentiel: true } }),
     lignesJointsPV(params.id),
+    annexeIntervenants(params.id),
   ]);
   if (!affaire) {
     notFound();
@@ -106,6 +108,14 @@ export default async function DossierReglementairePage({ params }: { params: { i
           ))}
         </ul>
       )}
+
+      <h2 style={{ fontSize: "1.1rem", marginTop: "2rem" }}>Annexe — Qualifications et aptitudes des intervenants</h2>
+      <p style={{ fontSize: "0.85rem", color: "#898781", margin: "0 0 0.5rem 0" }}>
+        État des qualifications (soudage/CND) et de l&apos;acuité visuelle des personnes ayant soudé ou réalisé un
+        contrôle CND sur cette affaire, archivé pour le dossier transmis. La vérification (et le blocage si elle
+        n&apos;était plus valide) a déjà eu lieu au moment de chaque action.
+      </p>
+      <AnnexeIntervenants intervenants={intervenants} />
     </main>
   );
 }

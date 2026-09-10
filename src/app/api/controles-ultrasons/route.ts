@@ -5,6 +5,7 @@ import { requireAuth } from "@/lib/auth";
 import { IndicationSchema, ConditionsExamenSchema, calculerResultat, extraireConditionsExamen } from "@/lib/controles";
 import { avancerFNCApresControleConforme } from "@/lib/remiseEnConformite";
 import { verifierOutilPourControle } from "@/lib/statutOutil";
+import { verifierAptitudeCND } from "@/lib/aptitudePersonnel";
 
 const CreateControleSchema = z
   .object({
@@ -59,6 +60,11 @@ export async function POST(req: NextRequest) {
   const verifOutil = await verifierOutilPourControle(outilId);
   if (!verifOutil.ok) {
     return NextResponse.json({ error: verifOutil.erreur }, { status: 422 });
+  }
+
+  const blocage = await verifierAptitudeCND(auth.utilisateur.personnelId);
+  if (blocage.bloque) {
+    return NextResponse.json({ error: blocage.motif }, { status: 403 });
   }
 
   const resultat = calculerResultat(indications);

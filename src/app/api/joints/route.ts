@@ -5,6 +5,7 @@ import { requireAuth } from "@/lib/auth";
 import { detecterPreuvesReconduction } from "@/lib/qualifications";
 import { calculerStatut } from "@/lib/statutValidite";
 import { verifierQS, type ResultatVerificationQS } from "@/lib/verificationQS";
+import { verifierQualificationBloquante } from "@/lib/aptitudePersonnel";
 
 const CreateJointSchema = z.object({
   affaireId: z.string().min(1),
@@ -83,6 +84,17 @@ export async function POST(req: NextRequest) {
     const piece = await prisma.piece.findUnique({ where: { id: parsed.data.pieceId } });
     if (!piece || piece.affaireId !== parsed.data.affaireId) {
       return NextResponse.json({ error: "Pièce introuvable pour cette affaire." }, { status: 422 });
+    }
+  }
+
+  // Qualification soudage bloquante (voir src/lib/aptitudePersonnel.ts) :
+  // contrairement au rapprochement QS/WPS ci-dessous (indicatif), une
+  // personne dont plus aucune qualification soudage n'est valide ne peut
+  // pas être désignée soudeur d'un nouveau joint.
+  if (parsed.data.soudeurId) {
+    const blocage = await verifierQualificationBloquante(parsed.data.soudeurId, "SOUDAGE");
+    if (blocage.bloque) {
+      return NextResponse.json({ error: blocage.motif }, { status: 403 });
     }
   }
 

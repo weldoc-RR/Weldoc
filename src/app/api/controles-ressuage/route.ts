@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
 import { IndicationSchema, ConditionsExamenSchema, calculerResultat, extraireConditionsExamen } from "@/lib/controles";
 import { avancerFNCApresControleConforme } from "@/lib/remiseEnConformite";
+import { verifierAptitudeCND } from "@/lib/aptitudePersonnel";
 
 const CreateControleRessuageSchema = z
   .object({
@@ -60,6 +61,11 @@ export async function POST(req: NextRequest) {
       { error: "Le contrôle visuel préalable est introuvable ou ne concerne pas ce joint." },
       { status: 422 }
     );
+  }
+
+  const blocage = await verifierAptitudeCND(auth.utilisateur.personnelId);
+  if (blocage.bloque) {
+    return NextResponse.json({ error: blocage.motif }, { status: 403 });
   }
 
   const resultat = calculerResultat(indications);

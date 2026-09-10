@@ -582,11 +582,19 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
     `src/lib/controles.ts`), plus un badge pour le résultat du contrôle
     dimensionnel (DIM, qui n'a pas de numéro de PV). Rien n'est ressaisi :
     c'est un nouvel affichage des contrôles déjà enregistrés sur `/joints`.
-    **Volontairement, cette page ne porte pas les rôles de l'affaire (voir
-    l'organigramme plus haut) ni un rapport qualifications/COFREND des
-    intervenants** : cette vérification est déjà faite en amont, au moment
-    où la personne réalise le contrôle (voir `/alertes`, "qualifications"/
-    "habilitations") — la reprendre une deuxième fois ici ferait doublon.
+    **Volontairement, cette page ne porte pas les rôles de l'affaire** (voir
+    l'organigramme plus haut) — ce n'est pas son rôle.
+  - **Annexe — Qualifications et aptitudes des intervenants**, en bas de
+    la page (voir `src/lib/contenuDossierReglementaire.ts`,
+    `annexeIntervenants`) : pour chaque personne ayant soudé ou réalisé un
+    contrôle CND sur l'affaire, l'état de ses qualifications
+    (soudage/CND) et, pour un contrôleur CND, de son acuité visuelle.
+    **Ce n'est qu'une archive de l'état constaté** — la vérification
+    elle-même (et le blocage si elle n'était plus valide) a déjà eu lieu
+    au moment de chaque action, voir `src/lib/aptitudePersonnel.ts`
+    ci-dessous : ça ne fait donc pas doublon avec cette vérification,
+    seulement avec un signalement, et le dossier transmis à l'organisme a
+    besoin de cette annexe pour être complet.
 - Modèle `Photo` — "book photo" du cahier des charges : photos horodatées
   rattachées à une affaire et, optionnellement, à une phase/un joint/une
   FNC précis. `url` reste du texte libre pour l'instant (comme
@@ -639,6 +647,33 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   reconduction proposée et non encore validée apparaît en alerte
   (`/alertes`, récapitulatif hebdomadaire) tant qu'elle attend une
   décision.
+- `src/lib/aptitudePersonnel.ts` — **qualification/acuité visuelle
+  bloquante**, cette fois-ci (voir le cahier des charges : "détecter" une
+  qualification expirée doit "bloquer l'intervenant", pas seulement le
+  signaler). Jusqu'ici, dans toute l'application, une qualification
+  expirée n'était jamais qu'un signalement (`/alertes`) ; ce fichier ajoute
+  la seule vérification qui empêche réellement une action :
+  - `POST /api/joints` refuse (403) de désigner un soudeur dont plus
+    aucune qualification soudage n'est valide (toutes expirées ou
+    suspendues).
+  - `POST /api/controles-visuels`, `-ressuage`, `-magnetoscopie`,
+    `-radiographie`, `-ultrasons` refusent (403) qu'une personne sans
+    qualification CND valide, ou sans acuité visuelle valide (non apte ou
+    test expiré), enregistre un contrôle.
+  - **Comportement volontairement additif**, comme les autres
+    vérifications du même genre (`MatierePrevue`, `ControlesRequis`) :
+    une personne qui n'a **aucune** qualification/acuité visuelle
+    enregistrée n'est jamais bloquée (rien à vérifier) — seule une
+    personne qui en a déjà eu, mais dont plus aucune n'est valide
+    aujourd'hui, l'est. Le signalement "bientôt à échéance" reste sur
+    `/alertes`, en amont, pour laisser le temps de requalifier quelqu'un
+    avant que ça ne devienne bloquant.
+  - Cette vérification ne sait pas si la qualification couvre précisément
+    la méthode/le procédé demandé (contrairement à `verifierQS.ts` pour le
+    rapprochement WPS/qualification soudage) : elle vérifie seulement
+    qu'il en existe au moins une valide du bon type (soudage ou CND), ce
+    qui reste la seule chose que Weldoc puisse constater sans interpréter
+    un référentiel qu'il ne reproduit pas.
 - Modèle `Qualification` — le type de qualification soudage (ex. "BW-A1",
   "FW-I2"...) et son domaine (groupe de matériaux, position, plages
   d'épaisseur/diamètre) sont maintenant des champs structurés

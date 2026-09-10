@@ -5,7 +5,7 @@ import { requireAuth } from "@/lib/auth";
 import { detecterPreuvesReconduction } from "@/lib/qualifications";
 import { calculerStatut } from "@/lib/statutValidite";
 import { verifierQS, type ResultatVerificationQS } from "@/lib/verificationQS";
-import { verifierQualificationBloquante } from "@/lib/aptitudePersonnel";
+import { verifierQualificationBloquante, verifierAffectationBloquante } from "@/lib/aptitudePersonnel";
 
 const CreateJointSchema = z.object({
   affaireId: z.string().min(1),
@@ -87,14 +87,20 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // Qualification soudage bloquante (voir src/lib/aptitudePersonnel.ts) :
-  // contrairement au rapprochement QS/WPS ci-dessous (indicatif), une
-  // personne dont plus aucune qualification soudage n'est valide ne peut
-  // pas être désignée soudeur d'un nouveau joint.
+  // Qualification soudage et contexte de l'affaire, bloquants (voir
+  // src/lib/aptitudePersonnel.ts) : contrairement au rapprochement QS/WPS
+  // ci-dessous (indicatif), une personne dont plus aucune qualification
+  // soudage n'est valide, ou qui n'est pas affectée à cette affaire (si
+  // l'affaire a des affectations), ne peut pas être désignée soudeur d'un
+  // nouveau joint.
   if (parsed.data.soudeurId) {
-    const blocage = await verifierQualificationBloquante(parsed.data.soudeurId, "SOUDAGE");
-    if (blocage.bloque) {
-      return NextResponse.json({ error: blocage.motif }, { status: 403 });
+    const blocageQualif = await verifierQualificationBloquante(parsed.data.soudeurId, "SOUDAGE");
+    if (blocageQualif.bloque) {
+      return NextResponse.json({ error: blocageQualif.motif }, { status: 403 });
+    }
+    const blocageAffectation = await verifierAffectationBloquante(parsed.data.soudeurId, parsed.data.affaireId);
+    if (blocageAffectation.bloque) {
+      return NextResponse.json({ error: blocageAffectation.motif }, { status: 403 });
     }
   }
 

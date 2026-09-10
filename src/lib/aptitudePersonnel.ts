@@ -63,11 +63,47 @@ export async function verifierAcuiteVisuelleBloquante(personnelId: string): Prom
   };
 }
 
-// Les deux vérifications requises avant un contrôle CND (VT/PT/MT/RT/UT) :
-// qualification CND et acuité visuelle. Utilisé par les cinq routes de
-// contrôle CND pour éviter de dupliquer cet enchaînement cinq fois.
-export async function verifierAptitudeCND(personnelId: string): Promise<BlocageAptitude> {
+// Droits contextuels — "contexte de l'affaire" (voir le cahier des
+// charges, "DROITS ET MODIFICATIONS" : "droits définis par... le contexte
+// de l'affaire") : pour souder un joint ou réaliser un contrôle CND,
+// encore fallait-il jusqu'ici être authentifié, sans être réellement
+// affecté à CETTE affaire dans le planning (voir Affectation, déjà
+// utilisé pour l'organigramme et les alertes de disponibilité).
+//
+// Même principe additif que les autres blocages : si aucune affectation
+// (autre qu'annulée) n'existe pour l'affaire, rien n'est vérifiable, donc
+// rien n'est bloqué — le comportement actuel continue. Si l'affaire a des
+// affectations mais que cette personne n'en a aucune, l'action est
+// bloquée. Niveau 3 (validation critique, décisions définies par
+// l'entreprise — voir le cahier des charges) passe toujours, comme pour
+// le déblocage réglementaire.
+export async function verifierAffectationBloquante(personnelId: string, affaireId: string): Promise<BlocageAptitude> {
+  const personnel = await prisma.personnel.findUnique({ where: { id: personnelId }, select: { niveau: true } });
+  if (personnel?.niveau === "NIVEAU_3") return { bloque: false };
+
+  const affectationsAffaire = await prisma.affectation.findMany({
+    where: { affaireId, statut: { not: "ANNULEE" } },
+    select: { personnelId: true },
+  });
+  if (affectationsAffaire.length === 0) return { bloque: false };
+
+  const estAffecte = affectationsAffaire.some((a) => a.personnelId === personnelId);
+  if (estAffecte) return { bloque: false };
+
+  return {
+    bloque: true,
+    motif: "Cette personne n'est pas affectée à cette affaire (voir le planning) — action bloquée.",
+  };
+}
+
+// Les vérifications requises avant un contrôle CND (VT/PT/MT/RT/UT) :
+// qualification CND, acuité visuelle, et être affecté à l'affaire.
+// Utilisé par les cinq routes de contrôle CND pour éviter de dupliquer
+// cet enchaînement cinq fois.
+export async function verifierAptitudeCND(personnelId: string, affaireId: string): Promise<BlocageAptitude> {
   const qualif = await verifierQualificationBloquante(personnelId, "CND");
   if (qualif.bloque) return qualif;
-  return verifierAcuiteVisuelleBloquante(personnelId);
+  const acuite = await verifierAcuiteVisuelleBloquante(personnelId);
+  if (acuite.bloque) return acuite;
+  return verifierAffectationBloquante(personnelId, affaireId);
 }

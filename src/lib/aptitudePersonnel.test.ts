@@ -7,18 +7,28 @@ vi.mock("@/lib/prisma", () => ({
   prisma: {
     qualification: { findMany: vi.fn() },
     acuiteVisuelle: { findMany: vi.fn() },
+    personnel: { findUnique: vi.fn() },
+    affectation: { findMany: vi.fn() },
   },
 }));
 
 import { prisma } from "@/lib/prisma";
-import { verifierQualificationBloquante, verifierAcuiteVisuelleBloquante } from "./aptitudePersonnel";
+import {
+  verifierQualificationBloquante,
+  verifierAcuiteVisuelleBloquante,
+  verifierAffectationBloquante,
+} from "./aptitudePersonnel";
 
 const findManyQualification = prisma.qualification.findMany as unknown as ReturnType<typeof vi.fn>;
 const findManyAcuite = prisma.acuiteVisuelle.findMany as unknown as ReturnType<typeof vi.fn>;
+const findUniquePersonnel = prisma.personnel.findUnique as unknown as ReturnType<typeof vi.fn>;
+const findManyAffectation = prisma.affectation.findMany as unknown as ReturnType<typeof vi.fn>;
 
 beforeEach(() => {
   findManyQualification.mockReset();
   findManyAcuite.mockReset();
+  findUniquePersonnel.mockReset();
+  findManyAffectation.mockReset();
 });
 
 describe("verifierQualificationBloquante", () => {
@@ -85,5 +95,46 @@ describe("verifierAcuiteVisuelleBloquante", () => {
     findManyAcuite.mockResolvedValue([{ apte: true, dateExpiration: new Date("2099-01-01") }]);
     const resultat = await verifierAcuiteVisuelleBloquante("p1");
     expect(resultat.bloque).toBe(false);
+  });
+});
+
+describe("verifierAffectationBloquante", () => {
+  it("ne bloque jamais un niveau 3, même sans affectation", async () => {
+    findUniquePersonnel.mockResolvedValue({ niveau: "NIVEAU_3" });
+    findManyAffectation.mockResolvedValue([{ personnelId: "autre" }]);
+    const resultat = await verifierAffectationBloquante("p1", "aff1");
+    expect(resultat.bloque).toBe(false);
+    expect(findManyAffectation).not.toHaveBeenCalled();
+  });
+
+  it("ne bloque jamais quand l'affaire n'a aucune affectation enregistrée (additif)", async () => {
+    findUniquePersonnel.mockResolvedValue({ niveau: "NIVEAU_1" });
+    findManyAffectation.mockResolvedValue([]);
+    const resultat = await verifierAffectationBloquante("p1", "aff1");
+    expect(resultat.bloque).toBe(false);
+  });
+
+  it("bloque une personne niveau 1/2 non affectée quand l'affaire a des affectations pour d'autres personnes", async () => {
+    findUniquePersonnel.mockResolvedValue({ niveau: "NIVEAU_2" });
+    findManyAffectation.mockResolvedValue([{ personnelId: "autre1" }, { personnelId: "autre2" }]);
+    const resultat = await verifierAffectationBloquante("p1", "aff1");
+    expect(resultat.bloque).toBe(true);
+    expect(resultat.motif).toMatch(/affectée/);
+  });
+
+  it("ne bloque pas une personne qui figure bien parmi les affectations de l'affaire", async () => {
+    findUniquePersonnel.mockResolvedValue({ niveau: "NIVEAU_1" });
+    findManyAffectation.mockResolvedValue([{ personnelId: "autre1" }, { personnelId: "p1" }]);
+    const resultat = await verifierAffectationBloquante("p1", "aff1");
+    expect(resultat.bloque).toBe(false);
+  });
+
+  it("exclut les affectations annulées de la requête (statut != ANNULEE)", async () => {
+    findUniquePersonnel.mockResolvedValue({ niveau: "NIVEAU_1" });
+    findManyAffectation.mockResolvedValue([]);
+    await verifierAffectationBloquante("p1", "aff1");
+    expect(findManyAffectation).toHaveBeenCalledWith(
+      expect.objectContaining({ where: expect.objectContaining({ statut: { not: "ANNULEE" } }) })
+    );
   });
 });

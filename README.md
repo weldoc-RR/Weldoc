@@ -1156,12 +1156,35 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   alerte non bloquante sur `/joints` (badge orange) et disponible via
   `GET /api/qualifications/verification-qs`, jamais une décision
   automatique — la vérification finale reste humaine.
-- Les droits contextuels fins évoqués au cahier des charges ("selon le
-  contexte de l'affaire") : pour l'instant, les droits ne dépendent que du
-  niveau (1/2/3) de la personne, pas encore de son rôle ni de l'affaire
-  concernée. Chantier volontairement mis en pause : il touche qui a le
-  droit de faire quoi, donc mieux vaut le cadrer précisément avant de
-  coder plutôt que de deviner.
+- **Droits contextuels — "contexte de l'affaire"** (voir le cahier des
+  charges, "DROITS ET MODIFICATIONS" : "droits définis par... le contexte
+  de l'affaire") : jusqu'ici, les droits ne dépendaient que du niveau
+  (1/2/3) de la personne, jamais de l'affaire concernée. Désormais, pour
+  souder un joint ou réaliser un contrôle CND (VT/PT/MT/RT/UT), il faut
+  être affecté à cette affaire dans le planning (`Affectation`, déjà
+  utilisé pour l'organigramme) — voir `src/lib/aptitudePersonnel.ts`,
+  `verifierAffectationBloquante`.
+  - **Même principe additif que les autres blocages** (qualification
+    expirée, acuité visuelle...) : si l'affaire n'a aucune affectation
+    configurée, rien n'est vérifiable donc rien n'est bloqué — le
+    comportement actuel continue sans changement pour une entreprise qui
+    n'utilise pas encore le planning.
+  - **Niveau 3 passe toujours**, même sans affectation — même logique que
+    le déblocage réglementaire ("validation critique, décisions définies
+    par l'entreprise", cahier des charges).
+  - Ne vérifie que la présence (être affecté à l'affaire), pas que la
+    fonction de l'affectation corresponde précisément à l'action (ex.
+    "Soudeur" pour souder) : la nomenclature des fonctions est libre,
+    propre à chaque entreprise, comme pour tout ce que Weldoc ne peut pas
+    interpréter sans référentiel fourni.
+  - Branché sur `POST /api/joints` (désignation du soudeur) et les cinq
+    routes de contrôle CND — pas le contrôle dimensionnel (DIM), qui
+    n'est pas dans le périmètre demandé.
+  - Le cahier des charges liste aussi le "rôle" parmi les axes des droits
+    ("rôle, niveau, qualification, autorisation, contexte de l'affaire") :
+    la fonction d'une personne (`PersonnelFonction`, `Affectation.
+    fonction`) reste, pour l'instant, purement descriptive — elle
+    n'entre encore dans aucun contrôle d'accès.
   - **Intitulés des niveaux** (`src/lib/niveaux.ts`, `LIBELLE_NIVEAU`) :
     Niveau 1 = "Exécutant", Niveau 2 = "Contrôleur technique", Niveau 3 =
     "Responsable" — affichés partout où le niveau apparaît (page

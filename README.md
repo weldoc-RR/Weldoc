@@ -1221,11 +1221,56 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   7, 9, 11 — voir ci-dessus) : toute autre norme reste à intégrer au fil de
   l'eau, au fur et à mesure qu'un utilisateur ou un expert métier avec
   l'accès licencié la fournit.
-- Les tests automatisés et le déploiement.
+- Le déploiement.
 
 L'objectif de cette première étape était de valider que l'architecture
 (modèle de données + moteur de règles + génération de FNC automatique) tient
 la route, avant d'empiler les modules suivants.
+
+## Tests automatisés
+
+Jusqu'ici, chaque module ajouté à Weldoc était vérifié à la main (comptes
+de test, actions dans l'application, nettoyage) à chaque session de
+travail — utile pour tester une nouvelle fonctionnalité en conditions
+réelles, mais rien ne garantissait qu'une modification future ne casse pas
+silencieusement quelque chose qui marchait déjà. `npm test` (Vitest) lance
+maintenant une suite de tests automatiques qui vérifie, en quelques
+secondes et sans toucher à la vraie base de données, les fonctions les
+plus sensibles de l'application — celles où une erreur aurait des
+conséquences concrètes :
+
+- `src/lib/tolerances.test.ts` — le moteur de tolérances dimensionnelles
+  (EN 10216-2, tableaux 7/9/11, et le placeholder EXEMPLE-DEMO) : les
+  bons seuils sont-ils appliqués selon le diamètre/l'épaisseur, y compris
+  aux limites (ex. D = 219,1 mm) ?
+- `src/lib/aptitudePersonnel.test.ts` — le **blocage** qualification/acuité
+  visuelle (voir plus haut) : c'est la seule vérification de
+  l'application qui empêche réellement une action, donc celle où une
+  erreur coûterait le plus cher (bloquer à tort quelqu'un de qualifié, ou
+  laisser passer quelqu'un qui ne l'est plus).
+- `src/lib/verificationQS.test.ts` — le rapprochement qualification
+  soudage/WPS (couvert, non couvert, données insuffisantes...).
+- `src/lib/statutValidite.test.ts`, `dossierReglementaire.test.ts`,
+  `controles.test.ts` — les calculs de statut (valide/bientôt à
+  échéance/expiré/suspendu, points bloquants, résultat d'un contrôle).
+
+Ces fonctions ne touchent jamais la base de données elles-mêmes (elles ne
+prennent en entrée que des données déjà chargées) : les tests s'exécutent
+donc instantanément, sans compte ni affaire de test à créer/nettoyer. Une
+seule exception : `aptitudePersonnel.ts` interroge normalement la base
+pour lire les qualifications d'une personne — le test simule cette lecture
+(“si la base répondait ceci, la fonction doit décider cela”) plutôt que
+d'interroger la vraie base, ce qui reste fiable et rapide tout en
+vérifiant la vraie logique de décision.
+
+Cette suite ne couvre pas encore tout Weldoc (pages, routes API, fonctions
+qui lisent beaucoup de données liées comme `avancement.ts` ou les alertes)
+— elle s'enrichira au fil des prochains modules, en particulier pour toute
+nouvelle règle de calcul ou de blocage.
+
+```bash
+npm test
+```
 
 ## Comment le lancer (nécessite un ordinateur avec Node.js installé)
 

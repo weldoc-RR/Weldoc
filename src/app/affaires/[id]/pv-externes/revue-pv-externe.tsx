@@ -51,7 +51,7 @@ export function RevuePvExterne({ pvExterneId }: { pvExterneId: string }) {
           {enCours ? "Enregistrement..." : "Enregistrer la revue"}
         </button>
       </div>
-      {erreur && <p style={{ color: "crimson" }}>{erreur}</p>}
+      {erreur && <p style={{ color: "var(--couleur-non-conforme)" }}>{erreur}</p>}
     </form>
   );
 }

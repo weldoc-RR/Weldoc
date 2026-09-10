@@ -36,7 +36,7 @@ export function QualificationObligatoire({ affaireId, valeurActuelle }: { affair
   return (
     <div style={{ marginBottom: "1.5rem" }}>
       <h2 style={{ fontSize: "1.1rem" }}>Qualification au dossier obligatoire</h2>
-      <p style={{ fontSize: "0.85rem", color: "#898781", margin: "0 0 0.4rem 0" }}>
+      <p style={{ fontSize: "0.85rem", color: "var(--couleur-texte-discret)", margin: "0 0 0.4rem 0" }}>
         Coché : une personne sans aucune qualification (soudage ou CND) enregistrée est bloquée dès qu&apos;elle
         tente de souder un joint ou de réaliser un contrôle CND sur cette affaire — pas seulement une personne dont
         la qualification a expiré, déjà bloquée par ailleurs.
@@ -45,7 +45,7 @@ export function QualificationObligatoire({ affaireId, valeurActuelle }: { affair
         <input type="checkbox" checked={coche} disabled={enCours} onChange={basculer} />
         Exiger une qualification au dossier sur cette affaire
       </label>
-      {erreur && <p style={{ color: "crimson", fontSize: "0.8rem" }}>{erreur}</p>}
+      {erreur && <p style={{ color: "var(--couleur-non-conforme)", fontSize: "0.8rem" }}>{erreur}</p>}
     </div>
   );
 }

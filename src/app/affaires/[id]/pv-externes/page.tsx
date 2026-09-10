@@ -59,12 +59,12 @@ export default async function PvExternesPage({ params }: { params: { id: string 
       ) : (
         <ul style={{ listStyle: "none", padding: 0 }}>
           {pvExternes.map((pv) => (
-            <li key={pv.id} style={{ marginBottom: "1rem", border: "1px solid #ddd", padding: "0.75rem" }}>
+            <li key={pv.id} style={{ marginBottom: "1rem", border: "1px solid var(--couleur-bordure)", padding: "0.75rem" }}>
               <strong>{pv.intitule}</strong>
               {pv.prestataire && ` — ${pv.prestataire}`}
               {pv.joint && ` — joint ${pv.joint.numero}${pv.joint.indiceReparation > 0 ? ` R${pv.joint.indiceReparation}` : ""}`}
               {pv.phase && ` — phase ${pv.phase.nom}`}
-              <div style={{ fontSize: "0.85rem", color: "#52514e" }}>
+              <div style={{ fontSize: "0.85rem", color: "var(--couleur-texte-attenue)" }}>
                 Importé par {pv.importePar.prenom} {pv.importePar.nom} le {pv.dateImport.toLocaleDateString("fr-FR")}
                 {pv.dateDocument && ` — document daté du ${pv.dateDocument.toLocaleDateString("fr-FR")}`} —{" "}
                 <a href={pv.url} target="_blank" rel="noopener noreferrer">
@@ -72,7 +72,7 @@ export default async function PvExternesPage({ params }: { params: { id: string 
                 </a>
               </div>
               {pv.revueConclusion ? (
-                <p style={{ fontSize: "0.85rem", color: pv.revueConclusion === "CONFORME" ? "#0ca30c" : "crimson" }}>
+                <p style={{ fontSize: "0.85rem", color: pv.revueConclusion === "CONFORME" ? "var(--couleur-conforme)" : "var(--couleur-non-conforme)" }}>
                   Revu par {pv.revuePar?.prenom} {pv.revuePar?.nom} le {pv.dateRevue?.toLocaleDateString("fr-FR")} —{" "}
                   {pv.revueConclusion === "CONFORME" ? "conforme" : "non conforme"}
                   {pv.revueCommentaire && ` — ${pv.revueCommentaire}`}
@@ -80,7 +80,7 @@ export default async function PvExternesPage({ params }: { params: { id: string 
               ) : peutReviser ? (
                 <RevuePvExterne pvExterneId={pv.id} />
               ) : (
-                <p style={{ fontSize: "0.85rem", color: "#898781" }}>Pas encore revu (réservé au niveau 3).</p>
+                <p style={{ fontSize: "0.85rem", color: "var(--couleur-texte-discret)" }}>Pas encore revu (réservé au niveau 3).</p>
               )}
             </li>
           ))}

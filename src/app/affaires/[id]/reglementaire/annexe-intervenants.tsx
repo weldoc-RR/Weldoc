@@ -8,15 +8,15 @@ const LIBELLE_STATUT: Record<string, string> = {
 };
 
 const COULEUR_STATUT: Record<string, string> = {
-  VALIDE: "#0ca30c",
-  BIENTOT_ECHEANCE: "#fab219",
-  EXPIRE: "#d03b3b",
-  SUSPENDU: "#d03b3b",
+  VALIDE: "var(--couleur-conforme)",
+  BIENTOT_ECHEANCE: "var(--couleur-a-verifier)",
+  EXPIRE: "var(--couleur-non-conforme)",
+  SUSPENDU: "var(--couleur-non-conforme)",
 };
 
 function Statut({ statut }: { statut: string }) {
   return (
-    <span style={{ color: COULEUR_STATUT[statut] ?? "#52514e", fontWeight: "bold" }}>
+    <span style={{ color: COULEUR_STATUT[statut] ?? "var(--couleur-texte-attenue)", fontWeight: "bold" }}>
       {LIBELLE_STATUT[statut] ?? statut}
     </span>
   );
@@ -40,14 +40,14 @@ export function AnnexeIntervenants({ intervenants }: { intervenants: Intervenant
       {intervenants.map((i) => (
         <li
           key={`${i.personnelId}-${i.role}`}
-          style={{ marginBottom: "0.75rem", borderBottom: "1px solid #eeeee8", paddingBottom: "0.5rem" }}
+          style={{ marginBottom: "0.75rem", borderBottom: "1px solid var(--couleur-bordure)", paddingBottom: "0.5rem" }}
         >
           <strong>
             {i.prenom} {i.nom}
           </strong>{" "}
           — {i.role === "SOUDEUR" ? "soudeur" : `contrôleur CND (${i.methodes.join(", ")})`}
           {i.qualifications.length === 0 ? (
-            <p style={{ margin: "0.2rem 0 0 0", fontSize: "0.85rem", color: "#d03b3b" }}>
+            <p style={{ margin: "0.2rem 0 0 0", fontSize: "0.85rem", color: "var(--couleur-non-conforme)" }}>
               Aucune qualification {i.role === "SOUDEUR" ? "soudage" : "CND"} enregistrée pour cette personne.
             </p>
           ) : (
@@ -72,7 +72,7 @@ export function AnnexeIntervenants({ intervenants }: { intervenants: Intervenant
                 <Statut statut={i.acuiteVisuelle.statutAffiche} />
               </p>
             ) : (
-              <p style={{ margin: "0.2rem 0 0 0", fontSize: "0.85rem", color: "#d03b3b" }}>
+              <p style={{ margin: "0.2rem 0 0 0", fontSize: "0.85rem", color: "var(--couleur-non-conforme)" }}>
                 Aucun test d&apos;acuité visuelle enregistré pour cette personne.
               </p>
             ))}

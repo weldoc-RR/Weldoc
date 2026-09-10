@@ -48,7 +48,7 @@ export function DocumentsRequis({ affaireId, valeurActuelle }: { affaireId: stri
   return (
     <div style={{ marginBottom: "1.5rem" }}>
       <h2 style={{ fontSize: "1.1rem" }}>Documents requis sur chaque joint</h2>
-      <p style={{ fontSize: "0.85rem", color: "#898781", margin: "0 0 0.4rem 0" }}>
+      <p style={{ fontSize: "0.85rem", color: "var(--couleur-texte-discret)", margin: "0 0 0.4rem 0" }}>
         Coché une fois pour l&apos;affaire : un joint d&apos;origine sans ce document apparaît en alerte
         &laquo;&nbsp;documents manquants&nbsp;&raquo; (page /alertes), sans jamais bloquer la fabrication.
       </p>
@@ -60,7 +60,7 @@ export function DocumentsRequis({ affaireId, valeurActuelle }: { affaireId: stri
           </label>
         ))}
       </div>
-      {erreur && <p style={{ color: "crimson", fontSize: "0.8rem" }}>{erreur}</p>}
+      {erreur && <p style={{ color: "var(--couleur-non-conforme)", fontSize: "0.8rem" }}>{erreur}</p>}
     </div>
   );
 }

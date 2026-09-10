@@ -3,7 +3,7 @@ import { BadgeControle } from "@/app/joints/badge-controle";
 import type { LigneJointPV } from "@/lib/contenuDossierReglementaire";
 
 function celluleMethode(controles: { numeroPV: string | null; resultat: string; date: Date }[]) {
-  if (controles.length === 0) return <span style={{ color: "#c3c2b7" }}>—</span>;
+  if (controles.length === 0) return <span style={{ color: "var(--couleur-texte-discret)" }}>—</span>;
   return (
     <>
       {controles.map((c, i) => (
@@ -30,7 +30,7 @@ export function JointsPV({ lignes }: { lignes: LigneJointPV[] }) {
     <div style={{ overflowX: "auto" }}>
       <table style={{ borderCollapse: "collapse", width: "100%", fontSize: "0.85rem" }}>
         <thead>
-          <tr style={{ borderBottom: "2px solid #e1e0d9", textAlign: "left" }}>
+          <tr style={{ borderBottom: "2px solid var(--couleur-fond-discret)", textAlign: "left" }}>
             <th style={{ padding: "0.3rem" }}>Joint</th>
             <th style={{ padding: "0.3rem" }}>WPS</th>
             <th style={{ padding: "0.3rem" }}>Soudeur</th>
@@ -45,7 +45,7 @@ export function JointsPV({ lignes }: { lignes: LigneJointPV[] }) {
         </thead>
         <tbody>
           {lignes.map((l) => (
-            <tr key={l.jointId} style={{ borderBottom: "1px solid #eeeee8" }}>
+            <tr key={l.jointId} style={{ borderBottom: "1px solid var(--couleur-bordure)" }}>
               <td style={{ padding: "0.3rem" }}>
                 <Link href="/joints">{l.numeroAffiche}</Link>
               </td>
@@ -56,7 +56,7 @@ export function JointsPV({ lignes }: { lignes: LigneJointPV[] }) {
               </td>
               <td style={{ padding: "0.3rem" }}>
                 {l.dimensionnel.length === 0 ? (
-                  <span style={{ color: "#c3c2b7" }}>—</span>
+                  <span style={{ color: "var(--couleur-texte-discret)" }}>—</span>
                 ) : (
                   <BadgeControle sigle="DIM" dernierResultat={l.dimensionnel[l.dimensionnel.length - 1].resultat} />
                 )}

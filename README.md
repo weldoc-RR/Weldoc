@@ -1449,7 +1449,14 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
     trail" sur `/systeme-qualite`. Le contenu détaillé des pages plus
     anciennes de cette liste (formulaires, tableaux) garde encore ses
     couleurs d'origine — à reprendre progressivement, comme pour le
-    socle tactile ci-dessous plutôt que dans une seule passe.
+    socle tactile ci-dessous plutôt que dans une seule passe. Premier
+    lot repris en ce sens : le contenu détaillé du dossier réglementaire
+    (points réglementaires et leur badge de statut bloquant/sous
+    réserve/levé, annexe qualifications, référentiels liés, contrôles et
+    documents requis), du book photo et des PV externes — mêmes
+    variables CSS que le reste de l'application plutôt que des couleurs
+    figées propres à chaque composant. Les autres pages de la liste
+    ci-dessus suivront au même rythme.
 - Une vraie interface tablette soignée sur l'ensemble de l'application —
   un premier socle vient d'être posé (`src/app/globals.css`, importé
   depuis `src/app/layout.tsx`) : boutons et champs de saisie sans style

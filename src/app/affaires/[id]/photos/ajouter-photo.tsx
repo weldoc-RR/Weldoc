@@ -63,7 +63,7 @@ export function AjouterPhoto({
   }
 
   return (
-    <form onSubmit={ajouter} style={{ display: "flex", flexDirection: "column", gap: "0.5rem", maxWidth: 480, marginBottom: "1.5rem", border: "1px solid #ddd", padding: "1rem" }}>
+    <form onSubmit={ajouter} style={{ display: "flex", flexDirection: "column", gap: "0.5rem", maxWidth: 480, marginBottom: "1.5rem", border: "1px solid var(--couleur-bordure)", padding: "1rem" }}>
       <label>
         Adresse de la photo (déjà hébergée quelque part)
         <input required type="url" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://..." style={{ display: "block", width: "100%", padding: "0.4rem" }} />
@@ -117,7 +117,7 @@ export function AjouterPhoto({
           {enCours ? "Ajout..." : "Ajouter la photo"}
         </button>
       </div>
-      {erreur && <p style={{ color: "crimson" }}>{erreur}</p>}
+      {erreur && <p style={{ color: "var(--couleur-non-conforme)" }}>{erreur}</p>}
     </form>
   );
 }

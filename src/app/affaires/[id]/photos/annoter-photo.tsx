@@ -45,8 +45,8 @@ export function AnnoterPhoto({ photoId, url, annotations }: { photoId: string; u
   return (
     <div style={{ marginTop: "0.4rem" }}>
       <IsoCanvas fondUrl={url} traits={traits} onChange={enregistrer} />
-      {enCours && <p style={{ fontSize: "0.75rem", color: "#898781", margin: "0.2rem 0 0 0" }}>Enregistrement...</p>}
-      {erreur && <p style={{ fontSize: "0.75rem", color: "crimson", margin: "0.2rem 0 0 0" }}>{erreur}</p>}
+      {enCours && <p style={{ fontSize: "0.75rem", color: "var(--couleur-texte-discret)", margin: "0.2rem 0 0 0" }}>Enregistrement...</p>}
+      {erreur && <p style={{ fontSize: "0.75rem", color: "var(--couleur-non-conforme)", margin: "0.2rem 0 0 0" }}>{erreur}</p>}
       <button type="button" onClick={() => setOuvert(false)} style={{ fontSize: "0.75rem", marginTop: "0.3rem" }}>
         Fermer
       </button>

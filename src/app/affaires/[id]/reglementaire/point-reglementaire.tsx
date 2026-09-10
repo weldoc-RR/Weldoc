@@ -30,9 +30,9 @@ const LIBELLE_STATUT: Record<string, string> = {
 };
 
 function couleurStatut(statut: string): string {
-  if (statut === "BLOQUANT") return "#d03b3b";
-  if (statut === "SOUS_RESERVE" || statut === "ATTENTE_DECISION") return "darkorange";
-  return "#0ca30c";
+  if (statut === "BLOQUANT") return "var(--couleur-non-conforme)";
+  if (statut === "SOUS_RESERVE" || statut === "ATTENTE_DECISION") return "var(--couleur-a-verifier)";
+  return "var(--couleur-conforme)";
 }
 
 const STATUTS_POSSIBLES = ["NON_BLOQUANT", "BLOQUANT", "SOUS_RESERVE", "ATTENTE_DECISION", "DEBLOCAGE_AUTORISE"] as const;
@@ -82,7 +82,7 @@ export function PointReglementaireCarte({ point, peutDebloquer }: { point: Point
   }
 
   return (
-    <li style={{ marginBottom: "1rem", border: "1px solid #ddd", padding: "0.75rem" }}>
+    <li style={{ marginBottom: "1rem", border: "1px solid var(--couleur-bordure)", padding: "0.75rem" }}>
       <strong>{point.intitule}</strong>
       {point.referentiel && ` — ${point.referentiel}`}
       {point.joint && ` — joint ${point.joint.numero}${point.joint.indiceReparation > 0 ? ` R${point.joint.indiceReparation}` : ""}`}
@@ -92,7 +92,7 @@ export function PointReglementaireCarte({ point, peutDebloquer }: { point: Point
       </div>
 
       {historique.length > 0 && (
-        <details style={{ fontSize: "0.8rem", color: "#52514e", marginTop: "0.3rem" }}>
+        <details style={{ fontSize: "0.8rem", color: "var(--couleur-texte-attenue)", marginTop: "0.3rem" }}>
           <summary>Historique ({historique.length})</summary>
           <ul>
             {point.evenements.map((e) => (
@@ -158,7 +158,7 @@ export function PointReglementaireCarte({ point, peutDebloquer }: { point: Point
             )}
           </>
         )}
-        {erreur && <span style={{ color: "crimson", fontSize: "0.85rem" }}>{erreur}</span>}
+        {erreur && <span style={{ color: "var(--couleur-non-conforme)", fontSize: "0.85rem" }}>{erreur}</span>}
       </form>
     </li>
   );

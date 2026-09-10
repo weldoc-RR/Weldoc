@@ -66,10 +66,10 @@ export default async function PhotosAffairePage({ params }: { params: { id: stri
       ) : (
         <ul style={{ listStyle: "none", padding: 0, display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "1rem" }}>
           {photos.map((p) => (
-            <li key={p.id} style={{ border: "1px solid #ddd", padding: "0.5rem" }}>
+            <li key={p.id} style={{ border: "1px solid var(--couleur-bordure)", padding: "0.5rem" }}>
               <img src={p.url} alt={p.commentaire ?? "Photo"} style={{ width: "100%", display: "block", marginBottom: "0.3rem" }} />
               {p.commentaire && <p style={{ fontSize: "0.85rem", margin: "0.2rem 0" }}>{p.commentaire}</p>}
-              <p style={{ fontSize: "0.75rem", color: "#898781", margin: 0 }}>
+              <p style={{ fontSize: "0.75rem", color: "var(--couleur-texte-discret)", margin: 0 }}>
                 {p.dateAjout.toLocaleDateString("fr-FR")} — {p.auteur.prenom} {p.auteur.nom}
                 {p.joint && ` — ${p.joint.numero}`}
                 {p.phase && ` — ${p.phase.nom}`}

@@ -52,11 +52,11 @@ export function ReferentielsAffaire({
     <div style={{ marginBottom: "1.5rem" }}>
       <h2 style={{ fontSize: "1.1rem" }}>Référentiels applicables</h2>
       {lies.length === 0 ? (
-        <p style={{ fontSize: "0.85rem", color: "#898781" }}>Aucun référentiel lié à cette affaire pour l&apos;instant.</p>
+        <p style={{ fontSize: "0.85rem", color: "var(--couleur-texte-discret)" }}>Aucun référentiel lié à cette affaire pour l&apos;instant.</p>
       ) : (
         <ul style={{ listStyle: "none", padding: 0, display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
           {lies.map((r) => (
-            <li key={r.id} style={{ border: "1px solid #ddd", borderRadius: 4, padding: "0.2rem 0.5rem", fontSize: "0.85rem" }}>
+            <li key={r.id} style={{ border: "1px solid var(--couleur-bordure)", borderRadius: 4, padding: "0.2rem 0.5rem", fontSize: "0.85rem" }}>
               {r.code} {r.version && `(${r.version})`}
               <button type="button" onClick={() => delier(r.id)} style={{ marginLeft: "0.4rem", fontSize: "0.75rem" }}>
                 Retirer
@@ -78,11 +78,11 @@ export function ReferentielsAffaire({
           <button type="submit" disabled={enCours} style={{ fontSize: "0.85rem" }}>
             {enCours ? "..." : "Lier"}
           </button>
-          {erreur && <span style={{ color: "crimson", fontSize: "0.8rem" }}>{erreur}</span>}
+          {erreur && <span style={{ color: "var(--couleur-non-conforme)", fontSize: "0.8rem" }}>{erreur}</span>}
         </form>
       ) : (
         tous.length === 0 && (
-          <p style={{ fontSize: "0.85rem", color: "#898781" }}>
+          <p style={{ fontSize: "0.85rem", color: "var(--couleur-texte-discret)" }}>
             Aucun référentiel enregistré — <a href="/referentiels">en créer un</a>.
           </p>
         )

@@ -15,6 +15,7 @@ import { LIBELLE_NIVEAU } from "@/lib/niveaux";
 import { ConfirmerValidite } from "./confirmer-validite";
 import { ValiderReconduction } from "./valider-reconduction";
 import { DefinirPin } from "./definir-pin";
+import { SuspendreHabilitation } from "./suspendre-habilitation";
 import { ChangerMotDePasse } from "./changer-mot-de-passe";
 import { ChangerNiveau } from "./changer-niveau";
 import { BasculerCompte } from "./basculer-compte";
@@ -303,6 +304,9 @@ export default async function PersonnelPage() {
                                 voir le certificat
                               </a>
                             </>
+                          )}
+                          {aNiveauMinimum(utilisateur.niveau, "NIVEAU_3") && (
+                            <SuspendreHabilitation habilitationId={h.id} suspendue={h.statut === "SUSPENDU"} />
                           )}
                           {historique.length > 0 && (
                             <details style={{ fontSize: "0.8rem", color: "#52514e" }}>

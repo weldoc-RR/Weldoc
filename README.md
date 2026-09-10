@@ -932,6 +932,18 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   n'en avaient pas encore (`POST /api/habilitations`,
   `POST /api/formations`, `POST /api/acuites-visuelles`, tous existants
   depuis un module précédent).
+  - **Habilitations suspendables** (`PATCH /api/habilitations/[id]`,
+    réservé au niveau 3, tracé par l'audit trail) : jusqu'ici, seules les
+    qualifications pouvaient être suspendues (`QualificationEvenement`,
+    avec tout son workflow de reconduction) — une habilitation n'avait
+    aucun moyen d'être mise hors service en cas d'incident, alors qu'elle
+    bloque exactement comme une habilitation expirée
+    (`verifierHabilitationsBloquantes`). Bouton "Suspendre" (motif
+    obligatoire) / "Réactiver" sur `/personnel`, à côté de chaque
+    habilitation en vigueur — même principe que suspendre un compte
+    (`BasculerCompte`), sans le workflow de reconduction propre aux
+    qualifications, que le cahier des charges ne prévoit pas pour les
+    habilitations.
   - **Documents justificatifs du personnel** (voir le cahier des charges,
     fiche personne : "..., documents justificatifs, ..."), au-delà des
     qualifications/habilitations/formations/acuités visuelles déjà

@@ -14,7 +14,7 @@ function couleurResultat(resultat: string): string {
 export function BadgeControle({ sigle, dernierResultat }: { sigle: string; dernierResultat: string | null }) {
   if (!dernierResultat) {
     return (
-      <span style={{ fontSize: "0.75rem", color: "#c3c2b7", border: "1px solid #e1e0d9", borderRadius: 4, padding: "0.1rem 0.4rem" }}>
+      <span style={{ fontSize: "0.85rem", color: "#c3c2b7", border: "1px solid #e1e0d9", borderRadius: 5, padding: "0.25rem 0.5rem" }}>
         {sigle}
       </span>
     );
@@ -22,11 +22,11 @@ export function BadgeControle({ sigle, dernierResultat }: { sigle: string; derni
   return (
     <span
       style={{
-        fontSize: "0.75rem",
+        fontSize: "0.85rem",
         color: "#fff",
         background: couleurResultat(dernierResultat),
-        borderRadius: 4,
-        padding: "0.1rem 0.4rem",
+        borderRadius: 5,
+        padding: "0.25rem 0.5rem",
         fontWeight: "bold",
       }}
     >

@@ -1276,10 +1276,26 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   des sujets d'offre commerciale que des écrans à construire). Le TQC
   ("tel que construit") est maintenant complet sur ses trois méthodes :
   texte + book photo, scan 3D, et ISO manuel au stylet (voir ci-dessus).
-- Une vraie interface tablette soignée (ici, des pages HTML minimales) —
-  le dessin au stylet fonctionne (testé au doigt/stylet/souris via les
-  événements `pointer`), mais le reste de l'écran garde le style HTML
-  minimal du squelette de démonstration.
+- Une vraie interface tablette soignée sur l'ensemble de l'application —
+  un premier socle vient d'être posé (`src/app/globals.css`, importé
+  depuis `src/app/layout.tsx`) : boutons et champs de saisie sans style
+  particulier reçoivent maintenant une zone tactile d'au moins 44px
+  (recommandation standard pour un doigt/gant), les cases à cocher sont
+  agrandies (1,25rem au lieu de la taille minuscule par défaut du
+  navigateur), et un contour visible apparaît au clavier/stylet. Comme ce
+  socle ne fait que relever le "plancher" par défaut (un style déjà
+  précisé en ligne sur un bouton continue de primer), il profite
+  immédiatement à toute l'application sans avoir dû retoucher chaque
+  page. La barre "Ajouter un contrôle" sous chaque joint (`/joints`,
+  `controles-joint.tsx`) et les badges de résultat (`badge-controle.tsx`)
+  ont en plus reçu un vrai passage dédié (boutons mieux espacés, bordure
+  claire sur le contrôle en cours, badges agrandis) puisque ce sont les
+  boutons les plus tapés sur le terrain. Le reste de la mise en page
+  (structure des pages, tableaux denses) garde encore le style HTML
+  minimal du squelette de démonstration — à affiner page par page au fil
+  des prochains modules, sur ce même socle. Le dessin au stylet
+  fonctionne déjà (testé au doigt/stylet/souris via les événements
+  `pointer`).
 - Les vraies valeurs de tolérances normatives, sauf l'EN 10216-2 (Tableaux
   7, 9, 11 — voir ci-dessus) : toute autre norme reste à intégrer au fil de
   l'eau, au fur et à mesure qu'un utilisateur ou un expert métier avec

@@ -1,0 +1,83 @@
+/* Fondations visuelles communes à toute l'application (voir le cahier des
+   charges, interface terrain/tablette) — reprend les couleurs déjà en
+   usage un peu partout dans les pages (vert conforme, rouge non conforme,
+   ambre à vérifier, gris de texte) pour les nommer une fois plutôt que de
+   les répéter en dur, et fixe des tailles de zones tactiles suffisantes
+   (≥ 44px) pour les éléments qui n'ont pas de style particulier page par
+   page — cases à cocher, boutons/champs par défaut. Chaque page garde le
+   contrôle fin de sa propre mise en page (styles en ligne existants) :
+   ceci ne fait que poser un sol commun, pas remplacer ce qui existe déjà.
+*/
+
+:root {
+  --couleur-conforme: #0ca30c;
+  --couleur-non-conforme: #d03b3b;
+  --couleur-a-verifier: #fab219;
+  --couleur-texte: #10161d;
+  --couleur-texte-attenue: #52514e;
+  --couleur-texte-discret: #898781;
+  --couleur-bordure: #ddd;
+  --couleur-fond-discret: #f7f6f1;
+  --couleur-fond-page: #fff;
+  --zone-tactile-min: 44px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--couleur-fond-page);
+  color: var(--couleur-texte);
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Cases à cocher/radios : la taille native du navigateur (~13px) est trop
+   petite pour un doigt ou un gant sur tablette — presque toutes les
+   utilisent dans l'application sans style particulier, donc les agrandir
+   ici bénéficie tout de suite à chaque page qui en a (contrôles requis,
+   documents requis, formulaires de contrôle...). */
+input[type="checkbox"],
+input[type="radio"] {
+  width: 1.25rem;
+  height: 1.25rem;
+  cursor: pointer;
+}
+
+/* Zone tactile minimale pour tout bouton/lien qui n'a pas déjà sa propre
+   taille définie en ligne — un bouton avec un padding explicite dans son
+   style continue de le respecter (la spécificité d'un style en ligne
+   l'emporte toujours), ceci ne fait que relever le plancher par défaut. */
+button {
+  min-height: var(--zone-tactile-min);
+  padding: 0.5rem 0.9rem;
+  font-size: 0.95rem;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+input[type="text"],
+input[type="number"],
+input[type="password"],
+input[type="date"],
+input[type="datetime-local"],
+input[type="email"],
+select,
+textarea {
+  min-height: var(--zone-tactile-min);
+  padding: 0.5rem;
+  font-size: 1rem;
+  font-family: inherit;
+}
+
+/* Cible visible au clavier/au stylet (accessibilité), sans halo permanent
+   au clic à la souris. */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+a:focus-visible {
+  outline: 2px solid #2563a8;
+  outline-offset: 2px;
+}

@@ -65,19 +65,46 @@ export function ControlesJoint({
   const fermer = () => setOuvert(null);
 
   return (
-    <div style={{ marginTop: "0.3rem" }}>
-      <span style={{ fontSize: "0.8rem", color: "#52514e" }}>Ajouter un contrôle :</span>{" "}
-      {(["DIM", "VT", "PT", "MT", "RT", "UT"] as const).map((type) => (
-        <button key={type} onClick={() => setOuvert(type)} style={{ fontSize: "0.8rem", marginRight: "0.2rem" }}>
-          + {type}
+    <div style={{ marginTop: "0.5rem" }}>
+      <span style={{ fontSize: "0.85rem", color: "var(--couleur-texte-attenue)" }}>Ajouter un contrôle :</span>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginTop: "0.35rem" }}>
+        {(["DIM", "VT", "PT", "MT", "RT", "UT"] as const).map((type) => (
+          <button
+            key={type}
+            onClick={() => setOuvert(type)}
+            style={{
+              fontWeight: ouvert === type ? "bold" : "normal",
+              border: ouvert === type ? "2px solid var(--couleur-texte)" : "1px solid var(--couleur-bordure)",
+              borderRadius: 6,
+              background: "#fff",
+            }}
+          >
+            + {type}
+          </button>
+        ))}
+        <button
+          onClick={() => setOuvert("FTS")}
+          style={{
+            fontWeight: ouvert === "FTS" ? "bold" : "normal",
+            border: ouvert === "FTS" ? "2px solid var(--couleur-texte)" : "1px solid var(--couleur-bordure)",
+            borderRadius: 6,
+            background: "#fff",
+          }}
+        >
+          {ficheSoudage ? "Fiche soudage" : "+ FTS"}
         </button>
-      ))}
-      <button onClick={() => setOuvert("FTS")} style={{ fontSize: "0.8rem", marginRight: "0.2rem" }}>
-        {ficheSoudage ? "Fiche soudage" : "+ FTS"}
-      </button>
-      <button onClick={() => setOuvert("TQC")} style={{ fontSize: "0.8rem", marginRight: "0.2rem" }}>
-        {tqc ? "TQC" : "+ TQC"}
-      </button>
+        <button
+          onClick={() => setOuvert("TQC")}
+          style={{
+            fontWeight: ouvert === "TQC" ? "bold" : "normal",
+            border: ouvert === "TQC" ? "2px solid var(--couleur-texte)" : "1px solid var(--couleur-bordure)",
+            borderRadius: 6,
+            background: "#fff",
+          }}
+        >
+          {tqc ? "TQC" : "+ TQC"}
+        </button>
+      </div>
       {ouvert === "FTS" && (
         <FicheSoudageForm
           jointId={jointId}

@@ -15,6 +15,10 @@ const UpdateSchema = z.object({
   // src/lib/documentsManquants.ts et l'alerte "documents manquants" sur
   // /alertes). Même principe additif que controlesRequis.
   documentsRequis: z.array(z.enum(SIGLES_DOCUMENT)).optional(),
+  // Exige une qualification (soudage ou CND) au dossier avant de souder
+  // un joint ou de réaliser un contrôle CND sur cette affaire (voir
+  // src/lib/aptitudePersonnel.ts, verifierQualificationBloquante).
+  qualificationSurDossierObligatoire: z.boolean().optional(),
 });
 
 // PATCH /api/affaires/[id] — informations générales éditables de

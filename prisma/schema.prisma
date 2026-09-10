@@ -353,6 +353,15 @@ model Affaire {
   // controlesRequis ci-dessus : vide par défaut, aucune alerte tant que
   // rien n'est déclaré.
   documentsRequis  String[] @default([])
+  // Exige, sur cette affaire, qu'une personne ait au moins une
+  // qualification (soudage ou CND) au dossier avant de souder un joint ou
+  // de réaliser un contrôle CND — pas seulement qu'aucune ne soit expirée
+  // (voir src/lib/aptitudePersonnel.ts, verifierQualificationBloquante).
+  // Faux par défaut = comportement additif inchangé : une personne sans
+  // aucune qualification enregistrée n'est bloquée que sur les affaires
+  // qui activent explicitement cette exigence, comme
+  // controlesRequis/documentsRequis ci-dessus.
+  qualificationSurDossierObligatoire Boolean @default(false)
   createdAt         DateTime @default(now())
 
   referentiels      AffaireReferentiel[]

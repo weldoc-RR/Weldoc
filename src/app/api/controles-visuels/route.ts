@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Joint introuvable." }, { status: 404 });
   }
 
-  const blocage = await verifierAptitudeCND(auth.utilisateur.personnelId);
+  const blocage = await verifierAptitudeCND(auth.utilisateur.personnelId, joint.affaireId);
   if (blocage.bloque) {
     return NextResponse.json({ error: blocage.motif }, { status: 403 });
   }

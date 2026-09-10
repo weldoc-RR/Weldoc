@@ -7,6 +7,7 @@ import { PointReglementaireCarte } from "./point-reglementaire";
 import { ReferentielsAffaire } from "./referentiels-affaire";
 import { ControlesRequis } from "./controles-requis";
 import { DocumentsRequis } from "./documents-requis";
+import { QualificationObligatoire } from "./qualification-obligatoire";
 import { JointsPV } from "./joints-pv";
 import { AnnexeIntervenants } from "./annexe-intervenants";
 import { lignesJointsPV, annexeIntervenants } from "@/lib/contenuDossierReglementaire";
@@ -92,6 +93,11 @@ export default async function DossierReglementairePage({ params }: { params: { i
       <ControlesRequis affaireId={affaire.id} valeurActuelle={affaire.controlesRequis} />
 
       <DocumentsRequis affaireId={affaire.id} valeurActuelle={affaire.documentsRequis} />
+
+      <QualificationObligatoire
+        affaireId={affaire.id}
+        valeurActuelle={affaire.qualificationSurDossierObligatoire}
+      />
 
       <AjouterPoint
         affaireId={affaire.id}

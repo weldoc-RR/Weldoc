@@ -9,6 +9,7 @@ vi.mock("@/lib/prisma", () => ({
     acuiteVisuelle: { findMany: vi.fn() },
     habilitation: { findMany: vi.fn() },
     affectation: { findFirst: vi.fn(), create: vi.fn() },
+    affaire: { findUnique: vi.fn() },
   },
 }));
 
@@ -18,6 +19,7 @@ import {
   verifierAcuiteVisuelleBloquante,
   verifierHabilitationsBloquantes,
   assurerAffectation,
+  qualificationObligatoireSurAffaire,
 } from "./aptitudePersonnel";
 
 const findManyQualification = prisma.qualification.findMany as unknown as ReturnType<typeof vi.fn>;
@@ -25,6 +27,7 @@ const findManyAcuite = prisma.acuiteVisuelle.findMany as unknown as ReturnType<t
 const findManyHabilitation = prisma.habilitation.findMany as unknown as ReturnType<typeof vi.fn>;
 const findFirstAffectation = prisma.affectation.findFirst as unknown as ReturnType<typeof vi.fn>;
 const createAffectation = prisma.affectation.create as unknown as ReturnType<typeof vi.fn>;
+const findUniqueAffaire = prisma.affaire.findUnique as unknown as ReturnType<typeof vi.fn>;
 
 beforeEach(() => {
   findManyQualification.mockReset();
@@ -32,6 +35,7 @@ beforeEach(() => {
   findManyHabilitation.mockReset();
   findFirstAffectation.mockReset();
   createAffectation.mockReset();
+  findUniqueAffaire.mockReset();
 });
 
 describe("verifierQualificationBloquante", () => {
@@ -72,6 +76,37 @@ describe("verifierQualificationBloquante", () => {
     findManyQualification.mockResolvedValue([{ statut: "VALIDE", dateExpiration: null }]);
     const resultat = await verifierQualificationBloquante("p1", "CND");
     expect(resultat.bloque).toBe(false);
+  });
+
+  it("qualificationObligatoire=false (défaut) : aucune qualification enregistrée ne bloque pas", async () => {
+    findManyQualification.mockResolvedValue([]);
+    const resultat = await verifierQualificationBloquante("p1", "SOUDAGE", { qualificationObligatoire: false });
+    expect(resultat.bloque).toBe(false);
+  });
+
+  it("qualificationObligatoire=true : bloque une personne sans aucune qualification enregistrée", async () => {
+    findManyQualification.mockResolvedValue([]);
+    const resultat = await verifierQualificationBloquante("p1", "SOUDAGE", { qualificationObligatoire: true });
+    expect(resultat.bloque).toBe(true);
+    expect(resultat.motif).toMatch(/exige une qualification au dossier/);
+  });
+
+  it("qualificationObligatoire=true : ne change rien pour une personne qui a déjà une qualification valide", async () => {
+    findManyQualification.mockResolvedValue([{ statut: "VALIDE", dateExpiration: new Date("2099-01-01") }]);
+    const resultat = await verifierQualificationBloquante("p1", "SOUDAGE", { qualificationObligatoire: true });
+    expect(resultat.bloque).toBe(false);
+  });
+});
+
+describe("qualificationObligatoireSurAffaire", () => {
+  it("retourne la valeur du champ de l'affaire", async () => {
+    findUniqueAffaire.mockResolvedValue({ qualificationSurDossierObligatoire: true });
+    expect(await qualificationObligatoireSurAffaire("aff1")).toBe(true);
+  });
+
+  it("retourne false si l'affaire est introuvable", async () => {
+    findUniqueAffaire.mockResolvedValue(null);
+    expect(await qualificationObligatoireSurAffaire("aff1")).toBe(false);
   });
 });
 

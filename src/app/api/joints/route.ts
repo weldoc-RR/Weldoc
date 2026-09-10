@@ -5,7 +5,12 @@ import { requireAuth } from "@/lib/auth";
 import { detecterPreuvesReconduction } from "@/lib/qualifications";
 import { calculerStatut } from "@/lib/statutValidite";
 import { verifierQS, type ResultatVerificationQS } from "@/lib/verificationQS";
-import { verifierQualificationBloquante, verifierHabilitationsBloquantes, assurerAffectation } from "@/lib/aptitudePersonnel";
+import {
+  verifierQualificationBloquante,
+  verifierHabilitationsBloquantes,
+  qualificationObligatoireSurAffaire,
+  assurerAffectation,
+} from "@/lib/aptitudePersonnel";
 
 const CreateJointSchema = z.object({
   affaireId: z.string().min(1),
@@ -94,7 +99,10 @@ export async function POST(req: NextRequest) {
   // expirée/suspendue, ne peut pas être désignée soudeur d'un nouveau
   // joint.
   if (parsed.data.soudeurId) {
-    const blocageQualif = await verifierQualificationBloquante(parsed.data.soudeurId, "SOUDAGE");
+    const qualificationObligatoire = await qualificationObligatoireSurAffaire(parsed.data.affaireId);
+    const blocageQualif = await verifierQualificationBloquante(parsed.data.soudeurId, "SOUDAGE", {
+      qualificationObligatoire,
+    });
     if (blocageQualif.bloque) {
       return NextResponse.json({ error: blocageQualif.motif }, { status: 403 });
     }

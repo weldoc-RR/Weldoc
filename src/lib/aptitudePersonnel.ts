@@ -13,19 +13,39 @@ export type BlocageAptitude = { bloque: boolean; motif?: string };
 // AUCUNE qualification de ce type enregistrée n'est jamais bloquée (rien à
 // vérifier) — seule une personne qui a déjà eu au moins une qualification
 // de ce type, mais dont plus aucune n'est valide aujourd'hui (toutes
-// expirées ou suspendues), est bloquée. Ce contrôle ne vérifie pas que la
-// qualification couvre précisément la méthode/le procédé demandé (voir
-// src/lib/verificationQS.ts pour cette correspondance fine, réservée au
-// soudage) : il vérifie seulement qu'il en existe au moins une valide, ce
-// qui reste la seule chose que Weldoc puisse constater sans interpréter un
-// référentiel qu'il ne reproduit pas (voir l'avertissement sur les normes
-// protégées).
+// expirées ou suspendues), est bloquée.
+//
+// Exception : sur une affaire qui exige explicitement une qualification au
+// dossier (`Affaire.qualificationSurDossierObligatoire`, voir le cahier
+// des charges "DROITS ET MODIFICATIONS"), une personne sans AUCUNE
+// qualification enregistrée est elle aussi bloquée — sur les affaires qui
+// n'activent pas cette exigence, le comportement additif habituel
+// continue.
+//
+// Ce contrôle ne vérifie pas que la qualification couvre précisément la
+// méthode/le procédé demandé (voir src/lib/verificationQS.ts pour cette
+// correspondance fine, réservée au soudage) : il vérifie seulement qu'il
+// en existe au moins une valide, ce qui reste la seule chose que Weldoc
+// puisse constater sans interpréter un référentiel qu'il ne reproduit pas
+// (voir l'avertissement sur les normes protégées).
 export async function verifierQualificationBloquante(
   personnelId: string,
-  type: "SOUDAGE" | "CND"
+  type: "SOUDAGE" | "CND",
+  options: { qualificationObligatoire?: boolean } = {}
 ): Promise<BlocageAptitude> {
   const qualifications = await prisma.qualification.findMany({ where: { personnelId, type } });
-  if (qualifications.length === 0) return { bloque: false };
+
+  if (qualifications.length === 0) {
+    if (options.qualificationObligatoire) {
+      return {
+        bloque: true,
+        motif:
+          `Aucune qualification ${type === "SOUDAGE" ? "soudage" : "CND"} enregistrée pour cette personne, ` +
+          "et cette affaire exige une qualification au dossier — action bloquée, voir sa fiche personnel.",
+      };
+    }
+    return { bloque: false };
+  }
 
   const auMoinsUneValide = qualifications.some((q) => {
     const statut = calculerStatut(q.dateExpiration, { suspendu: q.statut === "SUSPENDU" });
@@ -39,6 +59,18 @@ export async function verifierQualificationBloquante(
       `Aucune qualification ${type === "SOUDAGE" ? "soudage" : "CND"} valide pour cette personne ` +
       "(qualification(s) enregistrée(s) expirée(s) ou suspendue(s)) — action bloquée, voir sa fiche personnel.",
   };
+}
+
+// Lit l'exigence "qualification au dossier obligatoire" d'une affaire
+// (voir verifierQualificationBloquante ci-dessus) — factorisé pour éviter
+// de dupliquer cette lecture dans chaque route qui vérifie une
+// qualification.
+export async function qualificationObligatoireSurAffaire(affaireId: string): Promise<boolean> {
+  const affaire = await prisma.affaire.findUnique({
+    where: { id: affaireId },
+    select: { qualificationSurDossierObligatoire: true },
+  });
+  return affaire?.qualificationSurDossierObligatoire ?? false;
 }
 
 // Même principe pour l'acuité visuelle (obligatoire pour les cinq
@@ -134,8 +166,9 @@ export async function assurerAffectation(
 // qualification CND, acuité visuelle et habilitations. Utilisé par les
 // cinq routes de contrôle CND pour éviter de dupliquer cet enchaînement
 // cinq fois.
-export async function verifierAptitudeCND(personnelId: string): Promise<BlocageAptitude> {
-  const qualif = await verifierQualificationBloquante(personnelId, "CND");
+export async function verifierAptitudeCND(personnelId: string, affaireId: string): Promise<BlocageAptitude> {
+  const qualificationObligatoire = await qualificationObligatoireSurAffaire(affaireId);
+  const qualif = await verifierQualificationBloquante(personnelId, "CND", { qualificationObligatoire });
   if (qualif.bloque) return qualif;
   const acuite = await verifierAcuiteVisuelleBloquante(personnelId);
   if (acuite.bloque) return acuite;

@@ -701,6 +701,15 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
     exigences indépendantes qui ne se substituent pas les unes aux
     autres : **toutes** celles enregistrées doivent être valides — une
     seule expirée bloque, même si les autres sont valides.
+  - **"Qualification au dossier obligatoire"** (nouveau champ
+    `Affaire.qualificationSurDossierObligatoire`, section du même nom sur
+    `/affaires/[id]/reglementaire`) : le comportement additif ci-dessus
+    (« aucune qualification enregistrée = rien à vérifier ») reste la
+    règle par défaut, mais une affaire peut exiger explicitement qu'une
+    personne ait AU MOINS une qualification (soudage ou CND) au dossier
+    avant de souder ou de réaliser un contrôle CND — même une personne
+    qui n'en a jamais eu aucune est alors bloquée. Décochée par défaut :
+    aucun changement pour les affaires qui n'activent pas cette exigence.
   - Cette vérification ne sait pas si la qualification couvre précisément
     la méthode/le procédé demandé (contrairement à `verifierQS.ts` pour le
     rapprochement WPS/qualification soudage) : elle vérifie seulement

@@ -6,6 +6,7 @@ import { annoterStatutProcedures } from "@/lib/procedures";
 import { calculerStatut } from "@/lib/statutValidite";
 import { verifierQS } from "@/lib/verificationQS";
 import { calculerStatutOutil, outilUtilisable } from "@/lib/statutOutil";
+import { calculerStatutConsommable, consommableUtilisable } from "@/lib/statutConsommable";
 import { AjouterJoint } from "./ajouter-joint";
 import { AjouterMatiere } from "./ajouter-matiere";
 import { DeclarerMatierePrevue } from "./declarer-matiere-prevue";
@@ -88,7 +89,7 @@ export default async function JointsPage() {
     prisma.matiere.findMany({ select: { id: true, affaireId: true, designation: true, nuance: true } }),
     prisma.wps.findMany({ select: { id: true, reference: true, version: true, dateEmission: true, retiree: true } }),
     prisma.consommableCND.findMany({
-      select: { id: true, type: true, fabricant: true, reference: true, lot: true },
+      select: { id: true, type: true, fabricant: true, reference: true, lot: true, peremption: true },
       orderBy: { fabricant: "asc" },
     }),
     prisma.outil.findMany({
@@ -130,6 +131,12 @@ export default async function JointsPage() {
   const outilsUtilisables = outilsList
     .filter((o) => outilUtilisable(calculerStatutOutil(o.dateEcheance, { horsService: o.statut === "HORS_SERVICE" })))
     .map((o) => ({ id: o.id, reference: o.reference, type: o.type }));
+  // Même principe que les outils ci-dessus (voir POST /api/controles-*, qui
+  // refuse un consommable périmé) : un produit périmé n'est plus proposé au
+  // choix, il reste seulement visible/traçable sur /consommables.
+  const consommablesUtilisables = consommablesList
+    .filter((c) => consommableUtilisable(calculerStatutConsommable(c.peremption)))
+    .map((c) => ({ id: c.id, type: c.type, fabricant: c.fabricant, reference: c.reference, lot: c.lot }));
 
   // Regroupement par affaire puis par numéro de joint (les réparations
   // partagent le même numéro, avec un indiceReparation croissant), pour
@@ -311,7 +318,7 @@ export default async function JointsPage() {
                         procedureRef: cv.procedureRef,
                         dateControle: cv.dateControle.toISOString(),
                       }))}
-                      consommables={consommablesList}
+                      consommables={consommablesUtilisables}
                       outils={outilsUtilisables}
                       produitsDimensionnels={produitsDimEnVigueur}
                       matiere={j.matiere}

@@ -2,9 +2,37 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getUtilisateurConnecteServeur } from "@/lib/auth";
+import { calculerStatutConsommable, type StatutAffichageConsommable } from "@/lib/statutConsommable";
 import { ConsommableForm } from "./consommable-form";
 
 export const dynamic = "force-dynamic";
+
+const LIBELLE_STATUT: Record<StatutAffichageConsommable, string> = {
+  VALIDE: "Valide",
+  BIENTOT_ECHEANCE: "Bientôt périmé",
+  PERIME: "Périmé",
+};
+const COULEUR_STATUT: Record<StatutAffichageConsommable, string> = {
+  VALIDE: "#0ca30c",
+  BIENTOT_ECHEANCE: "#fab219",
+  PERIME: "#d03b3b",
+};
+
+function BadgeStatut({ statut }: { statut: StatutAffichageConsommable }) {
+  return (
+    <span
+      style={{
+        fontSize: "0.8rem",
+        color: statut === "BIENTOT_ECHEANCE" ? "#10161d" : "#fff",
+        background: COULEUR_STATUT[statut],
+        borderRadius: 5,
+        padding: "0.2rem 0.5rem",
+      }}
+    >
+      {LIBELLE_STATUT[statut]}
+    </span>
+  );
+}
 
 // Bibliothèque des consommables CND (pénétrant, révélateur, nettoyant pour
 // le ressuage ; poudre magnétique, produit de contraste, démagnétisant
@@ -33,7 +61,7 @@ export default async function ConsommablesPage() {
         <table style={{ borderCollapse: "collapse", marginTop: "1rem" }}>
           <thead>
             <tr>
-              {["Type", "Fabricant", "Référence", "Lot", "Péremption", "Certificat"].map((h) => (
+              {["Type", "Fabricant", "Référence", "Lot", "Péremption", "Statut", "Certificat"].map((h) => (
                 <th key={h} style={{ textAlign: "left", borderBottom: "1px solid #ccc", padding: "0.3rem 0.6rem" }}>
                   {h}
                 </th>
@@ -49,6 +77,9 @@ export default async function ConsommablesPage() {
                 <td style={{ padding: "0.3rem 0.6rem" }}>{c.lot}</td>
                 <td style={{ padding: "0.3rem 0.6rem" }}>
                   {c.peremption ? c.peremption.toLocaleDateString("fr-FR") : "—"}
+                </td>
+                <td style={{ padding: "0.3rem 0.6rem" }}>
+                  <BadgeStatut statut={calculerStatutConsommable(c.peremption)} />
                 </td>
                 <td style={{ padding: "0.3rem 0.6rem" }}>
                   {c.certificatUrl ? (

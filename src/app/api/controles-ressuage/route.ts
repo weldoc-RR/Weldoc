@@ -5,6 +5,7 @@ import { requireAuth } from "@/lib/auth";
 import { IndicationSchema, ConditionsExamenSchema, calculerResultat, extraireConditionsExamen } from "@/lib/controles";
 import { avancerFNCApresControleConforme } from "@/lib/remiseEnConformite";
 import { verifierAptitudeCND, assurerAffectation } from "@/lib/aptitudePersonnel";
+import { verifierConsommablesPourControle } from "@/lib/statutConsommable";
 
 const CreateControleRessuageSchema = z
   .object({
@@ -66,6 +67,11 @@ export async function POST(req: NextRequest) {
   const blocage = await verifierAptitudeCND(auth.utilisateur.personnelId, joint.affaireId);
   if (blocage.bloque) {
     return NextResponse.json({ error: blocage.motif }, { status: 403 });
+  }
+
+  const verifConsommables = await verifierConsommablesPourControle(consommableIds);
+  if (!verifConsommables.ok) {
+    return NextResponse.json({ error: verifConsommables.erreur }, { status: 403 });
   }
 
   const resultat = calculerResultat(indications);

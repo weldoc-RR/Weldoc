@@ -282,6 +282,19 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
     l'application qui restent purement indicatives. Ce n'est pas une
     décision réglementaire de Weldoc : une mesure prise avec un outil non
     vérifié n'est simplement pas exploitable, c'est un fait métrologique.
+  - **Péremption des consommables CND bloquante** (voir le cahier des
+    charges, "CONSOMMABLES CND" : fabricant/référence/lot/péremption) :
+    même principe et même position dans le code que l'outil expiré
+    ci-dessus (`src/lib/statutConsommable.ts`,
+    `verifierConsommablesPourControle`) — un pénétrant, une poudre
+    magnétique, un film radiographique ou un couplant périmé **bloque**
+    le contrôle qui tente de l'utiliser (ressuage, magnétoscopie,
+    radiographie, ultrasons), plutôt qu'une simple alerte. Un consommable
+    périmé n'est plus non plus proposé au choix sur `/joints`
+    (`consommablesUtilisables`, même filtrage que les outils) — il reste
+    seulement visible, avec son statut, sur `/consommables` (nouvelle
+    colonne "Statut" : Valide / Bientôt périmé / Périmé, badge coloré
+    comme sur `/procedures`).
   - `POST /api/indisponibilites` — déclarer une période d'indisponibilité
     (congé, maladie, formation, autre), utilisée pour détecter les
     conflits de planning (niveau 2 minimum). **Interface** (jusqu'ici API

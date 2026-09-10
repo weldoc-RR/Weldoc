@@ -143,11 +143,8 @@ export default async function AlertesPage() {
     .sort((a, b) => (a.evenements[0]?.date.getTime() ?? 0) - (b.evenements[0]?.date.getTime() ?? 0));
 
   return (
-    <main style={{ fontFamily: "sans-serif", padding: "2rem" }}>
-      <p>
-        <Link href="/">← Affaires</Link>
-      </p>
-      <h1>Weldoc — Alertes</h1>
+    <main style={{ padding: "2rem" }}>
+      <h1 style={{ marginBottom: "1rem" }}>Alertes</h1>
 
       <h2>Qualifications à échéance ou expirées</h2>
       {alertesQualification.length === 0 ? (

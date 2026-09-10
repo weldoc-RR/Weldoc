@@ -62,23 +62,23 @@ export default async function DossierReglementairePage({ params }: { params: { i
   const peutDebloquer = aNiveauMinimum(utilisateur.niveau, "NIVEAU_3");
 
   return (
-    <main style={{ fontFamily: "sans-serif", padding: "2rem", maxWidth: 900 }}>
+    <main style={{ padding: "2rem", maxWidth: 900 }}>
       <p>
-        <Link href="/">← Affaires</Link> · <Link href={`/affaires/${affaire.id}/dossier`}>Rapport de fin de fabrication →</Link>
+        <Link href={`/affaires/${affaire.id}/dossier`}>Rapport de fin de fabrication →</Link>
       </p>
-      <h1>Dossier réglementaire — {affaire.numero}</h1>
-      <p>
+      <h1 style={{ marginBottom: "0.25rem" }}>Dossier réglementaire — {affaire.numero}</h1>
+      <p style={{ color: "var(--couleur-texte-attenue)", marginTop: 0 }}>
         {affaire.client} / {affaire.projet}
       </p>
-      <p style={{ fontSize: "0.85rem", color: "#898781" }}>
-        Un point <strong style={{ color: "#d03b3b" }}>bloquant</strong> empêche l&apos;avancement de la phase
+      <p style={{ fontSize: "0.85rem", color: "var(--couleur-texte-discret)" }}>
+        Un point <strong style={{ color: "var(--couleur-non-conforme)" }}>bloquant</strong> empêche l&apos;avancement de la phase
         concernée (ou de toutes les phases si le point n&apos;est rattaché à aucune phase précise) et la validation
         du rapport de fin de fabrication, tant qu&apos;il n&apos;est pas levé (passage en &laquo;&nbsp;déblocage
         autorisé&nbsp;&raquo;, réservé au niveau 3 et signé).
       </p>
 
       <h2 style={{ fontSize: "1.1rem" }}>Joints et procès-verbaux</h2>
-      <p style={{ fontSize: "0.85rem", color: "#898781", margin: "0 0 0.5rem 0" }}>
+      <p style={{ fontSize: "0.85rem", color: "var(--couleur-texte-discret)", margin: "0 0 0.5rem 0" }}>
         Compilé automatiquement à partir des fiches soudage (FTS) et des contrôles déjà enregistrés sur chaque
         joint — rien n&apos;est ressaisi ici.
       </p>
@@ -116,7 +116,7 @@ export default async function DossierReglementairePage({ params }: { params: { i
       )}
 
       <h2 style={{ fontSize: "1.1rem", marginTop: "2rem" }}>Annexe — Qualifications et aptitudes des intervenants</h2>
-      <p style={{ fontSize: "0.85rem", color: "#898781", margin: "0 0 0.5rem 0" }}>
+      <p style={{ fontSize: "0.85rem", color: "var(--couleur-texte-discret)", margin: "0 0 0.5rem 0" }}>
         État des qualifications (soudage/CND) et de l&apos;acuité visuelle des personnes ayant soudé ou réalisé un
         contrôle CND sur cette affaire, archivé pour le dossier transmis. La vérification (et le blocage si elle
         n&apos;était plus valide) a déjà eu lieu au moment de chaque action.

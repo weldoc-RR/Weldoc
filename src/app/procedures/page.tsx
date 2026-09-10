@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getUtilisateurConnecteServeur } from "@/lib/auth";
 import { annoterStatutProcedures, type StatutAffichageProcedure } from "@/lib/procedures";
@@ -72,12 +71,9 @@ export default async function ProceduresPage() {
   const produitsDimAnnotes = annoterStatutProcedures(produitsDimList, (p) => p.createdAt);
 
   return (
-    <main style={{ fontFamily: "sans-serif", padding: "2rem" }}>
-      <p>
-        <Link href="/">← Affaires</Link>
-      </p>
-      <h1>Weldoc — Procédures</h1>
-      <p>
+    <main style={{ padding: "2rem" }}>
+      <h1 style={{ marginBottom: "0.25rem" }}>Procédures</h1>
+      <p style={{ color: "var(--couleur-texte-attenue)", marginTop: 0 }}>
         Bibliothèque des procédures de soudage, réutilisables sur les joints plutôt que ressaisies à chaque fois.
         Une nouvelle révision (Rev 1, Rev 2...) ne remplace jamais la précédente : c&apos;est un nouvel
         enregistrement, et la version « en vigueur » est simplement la plus récente pour une même référence.

@@ -11,8 +11,8 @@ const LIBELLE_STATUT: Record<string, string> = {
   EN_COURS: "En cours",
 };
 const COULEUR_STATUT: Record<string, string> = {
-  PLANIFIEE: "#898781",
-  EN_COURS: "#0ca30c",
+  PLANIFIEE: "var(--couleur-texte-discret)",
+  EN_COURS: "var(--couleur-conforme)",
 };
 
 // Vue globale du planning, toutes affaires confondues (voir le cahier des
@@ -46,12 +46,9 @@ export default async function PlanningGlobalPage() {
   }
 
   return (
-    <main style={{ fontFamily: "sans-serif", padding: "2rem" }}>
-      <p>
-        <Link href="/">← Affaires</Link>
-      </p>
-      <h1>Weldoc — Planning</h1>
-      <p style={{ fontSize: "0.85rem", color: "var(--couleur-texte-attenue)" }}>
+    <main style={{ padding: "2rem" }}>
+      <h1 style={{ marginBottom: "0.25rem" }}>Planning</h1>
+      <p style={{ fontSize: "0.85rem", color: "var(--couleur-texte-attenue)", marginTop: 0 }}>
         Qui est prévu où et quand, toutes affaires confondues (affectations planifiées ou en cours — pas
         l&apos;historique terminé/annulé). Pour affecter quelqu&apos;un, ouvrir le planning de l&apos;affaire
         concernée. Un conflit signalé ici (double affectation sur une même période) n&apos;a jamais bloqué la

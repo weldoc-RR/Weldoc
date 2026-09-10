@@ -9,6 +9,7 @@ import { pointBloque } from "@/lib/dossierReglementaire";
 import { controlesManquants } from "@/lib/controlesManquants";
 import { documentsManquants, LIBELLES_DOCUMENT } from "@/lib/documentsManquants";
 import { documentsObsoletes, LIBELLE_TYPE } from "@/lib/documentsObsoletes";
+import { rolesNonCorrespondants } from "@/lib/rolesNonCorrespondants";
 import { Destinataires } from "./destinataires";
 
 export const dynamic = "force-dynamic";
@@ -45,7 +46,12 @@ export const dynamic = "force-dynamic";
 // QMOS/procédure interne/produit dimensionnel qui n'est plus "en
 // vigueur" (annoterStatutProcedures) mais qui reste référencée par un
 // joint, une phase ou un contrôle — jamais recalculé après coup, jamais
-// remplacé automatiquement, seulement signalé.
+// remplacé automatiquement, seulement signalé. "Rôle ne correspond pas à
+// l'action" (voir src/lib/verificationRole.ts et rolesNonCorrespondants.ts)
+// est un nouvel axe, distinct des précédents : jusqu'ici le rôle (la ou
+// les fonctions d'une personne) restait purement descriptif, alors que le
+// cahier des charges le prévoit comme un axe des droits à part entière —
+// même principe indicatif que la QS (voir /joints), jamais bloquant.
 export default async function AlertesPage() {
   const utilisateur = await getUtilisateurConnecteServeur();
   if (!utilisateur) {
@@ -66,6 +72,7 @@ export default async function AlertesPage() {
     pvExternesEnAttente,
     demandesSequencementEnAttente,
     documentsObsoletesUtilises,
+    rolesNonCorrespondantsListe,
   ] = await Promise.all([
       prisma.outil.findMany({ where: { statut: { not: "HORS_SERVICE" } } }),
       prisma.qualification.findMany({
@@ -105,6 +112,7 @@ export default async function AlertesPage() {
         orderBy: { dateDemande: "asc" },
       }),
       documentsObsoletes(),
+      rolesNonCorrespondants(),
     ]);
 
   const alertesQualification = qualificationsToutes
@@ -242,6 +250,20 @@ export default async function AlertesPage() {
             <li key={i} style={{ color: "var(--couleur-a-verifier)" }}>
               {LIBELLE_TYPE[d.type]} <strong>{d.reference}</strong> ({d.version}) — plus en vigueur, encore utilisé
               sur {d.utiliseSur} (<Link href={d.lienHref}>voir</Link>)
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <h2>Rôle ne correspond pas à l&apos;action</h2>
+      {rolesNonCorrespondantsListe.length === 0 ? (
+        <p>Aucune alerte pour l&apos;instant.</p>
+      ) : (
+        <ul>
+          {rolesNonCorrespondantsListe.map((r) => (
+            <li key={r.jointId} style={{ color: "var(--couleur-a-verifier)" }}>
+              Joint <strong>{r.numero}</strong> — affaire {r.affaireNumero} — {r.soudeurNom} n&apos;a pas la fonction
+              &quot;Soudeur&quot; enregistrée (<Link href="/joints">voir les joints</Link>)
             </li>
           ))}
         </ul>

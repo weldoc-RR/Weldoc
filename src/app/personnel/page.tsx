@@ -16,6 +16,7 @@ import { ConfirmerValidite } from "./confirmer-validite";
 import { ValiderReconduction } from "./valider-reconduction";
 import { DefinirPin } from "./definir-pin";
 import { SuspendreHabilitation } from "./suspendre-habilitation";
+import { AjouterFonction } from "./ajouter-fonction";
 import { ChangerMotDePasse } from "./changer-mot-de-passe";
 import { ChangerNiveau } from "./changer-niveau";
 import { BasculerCompte } from "./basculer-compte";
@@ -166,7 +167,12 @@ export default async function PersonnelPage() {
               {p.compte && (p.id === utilisateur.personnelId || aNiveauMinimum(utilisateur.niveau, "NIVEAU_3")) && (
                 <ChangerMotDePasse compteId={p.compte.id} estSoiMeme={p.id === utilisateur.personnelId} />
               )}
-              {p.fonctions.length > 0 && <div>Fonctions : {p.fonctions.map((f) => f.fonction).join(", ")}</div>}
+              <div>
+                {p.fonctions.length > 0 && <>Fonctions : {p.fonctions.map((f) => f.fonction).join(", ")}</>}
+                {aNiveauMinimum(utilisateur.niveau, "NIVEAU_2") && (
+                  <AjouterFonction personnelId={p.id} fonctionsActuelles={p.fonctions.map((f) => f.fonction)} />
+                )}
+              </div>
 
               <div style={{ marginTop: "0.3rem" }}>
                 {resume.urgentes === 0 && resume.bientotEcheance === 0 && !acuiteInapte ? (

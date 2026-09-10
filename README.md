@@ -1321,11 +1321,33 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
     qui reste, lui, réellement bloquant : « avoir le droit de travailler
     sur cette affaire » (contexte) et « être apte à réaliser cette action »
     (qualification) sont deux vérifications séparées.
-  - Le cahier des charges liste aussi le "rôle" parmi les axes des droits
-    ("rôle, niveau, qualification, autorisation, contexte de l'affaire") :
-    la fonction d'une personne (`PersonnelFonction`, `Affectation.
-    fonction`) reste, pour l'instant, purement descriptive — elle
-    n'entre encore dans aucun contrôle d'accès.
+  - **Le rôle comme axe des droits** (`src/lib/verificationRole.ts`) :
+    le cahier des charges liste le "rôle" parmi les axes des droits
+    ("rôle, niveau, qualification, autorisation, contexte de l'affaire"),
+    mais la fonction d'une personne (`PersonnelFonction`) restait
+    purement descriptive — rien ne comparait jamais le rôle réel d'une
+    personne à l'action qu'elle réalise. Même principe indicatif que la
+    QS (`verifierQS`, ci-dessus) plutôt qu'un blocage : un rapprochement
+    entre les fonctions enregistrées d'un soudeur et la fonction
+    "Soudeur" attendue, affiché comme alerte ambre sur `/joints` (à côté
+    de l'alerte QS) et remonté dans une nouvelle section "Rôle ne
+    correspond pas à l'action" sur `/alertes`
+    (`src/lib/rolesNonCorrespondants.ts`) — jamais une décision
+    automatique, jamais bloquant. Jusqu'ici, `POST /api/personnel/[id]/
+    fonctions` (qui ajoute une fonction à une personne) n'avait aucune
+    interface, seulement l'API : ajouté un petit formulaire inline
+    "+ Ajouter une fonction" sur `/personnel` (réservé au niveau 2,
+    comme la route), avec un `<datalist>` reprenant les fonctions
+    suggérées par le cahier des charges (soudeur, contrôleur, contrôleur
+    CND, chargé de travaux, contremaître, chargé d'affaires, coordinateur
+    soudage, ingénieur soudage, ingénieur, responsable qualité,
+    exécutant, vérificateur) sans fermer la liste ("autres
+    configurables"). L'ajout d'une fonction est maintenant tracé dans
+    l'audit trail (il ne l'était pas). Portée volontairement limitée pour
+    l'instant au rapprochement soudeur/joint, seul endroit où l'identité
+    de la personne ayant réalisé l'action est déjà affichée action par
+    action ; un rapprochement contrôleur CND/contrôle pourra suivre le
+    même principe plus tard si besoin.
   - **Intitulés des niveaux** (`src/lib/niveaux.ts`, `LIBELLE_NIVEAU`) :
     Niveau 1 = "Exécutant", Niveau 2 = "Contrôleur technique", Niveau 3 =
     "Responsable" — affichés partout où le niveau apparaît (page

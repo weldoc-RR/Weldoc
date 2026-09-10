@@ -4,6 +4,7 @@ import { getUtilisateurConnecteServeur } from "@/lib/auth";
 import { annoterStatutProcedures } from "@/lib/procedures";
 import { calculerStatut } from "@/lib/statutValidite";
 import { verifierQS } from "@/lib/verificationQS";
+import { correspondFonction, FONCTION_SOUDEUR } from "@/lib/verificationRole";
 import { calculerStatutOutil, outilUtilisable } from "@/lib/statutOutil";
 import { calculerStatutConsommable, consommableUtilisable } from "@/lib/statutConsommable";
 import { AjouterJoint } from "./ajouter-joint";
@@ -36,6 +37,7 @@ export default async function JointsPage() {
           select: {
             nom: true,
             prenom: true,
+            fonctions: { select: { fonction: true } },
             qualifications: {
               where: { type: "SOUDAGE" },
               select: {
@@ -282,6 +284,16 @@ export default async function JointsPage() {
                     alerteQS = "QS : ce soudeur n'a aucune qualification soudage enregistrée";
                   }
                 }
+
+                // Rapprochement rôle/action, purement indicatif — voir
+                // src/lib/verificationRole.ts.
+                let alerteRole: string | null = null;
+                if (j.soudeur) {
+                  const fonctionsSoudeur = j.soudeur.fonctions.map((f) => f.fonction);
+                  if (!correspondFonction(fonctionsSoudeur, FONCTION_SOUDEUR)) {
+                    alerteRole = "Rôle : cette personne n'a pas la fonction \"Soudeur\" enregistrée";
+                  }
+                }
                 return (
                   <li
                     key={j.id}
@@ -315,6 +327,11 @@ export default async function JointsPage() {
                     {alerteQS && (
                       <span style={{ marginLeft: "0.6rem", color: "var(--couleur-a-verifier)" }} title="Vérification indicative, à confirmer par une personne compétente">
                         ⚠ {alerteQS}
+                      </span>
+                    )}
+                    {alerteRole && (
+                      <span style={{ marginLeft: "0.6rem", color: "var(--couleur-a-verifier)" }} title="Vérification indicative, à confirmer par une personne compétente">
+                        ⚠ {alerteRole}
                       </span>
                     )}
                     {estDernierDeLaChaine && <DeclarerReparation jointId={j.id} fncsOuvertes={fncsOuvertes} />}

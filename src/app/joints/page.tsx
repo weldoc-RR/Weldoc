@@ -13,6 +13,7 @@ import { AjouterScanTqc } from "./ajouter-scan-tqc";
 import { DeclarerReparation } from "./declarer-reparation";
 import { BadgeControle } from "./badge-controle";
 import { ControlesJoint } from "./controles-joint";
+import { TableauTuyauterie } from "./tableau-tuyauterie";
 
 export const dynamic = "force-dynamic";
 
@@ -210,6 +211,7 @@ export default async function JointsPage() {
             <h3>
               {jointsAffaire[0].affaire.numero} — {jointsAffaire[0].affaire.client}
             </h3>
+            <TableauTuyauterie joints={jointsAffaire} />
             {(scansParAffaire.get(affaireId) ?? []).length > 0 && (
               <ul style={{ listStyle: "none", padding: 0, marginBottom: "0.8rem" }}>
                 {(scansParAffaire.get(affaireId) ?? []).map((s) => (

@@ -1074,6 +1074,16 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   toujours calculé côté serveur, jamais saisi). Chaque contrôle exige une
   signature QR/matricule + PIN avant de pouvoir être enregistré (voir
   `src/lib/signature.ts`).
+  - **Tableau des joints (tuyauterie)** (`tableau-tuyauterie.tsx`) :
+    au-dessus des fiches détaillées de chaque affaire, un vrai tableau —
+    une ligne par joint, colonnes ligne/spool, type de joint, DN,
+    diamètre, épaisseur, matière et soudeur — pour voir d'un coup d'œil
+    les caractéristiques de la tuyauterie de toute une affaire, plutôt
+    que d'ouvrir chaque fiche une par une. Rien de nouveau à saisir :
+    diamètre/épaisseur reprennent la valeur propre au joint si elle est
+    renseignée, sinon celle de la matière (CCPU) liée — jamais ressaisis
+    ni dupliqués. Vue en plus, les fiches détaillées avec les contrôles
+    restent inchangées juste en dessous.
   - Les cinq contrôles à indications (VT, PT, MT, RT, UT) portent aussi une
     section facultative, repliée par défaut ("N° de PV, critères
     d'acceptation et conditions d'examen") — `ConditionsExamenSchema` dans

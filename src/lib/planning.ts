@@ -1,6 +1,14 @@
 import { prisma } from "@/lib/prisma";
 import { calculerStatut } from "@/lib/statutValidite";
 
+// Deux périodes se chevauchent si l'une commence avant que l'autre ne
+// finisse, dans les deux sens. Utilisé ici pour détecter un conflit de
+// planning (deux affectations actives qui se recoupent) ou une
+// indisponibilité qui tombe sur la période demandée.
+export function chevauche(debutA: Date, finA: Date, debutB: Date, finB: Date): boolean {
+  return debutA < finB && debutB < finA;
+}
+
 type EvaluationAffectation = {
   personnelId: string;
   fonction: string;
@@ -92,8 +100,6 @@ export async function evaluerAffectation(params: EvaluationAffectation): Promise
       alertes.push(`Habilitation "${h.intitule}" expirée.`);
     }
   }
-
-  const chevauche = (debutA: Date, finA: Date, debutB: Date, finB: Date) => debutA < finB && debutB < finA;
 
   const indisponibilites = await prisma.indisponibilite.findMany({ where: { personnelId: params.personnelId } });
   for (const i of indisponibilites) {

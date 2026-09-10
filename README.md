@@ -326,6 +326,21 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
     fabrication (section "4. Organigramme de l'intervention" de
     `/affaires/[id]/dossier`, qui affiche maintenant toute l'équipe du
     planning et plus seulement les 3 rôles fixes de l'affaire).
+  - **Planning global** (`/planning`, lien depuis la page d'accueil) : la
+    page `/affaires/[id]/planning` ci-dessus permet déjà d'affecter et
+    détecte un conflit affaire par affaire, mais rien ne permettait
+    jusqu'ici de voir en un coup d'œil qui est prévu où et quand sur
+    l'ensemble des affaires (voir le cahier des charges, "PLANNING" :
+    "signale... conflit de planning"). Regroupe par personne toutes les
+    affectations `PLANIFIEE`/`EN_COURS` (pas l'historique
+    terminé/annulé), avec un lien vers le planning de chaque affaire
+    concernée ; un badge rouge "Conflit de planning" apparaît sur toute
+    affectation dont la période recoupe une autre affectation active de
+    la même personne — la fonction `chevauche()` de
+    `src/lib/planning.ts`, déjà utilisée pour l'alerte non bloquante à la
+    création (`evaluerAffectation`), est réutilisée telle quelle plutôt
+    que dupliquée. Rien n'est stocké séparément : uniquement les
+    affectations déjà enregistrées ailleurs, donc toujours à jour.
 - `src/lib/sequencement.ts` — crée les 5 séquences par défaut, et vérifie
   qu'une phase peut démarrer (séquences précédentes terminées, ou
   dérogation acceptée par le niveau 3).

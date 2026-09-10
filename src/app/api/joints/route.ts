@@ -5,7 +5,7 @@ import { requireAuth } from "@/lib/auth";
 import { detecterPreuvesReconduction } from "@/lib/qualifications";
 import { calculerStatut } from "@/lib/statutValidite";
 import { verifierQS, type ResultatVerificationQS } from "@/lib/verificationQS";
-import { verifierQualificationBloquante, verifierAffectationBloquante } from "@/lib/aptitudePersonnel";
+import { verifierQualificationBloquante, assurerAffectation } from "@/lib/aptitudePersonnel";
 
 const CreateJointSchema = z.object({
   affaireId: z.string().min(1),
@@ -87,20 +87,14 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // Qualification soudage et contexte de l'affaire, bloquants (voir
-  // src/lib/aptitudePersonnel.ts) : contrairement au rapprochement QS/WPS
-  // ci-dessous (indicatif), une personne dont plus aucune qualification
-  // soudage n'est valide, ou qui n'est pas affectée à cette affaire (si
-  // l'affaire a des affectations), ne peut pas être désignée soudeur d'un
-  // nouveau joint.
+  // Qualification soudage bloquante (voir src/lib/aptitudePersonnel.ts) :
+  // contrairement au rapprochement QS/WPS ci-dessous (indicatif), une
+  // personne dont plus aucune qualification soudage n'est valide ne peut
+  // pas être désignée soudeur d'un nouveau joint.
   if (parsed.data.soudeurId) {
     const blocageQualif = await verifierQualificationBloquante(parsed.data.soudeurId, "SOUDAGE");
     if (blocageQualif.bloque) {
       return NextResponse.json({ error: blocageQualif.motif }, { status: 403 });
-    }
-    const blocageAffectation = await verifierAffectationBloquante(parsed.data.soudeurId, parsed.data.affaireId);
-    if (blocageAffectation.bloque) {
-      return NextResponse.json({ error: blocageAffectation.motif }, { status: 403 });
     }
   }
 
@@ -112,6 +106,12 @@ export async function POST(req: NextRequest) {
 
   if (joint.soudeurId) {
     await detecterPreuvesReconduction(joint.soudeurId, joint.id);
+
+    // Contexte de l'affaire (voir src/lib/aptitudePersonnel.ts) : intègre
+    // automatiquement le soudeur au planning de cette affaire s'il n'y
+    // est pas déjà, plutôt que d'exiger une affectation planifiée à
+    // l'avance.
+    await assurerAffectation(joint.soudeurId, joint.affaireId, "Soudeur", auth.utilisateur.personnelId);
   }
 
   // Rapprochement QS/WPS, non bloquant (voir src/lib/verificationQS.ts) :

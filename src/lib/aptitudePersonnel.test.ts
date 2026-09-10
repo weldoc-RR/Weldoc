@@ -7,28 +7,23 @@ vi.mock("@/lib/prisma", () => ({
   prisma: {
     qualification: { findMany: vi.fn() },
     acuiteVisuelle: { findMany: vi.fn() },
-    personnel: { findUnique: vi.fn() },
-    affectation: { findMany: vi.fn() },
+    affectation: { findFirst: vi.fn(), create: vi.fn() },
   },
 }));
 
 import { prisma } from "@/lib/prisma";
-import {
-  verifierQualificationBloquante,
-  verifierAcuiteVisuelleBloquante,
-  verifierAffectationBloquante,
-} from "./aptitudePersonnel";
+import { verifierQualificationBloquante, verifierAcuiteVisuelleBloquante, assurerAffectation } from "./aptitudePersonnel";
 
 const findManyQualification = prisma.qualification.findMany as unknown as ReturnType<typeof vi.fn>;
 const findManyAcuite = prisma.acuiteVisuelle.findMany as unknown as ReturnType<typeof vi.fn>;
-const findUniquePersonnel = prisma.personnel.findUnique as unknown as ReturnType<typeof vi.fn>;
-const findManyAffectation = prisma.affectation.findMany as unknown as ReturnType<typeof vi.fn>;
+const findFirstAffectation = prisma.affectation.findFirst as unknown as ReturnType<typeof vi.fn>;
+const createAffectation = prisma.affectation.create as unknown as ReturnType<typeof vi.fn>;
 
 beforeEach(() => {
   findManyQualification.mockReset();
   findManyAcuite.mockReset();
-  findUniquePersonnel.mockReset();
-  findManyAffectation.mockReset();
+  findFirstAffectation.mockReset();
+  createAffectation.mockReset();
 });
 
 describe("verifierQualificationBloquante", () => {
@@ -98,43 +93,35 @@ describe("verifierAcuiteVisuelleBloquante", () => {
   });
 });
 
-describe("verifierAffectationBloquante", () => {
-  it("ne bloque jamais un niveau 3, même sans affectation", async () => {
-    findUniquePersonnel.mockResolvedValue({ niveau: "NIVEAU_3" });
-    findManyAffectation.mockResolvedValue([{ personnelId: "autre" }]);
-    const resultat = await verifierAffectationBloquante("p1", "aff1");
-    expect(resultat.bloque).toBe(false);
-    expect(findManyAffectation).not.toHaveBeenCalled();
+describe("assurerAffectation", () => {
+  it("ne crée rien quand la personne a déjà une affectation (autre qu'annulée) sur l'affaire", async () => {
+    findFirstAffectation.mockResolvedValue({ id: "existante" });
+    await assurerAffectation("p1", "aff1", "Soudeur", "createur1");
+    expect(createAffectation).not.toHaveBeenCalled();
   });
 
-  it("ne bloque jamais quand l'affaire n'a aucune affectation enregistrée (additif)", async () => {
-    findUniquePersonnel.mockResolvedValue({ niveau: "NIVEAU_1" });
-    findManyAffectation.mockResolvedValue([]);
-    const resultat = await verifierAffectationBloquante("p1", "aff1");
-    expect(resultat.bloque).toBe(false);
+  it("crée une affectation marquée comme déjà réalisée quand la personne n'en a aucune sur l'affaire", async () => {
+    findFirstAffectation.mockResolvedValue(null);
+    await assurerAffectation("p1", "aff1", "Soudeur", "createur1");
+    expect(createAffectation).toHaveBeenCalledTimes(1);
+    const data = createAffectation.mock.calls[0][0].data;
+    expect(data).toMatchObject({
+      personnelId: "p1",
+      affaireId: "aff1",
+      fonction: "Soudeur",
+      statut: "TERMINEE",
+      creeParId: "createur1",
+    });
+    expect(data.dateDebut).toEqual(data.dateFin);
   });
 
-  it("bloque une personne niveau 1/2 non affectée quand l'affaire a des affectations pour d'autres personnes", async () => {
-    findUniquePersonnel.mockResolvedValue({ niveau: "NIVEAU_2" });
-    findManyAffectation.mockResolvedValue([{ personnelId: "autre1" }, { personnelId: "autre2" }]);
-    const resultat = await verifierAffectationBloquante("p1", "aff1");
-    expect(resultat.bloque).toBe(true);
-    expect(resultat.motif).toMatch(/affectée/);
-  });
-
-  it("ne bloque pas une personne qui figure bien parmi les affectations de l'affaire", async () => {
-    findUniquePersonnel.mockResolvedValue({ niveau: "NIVEAU_1" });
-    findManyAffectation.mockResolvedValue([{ personnelId: "autre1" }, { personnelId: "p1" }]);
-    const resultat = await verifierAffectationBloquante("p1", "aff1");
-    expect(resultat.bloque).toBe(false);
-  });
-
-  it("exclut les affectations annulées de la requête (statut != ANNULEE)", async () => {
-    findUniquePersonnel.mockResolvedValue({ niveau: "NIVEAU_1" });
-    findManyAffectation.mockResolvedValue([]);
-    await verifierAffectationBloquante("p1", "aff1");
-    expect(findManyAffectation).toHaveBeenCalledWith(
-      expect.objectContaining({ where: expect.objectContaining({ statut: { not: "ANNULEE" } }) })
+  it("recherche uniquement les affectations non annulées de cette personne sur cette affaire", async () => {
+    findFirstAffectation.mockResolvedValue(null);
+    await assurerAffectation("p1", "aff1", "Contrôleur CND", "createur1");
+    expect(findFirstAffectation).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { personnelId: "p1", affaireId: "aff1", statut: { not: "ANNULEE" } },
+      })
     );
   });
 });

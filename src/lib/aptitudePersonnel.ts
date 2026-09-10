@@ -65,45 +65,51 @@ export async function verifierAcuiteVisuelleBloquante(personnelId: string): Prom
 
 // Droits contextuels — "contexte de l'affaire" (voir le cahier des
 // charges, "DROITS ET MODIFICATIONS" : "droits définis par... le contexte
-// de l'affaire") : pour souder un joint ou réaliser un contrôle CND,
-// encore fallait-il jusqu'ici être authentifié, sans être réellement
-// affecté à CETTE affaire dans le planning (voir Affectation, déjà
-// utilisé pour l'organigramme et les alertes de disponibilité).
+// de l'affaire") : plutôt que d'exiger une affectation planifiée à
+// l'avance (ce qui bloquerait une action tant que quelqu'un n'a pas
+// pensé à mettre la personne au planning), Weldoc intègre automatiquement
+// la personne au planning de l'affaire au moment même où elle agit
+// (souder un joint, réaliser un contrôle) — comme ça, personne n'a besoin
+// d'être pré-affecté à la main, et le planning/l'organigramme d'une
+// affaire reste toujours complet et à jour avec ce qui s'est réellement
+// passé, sans double saisie.
 //
-// Même principe additif que les autres blocages : si aucune affectation
-// (autre qu'annulée) n'existe pour l'affaire, rien n'est vérifiable, donc
-// rien n'est bloqué — le comportement actuel continue. Si l'affaire a des
-// affectations mais que cette personne n'en a aucune, l'action est
-// bloquée. Niveau 3 (validation critique, décisions définies par
-// l'entreprise — voir le cahier des charges) passe toujours, comme pour
-// le déblocage réglementaire.
-export async function verifierAffectationBloquante(personnelId: string, affaireId: string): Promise<BlocageAptitude> {
-  const personnel = await prisma.personnel.findUnique({ where: { id: personnelId }, select: { niveau: true } });
-  if (personnel?.niveau === "NIVEAU_3") return { bloque: false };
-
-  const affectationsAffaire = await prisma.affectation.findMany({
-    where: { affaireId, statut: { not: "ANNULEE" } },
-    select: { personnelId: true },
+// N'écrit rien si la personne a déjà une affectation (autre qu'annulée)
+// sur cette affaire — jamais de doublon. L'affectation créée est marquée
+// directement comme déjà réalisée (statut TERMINEE, même date de début et
+// de fin) : ce n'est pas une planification à venir, c'est le constat
+// qu'une personne a bien travaillé sur cette affaire.
+export async function assurerAffectation(
+  personnelId: string,
+  affaireId: string,
+  fonction: string,
+  creeParId: string
+): Promise<void> {
+  const existante = await prisma.affectation.findFirst({
+    where: { personnelId, affaireId, statut: { not: "ANNULEE" } },
+    select: { id: true },
   });
-  if (affectationsAffaire.length === 0) return { bloque: false };
+  if (existante) return;
 
-  const estAffecte = affectationsAffaire.some((a) => a.personnelId === personnelId);
-  if (estAffecte) return { bloque: false };
-
-  return {
-    bloque: true,
-    motif: "Cette personne n'est pas affectée à cette affaire (voir le planning) — action bloquée.",
-  };
+  const maintenant = new Date();
+  await prisma.affectation.create({
+    data: {
+      personnelId,
+      affaireId,
+      fonction,
+      dateDebut: maintenant,
+      dateFin: maintenant,
+      statut: "TERMINEE",
+      creeParId,
+    },
+  });
 }
 
 // Les vérifications requises avant un contrôle CND (VT/PT/MT/RT/UT) :
-// qualification CND, acuité visuelle, et être affecté à l'affaire.
-// Utilisé par les cinq routes de contrôle CND pour éviter de dupliquer
-// cet enchaînement cinq fois.
-export async function verifierAptitudeCND(personnelId: string, affaireId: string): Promise<BlocageAptitude> {
+// qualification CND et acuité visuelle. Utilisé par les cinq routes de
+// contrôle CND pour éviter de dupliquer cet enchaînement cinq fois.
+export async function verifierAptitudeCND(personnelId: string): Promise<BlocageAptitude> {
   const qualif = await verifierQualificationBloquante(personnelId, "CND");
   if (qualif.bloque) return qualif;
-  const acuite = await verifierAcuiteVisuelleBloquante(personnelId);
-  if (acuite.bloque) return acuite;
-  return verifierAffectationBloquante(personnelId, affaireId);
+  return verifierAcuiteVisuelleBloquante(personnelId);
 }

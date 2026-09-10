@@ -1159,27 +1159,25 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
 - **Droits contextuels — "contexte de l'affaire"** (voir le cahier des
   charges, "DROITS ET MODIFICATIONS" : "droits définis par... le contexte
   de l'affaire") : jusqu'ici, les droits ne dépendaient que du niveau
-  (1/2/3) de la personne, jamais de l'affaire concernée. Désormais, pour
-  souder un joint ou réaliser un contrôle CND (VT/PT/MT/RT/UT), il faut
-  être affecté à cette affaire dans le planning (`Affectation`, déjà
-  utilisé pour l'organigramme) — voir `src/lib/aptitudePersonnel.ts`,
-  `verifierAffectationBloquante`.
-  - **Même principe additif que les autres blocages** (qualification
-    expirée, acuité visuelle...) : si l'affaire n'a aucune affectation
-    configurée, rien n'est vérifiable donc rien n'est bloqué — le
-    comportement actuel continue sans changement pour une entreprise qui
-    n'utilise pas encore le planning.
-  - **Niveau 3 passe toujours**, même sans affectation — même logique que
-    le déblocage réglementaire ("validation critique, décisions définies
-    par l'entreprise", cahier des charges).
-  - Ne vérifie que la présence (être affecté à l'affaire), pas que la
-    fonction de l'affectation corresponde précisément à l'action (ex.
-    "Soudeur" pour souder) : la nomenclature des fonctions est libre,
-    propre à chaque entreprise, comme pour tout ce que Weldoc ne peut pas
-    interpréter sans référentiel fourni.
+  (1/2/3) de la personne, jamais de l'affaire concernée. Plutôt que
+  d'exiger une affectation planifiée à l'avance (ce qui aurait bloqué une
+  action tant que personne n'a pensé à mettre la personne au planning),
+  Weldoc **intègre automatiquement la personne au planning de l'affaire
+  au moment même où elle agit** (souder un joint, réaliser un contrôle
+  CND VT/PT/MT/RT/UT) : `assurerAffectation` dans
+  `src/lib/aptitudePersonnel.ts` crée l'affectation (fonction "Soudeur" ou
+  "Contrôleur CND", statut `TERMINEE`, même date de début et de fin) si
+  cette personne n'en a pas déjà une sur cette affaire — jamais de
+  doublon. Pas de blocage : le planning/l'organigramme d'une affaire
+  reste ainsi toujours complet et à jour avec ce qui s'est réellement
+  passé, sans double saisie ni pré-planification obligatoire.
   - Branché sur `POST /api/joints` (désignation du soudeur) et les cinq
     routes de contrôle CND — pas le contrôle dimensionnel (DIM), qui
     n'est pas dans le périmètre demandé.
+  - Distinct du blocage qualification/acuité visuelle (voir plus haut),
+    qui reste, lui, réellement bloquant : « avoir le droit de travailler
+    sur cette affaire » (contexte) et « être apte à réaliser cette action »
+    (qualification) sont deux vérifications séparées.
   - Le cahier des charges liste aussi le "rôle" parmi les axes des droits
     ("rôle, niveau, qualification, autorisation, contexte de l'affaire") :
     la fonction d'une personne (`PersonnelFonction`, `Affectation.

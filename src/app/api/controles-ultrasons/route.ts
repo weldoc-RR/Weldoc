@@ -5,7 +5,7 @@ import { requireAuth } from "@/lib/auth";
 import { IndicationSchema, ConditionsExamenSchema, calculerResultat, extraireConditionsExamen } from "@/lib/controles";
 import { avancerFNCApresControleConforme } from "@/lib/remiseEnConformite";
 import { verifierOutilPourControle } from "@/lib/statutOutil";
-import { verifierAptitudeCND } from "@/lib/aptitudePersonnel";
+import { verifierAptitudeCND, assurerAffectation } from "@/lib/aptitudePersonnel";
 
 const CreateControleSchema = z
   .object({
@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: verifOutil.erreur }, { status: 422 });
   }
 
-  const blocage = await verifierAptitudeCND(auth.utilisateur.personnelId, joint.affaireId);
+  const blocage = await verifierAptitudeCND(auth.utilisateur.personnelId);
   if (blocage.bloque) {
     return NextResponse.json({ error: blocage.motif }, { status: 403 });
   }
@@ -82,6 +82,12 @@ export async function POST(req: NextRequest) {
       ...extraireConditionsExamen(parsed.data),
     },
   });
+
+  // Contexte de l'affaire (voir src/lib/aptitudePersonnel.ts) : intègre
+  // automatiquement le contrôleur au planning de cette affaire s'il n'y
+  // est pas déjà, plutôt que d'exiger une affectation planifiée à
+  // l'avance.
+  await assurerAffectation(auth.utilisateur.personnelId, joint.affaireId, "Contrôleur CND", auth.utilisateur.personnelId);
 
   // Liens vers les consommables utilisés, en écritures séquentielles (pas
   // de création imbriquée : voir la remarque sur les transactions dans

@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getUtilisateurConnecteServeur } from "@/lib/auth";
 import { annoterStatutProcedures } from "@/lib/procedures";
@@ -159,18 +158,15 @@ export default async function JointsPage() {
   }
 
   return (
-    <main style={{ fontFamily: "sans-serif", padding: "2rem" }}>
-      <p>
-        <Link href="/">← Affaires</Link>
-      </p>
-      <h1>Weldoc — Joints</h1>
-      <p>
+    <main style={{ padding: "2rem" }}>
+      <h1 style={{ marginBottom: "0.25rem" }}>Joints</h1>
+      <p style={{ color: "var(--couleur-texte-attenue)", marginTop: 0 }}>
         Chaque joint et, quand il y en a eu, sa chaîne de remise en conformité (M800 → M800 R1 → M800 R2...) —
         jamais un enregistrement écrasé par un autre.
       </p>
 
       <h2>Matières prévues (commande) par affaire</h2>
-      <p style={{ fontSize: "0.85rem", color: "#52514e", maxWidth: 640 }}>
+      <p style={{ fontSize: "0.85rem", color: "var(--couleur-texte-attenue)", maxWidth: 640 }}>
         Déclaré une seule fois par l&apos;encadrement, puis comparé automatiquement à chaque matière réceptionnée
         sur cette affaire (norme, nuance, diamètre, épaisseur) — un écart n&apos;empêche jamais la réception, il
         se signale simplement en alerte.

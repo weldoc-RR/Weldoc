@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 
-export function LogoutButton() {
+export function LogoutButton({ style }: { style?: React.CSSProperties }) {
   const router = useRouter();
 
   async function onClick() {
@@ -12,7 +12,7 @@ export function LogoutButton() {
   }
 
   return (
-    <button onClick={onClick} style={{ padding: "0.4rem 0.8rem" }}>
+    <button onClick={onClick} style={{ padding: "0.4rem 0.8rem", ...style }}>
       Déconnexion
     </button>
   );

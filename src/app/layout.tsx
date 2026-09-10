@@ -1,4 +1,6 @@
 import "./globals.css";
+import { archivo, plexSans } from "./fonts";
+import { Header } from "./header";
 
 export const metadata = {
   title: "Weldoc",
@@ -8,8 +10,11 @@ export const metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="fr">
-      <body>{children}</body>
+    <html lang="fr" className={`${archivo.variable} ${plexSans.variable}`}>
+      <body>
+        <Header />
+        {children}
+      </body>
     </html>
   );
 }

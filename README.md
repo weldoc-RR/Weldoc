@@ -1353,6 +1353,39 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
   des sujets d'offre commerciale que des écrans à construire). Le TQC
   ("tel que construit") est maintenant complet sur ses trois méthodes :
   texte + book photo, scan 3D, et ISO manuel au stylet (voir ci-dessus).
+- **Identité visuelle** (voir le cahier des charges, "ARCHITECTURE
+  TECHNIQUE" : "application web moderne") : jusqu'ici chaque page portait
+  le même style HTML minimal du squelette de démonstration, sans
+  cohérence ni marque propre à Weldoc. Premier socle posé :
+  - Palette dans `src/app/globals.css` : un bleu acier sombre
+    (`--couleur-primaire`) comme couleur de marque, volontairement
+    distinct des trois couleurs de statut réglementaire déjà en place
+    (vert conforme, rouge non conforme, ambre à vérifier) — la marque ne
+    doit jamais se confondre avec un résultat de contrôle. Gris de texte
+    et bordures légèrement retintés pour s'harmoniser avec ce bleu.
+  - Typographie (`src/app/fonts.ts`, via `next/font/google` — polices
+    auto-hébergées par Next.js, pas de requête externe au chargement) :
+    Archivo pour les titres, IBM Plex Sans pour le texte courant — une
+    famille dessinée à l'origine pour de l'outillage technique, cohérente
+    avec le domaine (soudage, contrôle, traçabilité).
+  - **En-tête commun à toute page connectée** (`src/app/header.tsx` +
+    `header-nav.tsx`, rendu une seule fois depuis `layout.tsx`) : marque
+    "WELDOC", navigation vers les cinq écrans les plus utilisés au
+    quotidien (Affaires, Joints, Personnel, Planning, Alertes) avec lien
+    actif mis en évidence, personne connectée et bouton de déconnexion.
+    Jusqu'ici, ce dernier n'existait que sur la page d'accueil : il
+    fallait y retourner pour se déconnecter depuis n'importe quelle autre
+    page. Les autres modules restent accessibles depuis la page d'accueil
+    (liste de liens secondaires, inchangée).
+  - Page de connexion (`/login`) retravaillée en carte centrée avec la
+    marque, plutôt que le formulaire brut d'origine — c'est la toute
+    première chose que voit un utilisateur.
+  - Appliqué pour l'instant aux écrans les plus utilisés (accueil,
+    `/joints`, `/personnel`) : titres, intitulés d'en-tête et cartes
+    retintés avec la nouvelle palette. Le contenu détaillé de chaque page
+    (formulaires, tableaux) garde encore ses couleurs d'origine — à
+    reprendre progressivement, page par page, comme pour le socle
+    tactile ci-dessous plutôt que dans une seule passe.
 - Une vraie interface tablette soignée sur l'ensemble de l'application —
   un premier socle vient d'être posé (`src/app/globals.css`, importé
   depuis `src/app/layout.tsx`) : boutons et champs de saisie sans style

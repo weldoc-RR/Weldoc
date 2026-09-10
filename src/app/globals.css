@@ -7,19 +7,34 @@
    page — cases à cocher, boutons/champs par défaut. Chaque page garde le
    contrôle fin de sa propre mise en page (styles en ligne existants) :
    ceci ne fait que poser un sol commun, pas remplacer ce qui existe déjà.
+
+   Identité visuelle (voir src/app/fonts.ts pour les polices) : un bleu
+   acier sombre comme couleur de marque — inspiré des bâtis d'équipement
+   industriel plutôt que d'un bleu "logiciel" générique — volontairement
+   distinct des trois couleurs de statut (vert/rouge/ambre) ci-dessus, qui
+   gardent leur sens exclusivement réglementaire (conforme/non conforme/à
+   vérifier) et ne doivent jamais être réutilisées comme couleur de marque.
 */
 
 :root {
   --couleur-conforme: #0ca30c;
   --couleur-non-conforme: #d03b3b;
   --couleur-a-verifier: #fab219;
-  --couleur-texte: #10161d;
-  --couleur-texte-attenue: #52514e;
-  --couleur-texte-discret: #898781;
-  --couleur-bordure: #ddd;
-  --couleur-fond-discret: #f7f6f1;
+
+  --couleur-primaire: #1c3f5f;
+  --couleur-primaire-sombre: #12293f;
+  --couleur-primaire-claire: #e8eef4;
+
+  --couleur-texte: #16222d;
+  --couleur-texte-attenue: #4c5b68;
+  --couleur-texte-discret: #83909c;
+  --couleur-bordure: #d8dfe5;
+  --couleur-fond-discret: #f2f5f8;
   --couleur-fond-page: #fff;
   --zone-tactile-min: 44px;
+
+  --font-titres: var(--font-archivo), "Archivo", sans-serif;
+  --font-texte: var(--font-plex-sans), "IBM Plex Sans", sans-serif;
 }
 
 * {
@@ -30,7 +45,17 @@ body {
   margin: 0;
   background: var(--couleur-fond-page);
   color: var(--couleur-texte);
+  font-family: var(--font-texte);
   -webkit-tap-highlight-color: transparent;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-titres);
+  letter-spacing: -0.01em;
+}
+
+a {
+  color: var(--couleur-primaire);
 }
 
 /* Cases à cocher/radios : la taille native du navigateur (~13px) est trop
@@ -55,6 +80,19 @@ button {
   font-size: 0.95rem;
   font-family: inherit;
   cursor: pointer;
+  border: 1px solid var(--couleur-bordure);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--couleur-texte);
+}
+
+button:not(:disabled):hover {
+  border-color: var(--couleur-primaire);
+}
+
+button:disabled {
+  cursor: default;
+  opacity: 0.6;
 }
 
 input[type="text"],
@@ -63,12 +101,17 @@ input[type="password"],
 input[type="date"],
 input[type="datetime-local"],
 input[type="email"],
+input[type="url"],
 select,
 textarea {
   min-height: var(--zone-tactile-min);
   padding: 0.5rem;
   font-size: 1rem;
   font-family: inherit;
+  border: 1px solid var(--couleur-bordure);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--couleur-texte);
 }
 
 /* Cible visible au clavier/au stylet (accessibilité), sans halo permanent
@@ -78,6 +121,6 @@ input:focus-visible,
 select:focus-visible,
 textarea:focus-visible,
 a:focus-visible {
-  outline: 2px solid #2563a8;
+  outline: 2px solid var(--couleur-primaire);
   outline-offset: 2px;
 }

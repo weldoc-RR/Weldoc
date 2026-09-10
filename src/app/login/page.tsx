@@ -60,27 +60,59 @@ export default function LoginPage() {
   }
 
   return (
-    <main style={{ fontFamily: "sans-serif", padding: "2rem", maxWidth: 360 }}>
-      <h1>Weldoc — Connexion</h1>
+    <main
+      style={{
+        minHeight: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "2rem 1rem",
+      }}
+    >
+      <div style={{ width: "100%", maxWidth: 380 }}>
+        <div
+          style={{
+            fontFamily: "var(--font-titres)",
+            fontWeight: 800,
+            fontSize: "1.6rem",
+            color: "var(--couleur-primaire-sombre)",
+            letterSpacing: "0.02em",
+            marginBottom: "0.25rem",
+          }}
+        >
+          WELDOC
+        </div>
+        <p style={{ color: "var(--couleur-texte-attenue)", marginTop: 0, marginBottom: "1.5rem" }}>Connexion</p>
 
-      <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1rem" }}>
-        <button
-          type="button"
-          onClick={() => setMethode("MOT_DE_PASSE")}
-          disabled={methode === "MOT_DE_PASSE"}
-          style={{ fontWeight: methode === "MOT_DE_PASSE" ? "bold" : "normal" }}
-        >
-          Matricule + mot de passe
-        </button>
-        <button
-          type="button"
-          onClick={() => setMethode("QR_PIN")}
-          disabled={methode === "QR_PIN"}
-          style={{ fontWeight: methode === "QR_PIN" ? "bold" : "normal" }}
-        >
-          QR + code PIN
-        </button>
-      </div>
+        <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1.25rem" }}>
+          <button
+            type="button"
+            onClick={() => setMethode("MOT_DE_PASSE")}
+            disabled={methode === "MOT_DE_PASSE"}
+            style={{
+              flex: 1,
+              fontSize: "0.85rem",
+              fontWeight: methode === "MOT_DE_PASSE" ? 600 : 400,
+              borderColor: methode === "MOT_DE_PASSE" ? "var(--couleur-primaire)" : undefined,
+            }}
+          >
+            Matricule + mot de passe
+          </button>
+          <button
+            type="button"
+            onClick={() => setMethode("QR_PIN")}
+            disabled={methode === "QR_PIN"}
+            style={{
+              flex: 1,
+              fontSize: "0.85rem",
+              fontWeight: methode === "QR_PIN" ? 600 : 400,
+              borderColor: methode === "QR_PIN" ? "var(--couleur-primaire)" : undefined,
+            }}
+          >
+            QR + code PIN
+          </button>
+        </div>
 
       {methode === "MOT_DE_PASSE" ? (
         <form onSubmit={onSubmitMotDePasse} style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
@@ -104,8 +136,12 @@ export default function LoginPage() {
               style={{ display: "block", width: "100%", padding: "0.5rem" }}
             />
           </label>
-          {erreur && <p style={{ color: "crimson" }}>{erreur}</p>}
-          <button type="submit" disabled={enCours} style={{ padding: "0.5rem" }}>
+          {erreur && <p style={{ color: "var(--couleur-non-conforme)" }}>{erreur}</p>}
+          <button
+            type="submit"
+            disabled={enCours}
+            style={{ background: "var(--couleur-primaire)", color: "#fff", borderColor: "var(--couleur-primaire)", fontWeight: 600 }}
+          >
             {enCours ? "Connexion..." : "Se connecter"}
           </button>
         </form>
@@ -133,16 +169,21 @@ export default function LoginPage() {
               style={{ display: "block", width: "100%", padding: "0.5rem" }}
             />
           </label>
-          <p style={{ fontSize: "0.75rem", color: "#898781", margin: 0 }}>
+          <p style={{ fontSize: "0.75rem", color: "var(--couleur-texte-discret)", margin: 0 }}>
             Même code PIN que celui utilisé pour signer un document. À défaut, se connecter avec le mot de passe et
             en définir un depuis sa fiche personnel.
           </p>
-          {erreur && <p style={{ color: "crimson" }}>{erreur}</p>}
-          <button type="submit" disabled={enCours} style={{ padding: "0.5rem" }}>
+          {erreur && <p style={{ color: "var(--couleur-non-conforme)" }}>{erreur}</p>}
+          <button
+            type="submit"
+            disabled={enCours}
+            style={{ background: "var(--couleur-primaire)", color: "#fff", borderColor: "var(--couleur-primaire)", fontWeight: 600 }}
+          >
             {enCours ? "Connexion..." : "Se connecter"}
           </button>
         </form>
       )}
+      </div>
     </main>
   );
 }

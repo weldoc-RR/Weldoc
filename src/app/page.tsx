@@ -3,8 +3,6 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getUtilisateurConnecteServeur, aNiveauMinimum } from "@/lib/auth";
 import { calculerAvancementAffaire } from "@/lib/avancement";
-import { LIBELLE_NIVEAU } from "@/lib/niveaux";
-import { LogoutButton } from "./logout-button";
 
 export const dynamic = "force-dynamic";
 
@@ -27,63 +25,69 @@ export default async function HomePage() {
   const avancementParAffaire = new Map(avancements.map((a) => [a.affaireId, a.avancement]));
 
   return (
-    <main style={{ fontFamily: "sans-serif", padding: "2rem" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <h1>Weldoc — Affaires</h1>
-        <div style={{ textAlign: "right" }}>
-          <p>
-            Connecté : {utilisateur.prenom} {utilisateur.nom} ({LIBELLE_NIVEAU[utilisateur.niveau]})
-          </p>
-          <LogoutButton />
-        </div>
-      </div>
-      <p>
-        Squelette de démonstration : liste des affaires, joints et FNC. <Link href="/personnel">Personnel →</Link>{" "}
-        <Link href="/joints">Joints →</Link> <Link href="/procedures">WPS/QMOS →</Link>{" "}
-        <Link href="/planning">Planning →</Link>{" "}
-        <Link href="/consommables">Consommables CND →</Link>{" "}
-        <Link href="/alertes">Alertes →</Link> <Link href="/pieces">Pièces (atelier) →</Link>{" "}
-        <Link href="/avancement">Avancement →</Link> <Link href="/charte">Charte →</Link>{" "}
-        <Link href="/documents">Documents externes →</Link>{" "}
-        <Link href="/rex">REX →</Link>{" "}
-        <Link href="/productivite">Temps et productivité →</Link>{" "}
+    <main style={{ padding: "2rem" }}>
+      <h1 style={{ marginBottom: "0.25rem" }}>Affaires</h1>
+      <p style={{ color: "var(--couleur-texte-attenue)", marginTop: 0 }}>
+        Préparation, réalisation, contrôle et traçabilité des affaires — chaque affaire regroupe ses joints, son
+        planning, son dossier réglementaire et son rapport de fin de fabrication.
+      </p>
+      <p style={{ fontSize: "0.85rem" }}>
+        <Link href="/procedures">WPS/QMOS →</Link> · <Link href="/consommables">Consommables CND →</Link> ·{" "}
+        <Link href="/pieces">Pièces (atelier) →</Link> · <Link href="/avancement">Avancement →</Link> ·{" "}
+        <Link href="/charte">Charte →</Link> · <Link href="/documents">Documents externes →</Link> ·{" "}
+        <Link href="/rex">REX →</Link> · <Link href="/productivite">Temps et productivité →</Link> ·{" "}
         <Link href="/referentiels">Référentiels →</Link>{" "}
         {aNiveauMinimum(utilisateur.niveau, "NIVEAU_3") && (
           <>
-            <Link href="/audit">Audit trail →</Link> <Link href="/systeme-qualite">Système qualité →</Link>
+            · <Link href="/audit">Audit trail →</Link> · <Link href="/systeme-qualite">Système qualité →</Link>
           </>
         )}
       </p>
-      <ul style={{ listStyle: "none", padding: 0 }}>
+      <ul style={{ listStyle: "none", padding: 0, marginTop: "1.5rem" }}>
         {affaires.map((a) => {
           const avancement = avancementParAffaire.get(a.id);
           return (
-            <li key={a.id} style={{ marginBottom: "1rem", borderBottom: "1px solid #ddd", paddingBottom: "0.75rem" }}>
-              <strong>{a.numero}</strong> — {a.client} / {a.projet} ({a.typeRealisation.toLowerCase()}) —{" "}
-              {a.joints.length} joint(s), {a.fncs.length} FNC —{" "}
-              <Link href={`/affaires/${a.id}/dossier`}>Rapport de fin de fabrication →</Link>{" "}
-              · <Link href={`/affaires/${a.id}/photos`}>Book photo →</Link>{" "}
-              · <Link href={`/affaires/${a.id}/reglementaire`}>Dossier réglementaire →</Link>{" "}
-              · <Link href={`/affaires/${a.id}/planning`}>Planning →</Link>{" "}
-              · <Link href={`/affaires/${a.id}/organigramme`}>Organigramme →</Link>{" "}
-              · <Link href={`/affaires/${a.id}/pv-externes`}>PV externes →</Link>{" "}
-              · <Link href={`/affaires/${a.id}/etat-des-lieux`}>État des lieux →</Link>{" "}
-              · <Link href={`/affaires/${a.id}/notes-rex`}>Notes REX →</Link>
+            <li
+              key={a.id}
+              style={{
+                marginBottom: "1rem",
+                border: "1px solid var(--couleur-bordure)",
+                borderRadius: 8,
+                padding: "1rem 1.25rem",
+              }}
+            >
+              <div style={{ fontFamily: "var(--font-titres)", fontWeight: 700, fontSize: "1.05rem" }}>{a.numero}</div>
+              <div style={{ color: "var(--couleur-texte-attenue)", marginTop: "0.1rem" }}>
+                {a.client} / {a.projet} ({a.typeRealisation.toLowerCase()}) — {a.joints.length} joint(s), {a.fncs.length}{" "}
+                FNC
+              </div>
+              <p style={{ fontSize: "0.85rem", margin: "0.5rem 0 0 0" }}>
+                <Link href={`/affaires/${a.id}/dossier`}>Rapport de fin de fabrication →</Link>{" "}
+                · <Link href={`/affaires/${a.id}/photos`}>Book photo →</Link>{" "}
+                · <Link href={`/affaires/${a.id}/reglementaire`}>Dossier réglementaire →</Link>{" "}
+                · <Link href={`/affaires/${a.id}/planning`}>Planning →</Link>{" "}
+                · <Link href={`/affaires/${a.id}/organigramme`}>Organigramme →</Link>{" "}
+                · <Link href={`/affaires/${a.id}/pv-externes`}>PV externes →</Link>{" "}
+                · <Link href={`/affaires/${a.id}/etat-des-lieux`}>État des lieux →</Link>{" "}
+                · <Link href={`/affaires/${a.id}/notes-rex`}>Notes REX →</Link>
+              </p>
               {avancement && (
-                <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", marginTop: "0.35rem" }}>
-                  <div style={{ width: 200, height: 8, background: "#e1e0d9", borderRadius: 4, overflow: "hidden" }}>
-                    <div style={{ width: `${avancement.pourcentageGlobal}%`, height: "100%", background: "#0ca30c" }} />
+                <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", marginTop: "0.6rem" }}>
+                  <div style={{ width: 200, height: 8, background: "var(--couleur-fond-discret)", borderRadius: 4, overflow: "hidden" }}>
+                    <div style={{ width: `${avancement.pourcentageGlobal}%`, height: "100%", background: "var(--couleur-conforme)" }} />
                   </div>
                   <span style={{ fontSize: "0.85rem" }}>
                     <Link href={`/avancement/${a.id}`}>{avancement.pourcentageGlobal}% d&apos;avancement</Link>
                   </span>
                   {avancement.joints.prevus !== null && (
-                    <span style={{ fontSize: "0.85rem", color: "#52514e" }}>
+                    <span style={{ fontSize: "0.85rem", color: "var(--couleur-texte-attenue)" }}>
                       {avancement.joints.soudes}/{avancement.joints.prevus} joints soudés
                     </span>
                   )}
                   {avancement.fnc.ouvertes > 0 && (
-                    <span style={{ fontSize: "0.85rem", color: "#d03b3b" }}>{avancement.fnc.ouvertes} FNC ouverte(s)</span>
+                    <span style={{ fontSize: "0.85rem", color: "var(--couleur-non-conforme)" }}>
+                      {avancement.fnc.ouvertes} FNC ouverte(s)
+                    </span>
                   )}
                 </div>
               )}

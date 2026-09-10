@@ -89,12 +89,9 @@ export default async function PersonnelPage() {
   ]);
 
   return (
-    <main style={{ fontFamily: "sans-serif", padding: "2rem" }}>
-      <p>
-        <Link href="/">← Affaires</Link>
-      </p>
-      <h1>Weldoc — Personnel</h1>
-      <p>
+    <main style={{ padding: "2rem" }}>
+      <h1 style={{ marginBottom: "0.25rem" }}>Personnel</h1>
+      <p style={{ marginTop: 0 }}>
         <Link href="/charte">Charte d&apos;utilisation et d&apos;intégrité →</Link>
       </p>
 

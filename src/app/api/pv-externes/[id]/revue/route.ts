@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireNiveau } from "@/lib/auth";
+import { tracerModification } from "@/lib/auditTrail";
 
 const RevueSchema = z.object({
   conclusion: z.enum(["CONFORME", "NON_CONFORME"]),
@@ -39,6 +40,18 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       revueParId: droits.utilisateur.personnelId,
       dateRevue: new Date(),
     },
+  });
+
+  // Contrairement aux qualifications/points réglementaires (leur propre
+  // historique d'événements), cette revue n'est qu'un champ posé une fois
+  // sur le PV lui-même : sans cette trace, elle n'apparaîtrait dans
+  // aucune vue d'ensemble des actions sensibles (voir /audit).
+  await tracerModification({
+    utilisateurId: droits.utilisateur.personnelId,
+    entite: "PVExterne",
+    entiteId: pvExterne.id,
+    nouvelleValeur: { conclusion: parsed.data.conclusion, commentaire: parsed.data.commentaire },
+    motif: "Revue d'un PV externe.",
   });
 
   return NextResponse.json(misAJour);

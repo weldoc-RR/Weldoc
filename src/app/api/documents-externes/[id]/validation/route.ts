@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireNiveau } from "@/lib/auth";
+import { tracerModification } from "@/lib/auditTrail";
 
 const ValidationSchema = z.object({
   conclusion: z.enum(["CONFORME", "NON_CONFORME"]),
@@ -41,5 +42,18 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       dateValidation: new Date(),
     },
   });
+
+  // Contrairement aux qualifications/points réglementaires (leur propre
+  // historique d'événements), cette validation n'est qu'un champ posé une
+  // fois sur le document lui-même : sans cette trace, elle n'apparaîtrait
+  // dans aucune vue d'ensemble des actions sensibles (voir /audit).
+  await tracerModification({
+    utilisateurId: droits.utilisateur.personnelId,
+    entite: "DocumentExterne",
+    entiteId: document.id,
+    nouvelleValeur: { conclusion: parsed.data.conclusion, commentaire: parsed.data.commentaire },
+    motif: "Validation d'un document externe.",
+  });
+
   return NextResponse.json(misAJour);
 }

@@ -547,6 +547,16 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
     désormais centralisés sur le même helper), et l'avancement d'une
     phase (`PATCH /api/phases` — nouveau : une phase n'a pas d'historique
     propre, contrairement aux qualifications ou au dossier réglementaire).
+  - **Validation d'un document externe et revue d'un PV externe**
+    (`POST /api/documents-externes/[id]/validation`,
+    `POST /api/pv-externes/[id]/revue`) : contrairement aux qualifications
+    ou aux points réglementaires (leur propre historique d'événements),
+    ces deux actions ne posaient jusqu'ici qu'un champ sur le document
+    lui-même (conclusion/commentaire/auteur/date) — suffisant pour savoir
+    "qui a validé quoi" en ouvrant ce document précis, mais invisible
+    depuis la vue d'ensemble `/audit` que le niveau 3 utilise pour
+    repasser en revue toutes les actions sensibles récentes. Désormais
+    tracées comme le reste.
   - `GET /api/audit-trail?entite=...&entiteId=...`, page `/audit` —
     réservés au niveau 3 (outil de contrôle interne, voir "DROITS ET
     MODIFICATIONS"), lien visible uniquement pour ce niveau depuis la page

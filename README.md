@@ -1743,6 +1743,22 @@ doit démarrer sur une base neuve et vide.
    tout seul). Applique dans l'ordre tous les changements déjà validés
    pas à pas au fil des modules de ce projet ; sans certificat ni
    étape technique supplémentaire propre à Weldoc.
+   **Vérifié dans cette session** : les 52 migrations présentes dans
+   `prisma/migrations/` correspondent exactement, une à une et dans
+   l'ordre, aux 52 entrées enregistrées comme appliquées avec succès
+   dans la table de suivi de la base de développement (`_prisma_migrations`)
+   — aucun fichier manquant, vide, ou comportant un résidu de sortie de
+   commande (un problème déjà rencontré et corrigé une fois en cours de
+   projet). `npx prisma validate` confirme aussi que `schema.prisma`
+   reste cohérent avec l'ensemble de ces migrations. Limite de cette
+   vérification : l'environnement de développement de cette session n'a
+   qu'un accès HTTP à Neon, pas un accès PostgreSQL direct, donc
+   `npx prisma migrate deploy` n'a pas pu être rejoué ici de bout en bout
+   contre une base réellement vierge — ce sera, de fait, la toute
+   première exécution réelle de cette commande. Le reste a été revérifié
+   à l'identique : `npm run build` (compilation de production complète,
+   81 pages, sans erreur), `npx tsc --noEmit` et `npx vitest run`
+   (93 tests) au vert.
 6. **Créer le tout premier compte** : comme en local (voir
    "Comment le lancer" ci-dessus), les deux appels `curl` — remplacer
    `http://localhost:3000` par l'adresse de votre déploiement Vercel.

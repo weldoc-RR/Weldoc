@@ -167,6 +167,26 @@ a:focus-visible {
   background: rgba(255, 255, 255, 0.1);
 }
 
+/* Carte cliquable réutilisable (ex. liste d'affaires sur /avancement) :
+   même soulèvement/ombre douce qu'un bouton au survol, pour que toute la
+   carte se comporte comme un vrai bouton plutôt qu'un simple lien texte. */
+.carte-lien {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  border: 1px solid var(--couleur-bordure);
+  border-radius: var(--rayon-carte);
+  padding: 1.1rem 1.25rem;
+  box-shadow: var(--ombre-legere);
+  transition: box-shadow var(--transition-douce), transform var(--transition-douce), border-color var(--transition-douce);
+}
+
+.carte-lien:hover {
+  box-shadow: var(--ombre-survol);
+  transform: translateY(-2px);
+  border-color: var(--couleur-primaire);
+}
+
 @media (prefers-reduced-motion: reduce) {
   * {
     transition: none !important;

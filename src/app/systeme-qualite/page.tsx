@@ -7,7 +7,15 @@ export const dynamic = "force-dynamic";
 
 function Carte({ titre, children }: { titre: string; children: React.ReactNode }) {
   return (
-    <div style={{ border: "1px solid var(--couleur-bordure)", padding: "0.75rem", marginBottom: "1rem" }}>
+    <div
+      style={{
+        border: "1px solid var(--couleur-bordure)",
+        borderRadius: "var(--rayon-carte)",
+        boxShadow: "var(--ombre-legere)",
+        padding: "1rem 1.1rem",
+        marginBottom: "1rem",
+      }}
+    >
       <h3 style={{ marginTop: 0 }}>{titre}</h3>
       {children}
     </div>

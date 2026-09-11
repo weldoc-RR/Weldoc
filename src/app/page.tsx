@@ -52,7 +52,8 @@ export default async function HomePage() {
               style={{
                 marginBottom: "1rem",
                 border: "1px solid var(--couleur-bordure)",
-                borderRadius: 8,
+                borderRadius: "var(--rayon-carte)",
+                boxShadow: "var(--ombre-legere)",
                 padding: "1rem 1.25rem",
               }}
             >
@@ -73,8 +74,8 @@ export default async function HomePage() {
               </p>
               {avancement && (
                 <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", marginTop: "0.6rem" }}>
-                  <div style={{ width: 200, height: 8, background: "var(--couleur-fond-discret)", borderRadius: 4, overflow: "hidden" }}>
-                    <div style={{ width: `${avancement.pourcentageGlobal}%`, height: "100%", background: "var(--couleur-conforme)" }} />
+                  <div style={{ width: 200, height: 8, background: "var(--couleur-fond-discret)", borderRadius: 999, overflow: "hidden" }}>
+                    <div style={{ width: `${avancement.pourcentageGlobal}%`, height: "100%", background: "var(--couleur-conforme)", borderRadius: 999 }} />
                   </div>
                   <span style={{ fontSize: "0.85rem" }}>
                     <Link href={`/avancement/${a.id}`}>{avancement.pourcentageGlobal}% d&apos;avancement</Link>

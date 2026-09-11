@@ -1539,6 +1539,16 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
     - Les sections "Demandes de modification de séquencement" et
       "Phases" en dessous ne sont pas touchées dans leur logique, seule
       la mise en page autour change.
+  - **Même style de carte repris ailleurs** (`.carte-lien` dans
+    `globals.css`, nouvelle classe utilitaire : coins arrondis, ombre
+    légère, soulèvement + bordure bleu de marque au survol) : la liste
+    `/avancement` passe d'une liste de texte à une grille de cartes
+    cliquables (toute la carte est le lien, plus seulement le numéro
+    d'affaire) ; les cartes de `/systeme-qualite` et les cartes d'affaire
+    de la page d'accueil (`/`) reprennent les mêmes coins arrondis et la
+    même ombre légère — ces deux dernières restent des `<div>` (pas
+    `.carte-lien`) puisqu'elles contiennent chacune plusieurs liens
+    distincts, qu'on ne peut pas imbriquer dans un lien englobant.
 - Une vraie interface tablette soignée sur l'ensemble de l'application —
   un premier socle vient d'être posé (`src/app/globals.css`, importé
   depuis `src/app/layout.tsx`) : boutons et champs de saisie sans style

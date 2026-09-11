@@ -10,7 +10,7 @@ const COULEUR_A_FAIRE = "var(--couleur-texte-discret)";
 const COULEUR_NON_APPLICABLE = "var(--couleur-fond-discret)";
 
 const LARGEUR = 320;
-const HAUTEUR = 14;
+const HAUTEUR = 16;
 
 export function BarreSequence({ avancement }: { avancement: AvancementSequence }) {
   const { totalPhases, terminees, enCours, aFaire, nonApplicables } = avancement;
@@ -36,7 +36,7 @@ export function BarreSequence({ avancement }: { avancement: AvancementSequence }
         y={0}
         width={Math.max(largeur, 0)}
         height={HAUTEUR}
-        rx={4}
+        rx={HAUTEUR / 2}
         fill={s.couleur}
         stroke={s.couleur === COULEUR_NON_APPLICABLE ? "var(--couleur-texte-discret)" : "none"}
         strokeWidth={s.couleur === COULEUR_NON_APPLICABLE ? 1 : 0}
@@ -65,7 +65,7 @@ export function LegendeStatutsPhase() {
       {items.map(([couleur, label]) => (
         <span key={label} style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem" }}>
           <span
-            style={{ width: 10, height: 10, borderRadius: 3, background: couleur, display: "inline-block" }}
+            style={{ width: 10, height: 10, borderRadius: "50%", background: couleur, display: "inline-block" }}
           />
           {label}
         </span>

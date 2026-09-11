@@ -1507,6 +1507,38 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
     page principale de chacun, pas leurs sous-composants (formulaires,
     carte de constat, ligne d'affectation) — désormais alignés eux
     aussi.
+- **Ergonomie — une interface plus ronde et plus fluide** (demande directe
+  de l'utilisateur : que l'outil donne envie d'être utilisé) :
+  - `src/app/globals.css` : coins plus arrondis sur tous les boutons/champs
+    de saisie (`--rayon`, 10px au lieu de 6px), et un vrai retour au
+    survol d'un bouton — léger soulèvement + ombre douce plutôt qu'un
+    simple changement de couleur (`--ombre-survol`, désactivé
+    automatiquement si `prefers-reduced-motion` est actif). Les liens de
+    la barre de navigation (`header-nav.tsx`) sont maintenant en pastille
+    complètement arrondie, avec un fond léger au survol même sur un lien
+    non actif — jusqu'ici seul le lien déjà actif réagissait.
+  - **Nouveau tableau de bord d'avancement** (voir le cahier des charges,
+    "AVANCEMENT" — demande explicite : suivre au fur et à mesure les
+    joints soudés et les dossiers complétés) : `/avancement/[id]`
+    (transformé plutôt que dupliqué — une seule page à retenir par
+    affaire) remplace son texte plat par un vrai tableau de bord visuel,
+    sans changer aucun calcul sous-jacent (`calculerAvancementAffaire`
+    reste inchangé) :
+    - Un **anneau de progression** (`anneau-progression.tsx`, nouveau,
+      SVG) pour le pourcentage global, en bleu de marque — un pourcentage
+      d'avancement n'est pas un verdict de conformité, il garde donc la
+      couleur de marque plutôt qu'une couleur de statut.
+    - Des **cartes chiffrées** (joints enregistrés, contrôle dimensionnel
+      conforme, FNC ouvertes/total, joints soudés/prévus avec sa propre
+      mini barre) à la place de la ligne de texte d'origine.
+    - La liste "Par séquence" passe d'un tableau HTML à des cartes
+      arrondies, une par séquence, avec la barre déjà existante
+      (`barre-sequence.tsx`, elle-même arrondie en forme de pilule
+      maintenant — `rx` égal à la moitié de la hauteur au lieu de 4px
+      fixes, même principe sur les puces de `LegendeStatutsPhase`).
+    - Les sections "Demandes de modification de séquencement" et
+      "Phases" en dessous ne sont pas touchées dans leur logique, seule
+      la mise en page autour change.
 - Une vraie interface tablette soignée sur l'ensemble de l'application —
   un premier socle vient d'être posé (`src/app/globals.css`, importé
   depuis `src/app/layout.tsx`) : boutons et champs de saisie sans style

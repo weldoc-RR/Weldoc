@@ -33,6 +33,16 @@
   --couleur-fond-page: #fff;
   --zone-tactile-min: 44px;
 
+  /* Rayons et ombre communs (voir "ergonomie" ci-dessous) : des coins plus
+     ronds et une ombre très légère au survol donnent aux boutons/cartes un
+     rendu plus "app moderne" que le rectangle net d'origine, sans changer
+     la palette ni la densité d'information. */
+  --rayon: 10px;
+  --rayon-carte: 14px;
+  --ombre-legere: 0 1px 2px rgba(22, 34, 45, 0.06);
+  --ombre-survol: 0 4px 14px rgba(22, 34, 45, 0.1);
+  --transition-douce: 0.15s ease;
+
   --font-titres: var(--font-archivo), "Archivo", sans-serif;
   --font-texte: var(--font-plex-sans), "IBM Plex Sans", sans-serif;
 }
@@ -56,6 +66,7 @@ h1, h2, h3, h4 {
 
 a {
   color: var(--couleur-primaire);
+  transition: color var(--transition-douce);
 }
 
 /* Cases à cocher/radios : la taille native du navigateur (~13px) est trop
@@ -81,13 +92,24 @@ button {
   font-family: inherit;
   cursor: pointer;
   border: 1px solid var(--couleur-bordure);
-  border-radius: 6px;
+  border-radius: var(--rayon);
   background: #fff;
   color: var(--couleur-texte);
+  transition: border-color var(--transition-douce), box-shadow var(--transition-douce), transform var(--transition-douce);
 }
 
+/* Un léger soulèvement plutôt qu'un simple changement de couleur : c'est
+   ce qui donne l'impression d'un bouton "vivant" plutôt qu'un rectangle
+   statique — discret, pas une animation qui distrait. */
 button:not(:disabled):hover {
   border-color: var(--couleur-primaire);
+  box-shadow: var(--ombre-survol);
+  transform: translateY(-1px);
+}
+
+button:not(:disabled):active {
+  transform: translateY(0);
+  box-shadow: var(--ombre-legere);
 }
 
 button:disabled {
@@ -109,9 +131,22 @@ textarea {
   font-size: 1rem;
   font-family: inherit;
   border: 1px solid var(--couleur-bordure);
-  border-radius: 6px;
+  border-radius: var(--rayon);
   background: #fff;
   color: var(--couleur-texte);
+  transition: border-color var(--transition-douce), box-shadow var(--transition-douce);
+}
+
+input[type="text"]:hover,
+input[type="number"]:hover,
+input[type="password"]:hover,
+input[type="date"]:hover,
+input[type="datetime-local"]:hover,
+input[type="email"]:hover,
+input[type="url"]:hover,
+select:hover,
+textarea:hover {
+  border-color: var(--couleur-texte-discret);
 }
 
 /* Cible visible au clavier/au stylet (accessibilité), sans halo permanent
@@ -123,4 +158,17 @@ textarea:focus-visible,
 a:focus-visible {
   outline: 2px solid var(--couleur-primaire);
   outline-offset: 2px;
+}
+
+/* Liens de la navigation principale (voir header-nav.tsx) : un fond léger
+   au survol même sur le lien non actif, pour que la barre entière donne
+   une sensation de réactivité plutôt que seul le lien déjà actif. */
+.lien-nav-entete:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
 }

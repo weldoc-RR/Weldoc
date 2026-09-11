@@ -4,11 +4,36 @@ import { prisma } from "@/lib/prisma";
 import { getUtilisateurConnecteServeur, aNiveauMinimum } from "@/lib/auth";
 import { calculerAvancementAffaire } from "@/lib/avancement";
 import { BarreSequence, LegendeStatutsPhase } from "../barre-sequence";
+import { AnneauProgression } from "../anneau-progression";
 import { PhasesSection } from "./phases-section";
 import { DefinirJointsPrevus } from "./definir-joints-prevus";
 import { DemandesSequencement } from "./demandes-sequencement";
 
 export const dynamic = "force-dynamic";
+
+// Petite carte visuelle réutilisée sur tout le tableau de bord (chiffre
+// clé + libellé, coins arrondis, légère ombre) : la même forme partout
+// donne au tableau de bord un rythme régulier plutôt qu'une mosaïque de
+// styles différents.
+function CarteStat({ valeur, libelle, couleur }: { valeur: React.ReactNode; libelle: string; couleur?: string }) {
+  return (
+    <div
+      style={{
+        border: "1px solid var(--couleur-bordure)",
+        borderRadius: "var(--rayon-carte)",
+        boxShadow: "var(--ombre-legere)",
+        padding: "1rem 1.25rem",
+        minWidth: 160,
+        flex: "1 1 160px",
+      }}
+    >
+      <div style={{ fontSize: "1.8rem", fontWeight: "bold", fontFamily: "var(--font-titres)", color: couleur ?? "var(--couleur-texte)" }}>
+        {valeur}
+      </div>
+      <div style={{ fontSize: "0.85rem", color: "var(--couleur-texte-attenue)", marginTop: "0.2rem" }}>{libelle}</div>
+    </div>
+  );
+}
 
 export default async function AvancementAffairePage({ params }: { params: { id: string } }) {
   const utilisateur = await getUtilisateurConnecteServeur();
@@ -89,7 +114,7 @@ export default async function AvancementAffairePage({ params }: { params: { id: 
   }));
 
   return (
-    <main style={{ padding: "2rem" }}>
+    <main style={{ padding: "2rem", maxWidth: 980 }}>
       <p>
         <Link href="/avancement">← Avancement</Link>
       </p>
@@ -97,50 +122,97 @@ export default async function AvancementAffairePage({ params }: { params: { id: 
         Avancement — {affaire.numero} ({affaire.client})
       </h1>
 
-      <div style={{ display: "flex", alignItems: "baseline", gap: "1rem", margin: "1rem 0" }}>
-        <span style={{ fontSize: "2.5rem", fontWeight: "bold" }}>{avancement.pourcentageGlobal}%</span>
-        <span style={{ color: "var(--couleur-texte-attenue)" }}>des phases applicables du dossier de fabrication sont terminées</span>
+      {/* ————— Tableau de bord ————— */}
+      <div
+        style={{
+          display: "flex",
+          gap: "1.5rem",
+          alignItems: "center",
+          flexWrap: "wrap",
+          margin: "1.25rem 0",
+          padding: "1.25rem",
+          border: "1px solid var(--couleur-bordure)",
+          borderRadius: "var(--rayon-carte)",
+          background: "var(--couleur-fond-discret)",
+        }}
+      >
+        <AnneauProgression pourcentage={avancement.pourcentageGlobal} />
+        <div>
+          <p style={{ margin: 0, fontSize: "1.05rem" }}>
+            des phases applicables du dossier de fabrication sont terminées
+          </p>
+          <p style={{ margin: "0.3rem 0 0 0", fontSize: "0.85rem", color: "var(--couleur-texte-attenue)" }}>
+            Recalculé à chaque affichage à partir des phases du séquencement — rien n&apos;est jamais figé.
+          </p>
+        </div>
       </div>
 
-      <div style={{ display: "flex", gap: "2rem", marginBottom: "0.5rem", color: "var(--couleur-texte-attenue)", flexWrap: "wrap" }}>
-        <div>
-          <strong style={{ color: "var(--couleur-texte)" }}>{avancement.joints.total}</strong> joint(s)
-          {avancement.joints.reparations > 0 && <> ({avancement.joints.reparations} réparation(s))</>}
+      <div style={{ display: "flex", gap: "0.9rem", flexWrap: "wrap", marginBottom: "1.5rem" }}>
+        <CarteStat
+          valeur={
+            <>
+              {avancement.joints.total}
+              {avancement.joints.reparations > 0 && (
+                <span style={{ fontSize: "1rem", fontWeight: 400, color: "var(--couleur-texte-attenue)" }}>
+                  {" "}
+                  (+{avancement.joints.reparations} rép.)
+                </span>
+              )}
+            </>
+          }
+          libelle="Joints enregistrés"
+        />
+        <CarteStat
+          valeur={avancement.joints.controlesDimensionnelsConformes}
+          libelle="Contrôle dimensionnel conforme"
+          couleur="var(--couleur-conforme)"
+        />
+        <CarteStat
+          valeur={`${avancement.fnc.ouvertes} / ${avancement.fnc.total}`}
+          libelle="FNC ouvertes / total"
+          couleur={avancement.fnc.ouvertes > 0 ? "var(--couleur-non-conforme)" : "var(--couleur-conforme)"}
+        />
+        <div
+          style={{
+            border: "1px solid var(--couleur-bordure)",
+            borderRadius: "var(--rayon-carte)",
+            boxShadow: "var(--ombre-legere)",
+            padding: "1rem 1.25rem",
+            minWidth: 220,
+            flex: "1 1 220px",
+          }}
+        >
+          {avancement.joints.prevus !== null ? (
+            <>
+              <div style={{ fontSize: "1.8rem", fontWeight: "bold", fontFamily: "var(--font-titres)" }}>
+                {avancement.joints.soudes}
+                <span style={{ fontSize: "1rem", fontWeight: 400, color: "var(--couleur-texte-attenue)" }}>
+                  {" "}
+                  / {avancement.joints.prevus}
+                </span>
+              </div>
+              <div style={{ height: 8, background: "var(--couleur-fond-discret)", borderRadius: 999, overflow: "hidden", margin: "0.4rem 0" }}>
+                <div
+                  style={{
+                    width: `${Math.min(100, avancement.joints.pourcentageJoints ?? 0)}%`,
+                    height: "100%",
+                    background: "var(--couleur-primaire)",
+                    borderRadius: 999,
+                    transition: "width 0.4s ease",
+                  }}
+                />
+              </div>
+              <div style={{ fontSize: "0.85rem", color: "var(--couleur-texte-attenue)" }}>
+                Joints soudés sur prévus ({avancement.joints.pourcentageJoints}%)
+              </div>
+            </>
+          ) : (
+            <div style={{ fontSize: "0.9rem", color: "var(--couleur-texte-discret)" }}>Nombre de joints prévus non saisi</div>
+          )}
+          <div style={{ marginTop: "0.5rem" }}>
+            <DefinirJointsPrevus affaireId={affaire.id} valeurActuelle={affaire.nombreJointsPrevus} />
+          </div>
         </div>
-        <div>
-          <strong style={{ color: "var(--couleur-texte)" }}>{avancement.joints.controlesDimensionnelsConformes}</strong> joint(s)
-          avec contrôle dimensionnel conforme
-        </div>
-        <div>
-          <strong style={{ color: avancement.fnc.ouvertes > 0 ? "var(--couleur-non-conforme)" : "var(--couleur-texte)" }}>
-            {avancement.fnc.ouvertes}
-          </strong>{" "}
-          FNC ouverte(s) sur {avancement.fnc.total}
-        </div>
-      </div>
-
-      <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "1.5rem" }}>
-        {avancement.joints.prevus !== null ? (
-          <>
-            <div style={{ width: 240, height: 10, background: "var(--couleur-fond-discret)", borderRadius: 5, overflow: "hidden" }}>
-              <div
-                style={{
-                  width: `${Math.min(100, avancement.joints.pourcentageJoints ?? 0)}%`,
-                  height: "100%",
-                  background: "var(--couleur-primaire)",
-                }}
-              />
-            </div>
-            <span style={{ color: "var(--couleur-texte-attenue)" }}>
-              <strong style={{ color: "var(--couleur-texte)" }}>{avancement.joints.soudes}</strong> joint(s) soudé(s) sur{" "}
-              <strong style={{ color: "var(--couleur-texte)" }}>{avancement.joints.prevus}</strong> prévu(s) (
-              {avancement.joints.pourcentageJoints}%)
-            </span>
-          </>
-        ) : (
-          <span style={{ color: "var(--couleur-texte-discret)" }}>Nombre de joints prévus non saisi</span>
-        )}
-        <DefinirJointsPrevus affaireId={affaire.id} valeurActuelle={affaire.nombreJointsPrevus} />
       </div>
 
       <h2>Par séquence</h2>
@@ -148,23 +220,30 @@ export default async function AvancementAffairePage({ params }: { params: { id: 
       {avancement.sequences.length === 0 ? (
         <p>Aucune séquence pour cette affaire.</p>
       ) : (
-        <table style={{ marginTop: "1rem", borderCollapse: "collapse" }}>
-          <tbody>
-            {avancement.sequences.map((s) => (
-              <tr key={s.sequenceId}>
-                <td style={{ padding: "0.4rem 1rem 0.4rem 0", whiteSpace: "nowrap" }}>{s.nom}</td>
-                <td style={{ padding: "0.4rem 1rem" }}>
-                  <BarreSequence avancement={s} />
-                </td>
-                <td style={{ padding: "0.4rem 0", whiteSpace: "nowrap", color: "var(--couleur-texte-attenue)" }}>
-                  {s.pourcentage}% ({s.terminees}/{s.totalPhases - s.nonApplicables})
-                  {s.enCours > 0 && <>, {s.enCours} en cours</>}
-                  {s.nonApplicables > 0 && <>, {s.nonApplicables} non applicable(s)</>}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", marginTop: "1rem" }}>
+          {avancement.sequences.map((s) => (
+            <div
+              key={s.sequenceId}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "1rem",
+                flexWrap: "wrap",
+                border: "1px solid var(--couleur-bordure)",
+                borderRadius: "var(--rayon-carte)",
+                padding: "0.7rem 1rem",
+              }}
+            >
+              <div style={{ minWidth: 170, fontWeight: 600 }}>{s.nom}</div>
+              <BarreSequence avancement={s} />
+              <div style={{ whiteSpace: "nowrap", color: "var(--couleur-texte-attenue)", fontSize: "0.9rem" }}>
+                {s.pourcentage}% ({s.terminees}/{s.totalPhases - s.nonApplicables})
+                {s.enCours > 0 && <>, {s.enCours} en cours</>}
+                {s.nonApplicables > 0 && <>, {s.nonApplicables} non applicable(s)</>}
+              </div>
+            </div>
+          ))}
+        </div>
       )}
 
       <DemandesSequencement

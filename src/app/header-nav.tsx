@@ -29,14 +29,16 @@ export function HeaderNav() {
           <Link
             key={lien.href}
             href={lien.href}
+            className="lien-nav-entete"
             style={{
               color: "#fff",
               textDecoration: "none",
               fontSize: "0.9rem",
               fontWeight: actif ? 600 : 400,
-              padding: "0.4rem 0.7rem",
-              borderRadius: 6,
+              padding: "0.4rem 0.8rem",
+              borderRadius: 999,
               background: actif ? "rgba(255,255,255,0.16)" : "transparent",
+              transition: "background var(--transition-douce)",
             }}
           >
             {lien.label}

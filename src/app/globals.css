@@ -1,0 +1,194 @@
+/* Fondations visuelles communes à toute l'application (voir le cahier des
+   charges, interface terrain/tablette) — reprend les couleurs déjà en
+   usage un peu partout dans les pages (vert conforme, rouge non conforme,
+   ambre à vérifier, gris de texte) pour les nommer une fois plutôt que de
+   les répéter en dur, et fixe des tailles de zones tactiles suffisantes
+   (≥ 44px) pour les éléments qui n'ont pas de style particulier page par
+   page — cases à cocher, boutons/champs par défaut. Chaque page garde le
+   contrôle fin de sa propre mise en page (styles en ligne existants) :
+   ceci ne fait que poser un sol commun, pas remplacer ce qui existe déjà.
+
+   Identité visuelle (voir src/app/fonts.ts pour les polices) : un bleu
+   acier sombre comme couleur de marque — inspiré des bâtis d'équipement
+   industriel plutôt que d'un bleu "logiciel" générique — volontairement
+   distinct des trois couleurs de statut (vert/rouge/ambre) ci-dessus, qui
+   gardent leur sens exclusivement réglementaire (conforme/non conforme/à
+   vérifier) et ne doivent jamais être réutilisées comme couleur de marque.
+*/
+
+:root {
+  --couleur-conforme: #0ca30c;
+  --couleur-non-conforme: #d03b3b;
+  --couleur-a-verifier: #fab219;
+
+  --couleur-primaire: #1c3f5f;
+  --couleur-primaire-sombre: #12293f;
+  --couleur-primaire-claire: #e8eef4;
+
+  --couleur-texte: #16222d;
+  --couleur-texte-attenue: #4c5b68;
+  --couleur-texte-discret: #83909c;
+  --couleur-bordure: #d8dfe5;
+  --couleur-fond-discret: #f2f5f8;
+  --couleur-fond-page: #fff;
+  --zone-tactile-min: 44px;
+
+  /* Rayons et ombre communs (voir "ergonomie" ci-dessous) : des coins plus
+     ronds et une ombre très légère au survol donnent aux boutons/cartes un
+     rendu plus "app moderne" que le rectangle net d'origine, sans changer
+     la palette ni la densité d'information. */
+  --rayon: 10px;
+  --rayon-carte: 14px;
+  --ombre-legere: 0 1px 2px rgba(22, 34, 45, 0.06);
+  --ombre-survol: 0 4px 14px rgba(22, 34, 45, 0.1);
+  --transition-douce: 0.15s ease;
+
+  --font-titres: var(--font-archivo), "Archivo", sans-serif;
+  --font-texte: var(--font-plex-sans), "IBM Plex Sans", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--couleur-fond-page);
+  color: var(--couleur-texte);
+  font-family: var(--font-texte);
+  -webkit-tap-highlight-color: transparent;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-titres);
+  letter-spacing: -0.01em;
+}
+
+a {
+  color: var(--couleur-primaire);
+  transition: color var(--transition-douce);
+}
+
+/* Cases à cocher/radios : la taille native du navigateur (~13px) est trop
+   petite pour un doigt ou un gant sur tablette — presque toutes les
+   utilisent dans l'application sans style particulier, donc les agrandir
+   ici bénéficie tout de suite à chaque page qui en a (contrôles requis,
+   documents requis, formulaires de contrôle...). */
+input[type="checkbox"],
+input[type="radio"] {
+  width: 1.25rem;
+  height: 1.25rem;
+  cursor: pointer;
+}
+
+/* Zone tactile minimale pour tout bouton/lien qui n'a pas déjà sa propre
+   taille définie en ligne — un bouton avec un padding explicite dans son
+   style continue de le respecter (la spécificité d'un style en ligne
+   l'emporte toujours), ceci ne fait que relever le plancher par défaut. */
+button {
+  min-height: var(--zone-tactile-min);
+  padding: 0.5rem 0.9rem;
+  font-size: 0.95rem;
+  font-family: inherit;
+  cursor: pointer;
+  border: 1px solid var(--couleur-bordure);
+  border-radius: var(--rayon);
+  background: #fff;
+  color: var(--couleur-texte);
+  transition: border-color var(--transition-douce), box-shadow var(--transition-douce), transform var(--transition-douce);
+}
+
+/* Un léger soulèvement plutôt qu'un simple changement de couleur : c'est
+   ce qui donne l'impression d'un bouton "vivant" plutôt qu'un rectangle
+   statique — discret, pas une animation qui distrait. */
+button:not(:disabled):hover {
+  border-color: var(--couleur-primaire);
+  box-shadow: var(--ombre-survol);
+  transform: translateY(-1px);
+}
+
+button:not(:disabled):active {
+  transform: translateY(0);
+  box-shadow: var(--ombre-legere);
+}
+
+button:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+input[type="text"],
+input[type="number"],
+input[type="password"],
+input[type="date"],
+input[type="datetime-local"],
+input[type="email"],
+input[type="url"],
+select,
+textarea {
+  min-height: var(--zone-tactile-min);
+  padding: 0.5rem;
+  font-size: 1rem;
+  font-family: inherit;
+  border: 1px solid var(--couleur-bordure);
+  border-radius: var(--rayon);
+  background: #fff;
+  color: var(--couleur-texte);
+  transition: border-color var(--transition-douce), box-shadow var(--transition-douce);
+}
+
+input[type="text"]:hover,
+input[type="number"]:hover,
+input[type="password"]:hover,
+input[type="date"]:hover,
+input[type="datetime-local"]:hover,
+input[type="email"]:hover,
+input[type="url"]:hover,
+select:hover,
+textarea:hover {
+  border-color: var(--couleur-texte-discret);
+}
+
+/* Cible visible au clavier/au stylet (accessibilité), sans halo permanent
+   au clic à la souris. */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--couleur-primaire);
+  outline-offset: 2px;
+}
+
+/* Liens de la navigation principale (voir header-nav.tsx) : un fond léger
+   au survol même sur le lien non actif, pour que la barre entière donne
+   une sensation de réactivité plutôt que seul le lien déjà actif. */
+.lien-nav-entete:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Carte cliquable réutilisable (ex. liste d'affaires sur /avancement) :
+   même soulèvement/ombre douce qu'un bouton au survol, pour que toute la
+   carte se comporte comme un vrai bouton plutôt qu'un simple lien texte. */
+.carte-lien {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  border: 1px solid var(--couleur-bordure);
+  border-radius: var(--rayon-carte);
+  padding: 1.1rem 1.25rem;
+  box-shadow: var(--ombre-legere);
+  transition: box-shadow var(--transition-douce), transform var(--transition-douce), border-color var(--transition-douce);
+}
+
+.carte-lien:hover {
+  box-shadow: var(--ombre-survol);
+  transform: translateY(-2px);
+  border-color: var(--couleur-primaire);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
+}

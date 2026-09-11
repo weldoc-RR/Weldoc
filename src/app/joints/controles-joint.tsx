@@ -1,0 +1,172 @@
+"use client";
+
+import { useState } from "react";
+import { ControleGeneriqueForm } from "./controle-generique-form";
+import { ControleRessuageForm } from "./controle-ressuage-form";
+import { ControleCndConsommablesForm } from "./controle-cnd-consommables-form";
+import { ControleDimensionnelForm } from "./controle-dimensionnel-form";
+import { FicheSoudageForm, type FicheSoudage } from "./fiche-soudage-form";
+import { TqcForm, type Tqc } from "./tqc-form";
+
+type ControleVisuel = { id: string; procedureRef: string; dateControle: string };
+type Consommable = { id: string; type: string; fabricant: string; reference: string; lot: string };
+type Outil = { id: string; reference: string; type: string };
+type ProduitDimensionnel = {
+  id: string;
+  reference: string;
+  version: string;
+  designation: string;
+  normeProduit: string;
+  diametreNominalMm: number | null;
+  epaisseurNominaleMm: number | null;
+};
+type MatiereJoint = { normeProduit: string; diametre: number | null; epaisseur: number | null } | null;
+type JointCandidat = { id: string; numero: string; indiceReparation: number };
+
+type TypeFormulaireOuvert = "DIM" | "VT" | "PT" | "MT" | "RT" | "UT" | "FTS" | "TQC" | null;
+
+// Chaque méthode ne propose que les types de consommables qui la
+// concernent (voir TypeConsommableCND) — "AUTRE" reste toujours proposé.
+const TYPES_PAR_METHODE: Record<"PT" | "MT" | "RT" | "UT", string[]> = {
+  PT: ["PENETRANT", "REVELATEUR", "NETTOYANT", "AUTRE"],
+  MT: ["POUDRE_MAGNETIQUE", "PRODUIT_CONTRASTE", "DEMAGNETISANT", "NETTOYANT", "AUTRE"],
+  RT: ["FILM_RADIOGRAPHIQUE", "PRODUIT_DEVELOPPEMENT", "AUTRE"],
+  UT: ["COUPLANT", "AUTRE"],
+};
+
+// Barre de boutons "+ VT", "+ Dimensionnel"... sous un joint, qui ouvre le
+// formulaire de saisie correspondant. Un seul formulaire ouvert à la fois
+// pour rester lisible.
+export function ControlesJoint({
+  jointId,
+  jointNumero,
+  controlesVisuels,
+  consommables,
+  outils,
+  produitsDimensionnels,
+  matiere,
+  ficheSoudage,
+  autresJointsSansFiche,
+  tqc,
+}: {
+  jointId: string;
+  jointNumero: string;
+  controlesVisuels: ControleVisuel[];
+  consommables: Consommable[];
+  outils: Outil[];
+  produitsDimensionnels: ProduitDimensionnel[];
+  matiere: MatiereJoint;
+  ficheSoudage: FicheSoudage;
+  autresJointsSansFiche: JointCandidat[];
+  tqc: Tqc;
+}) {
+  const [ouvert, setOuvert] = useState<TypeFormulaireOuvert>(null);
+
+  const fermer = () => setOuvert(null);
+
+  return (
+    <div style={{ marginTop: "0.5rem" }}>
+      <span style={{ fontSize: "0.85rem", color: "var(--couleur-texte-attenue)" }}>Ajouter un contrôle :</span>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginTop: "0.35rem" }}>
+        {(["DIM", "VT", "PT", "MT", "RT", "UT"] as const).map((type) => (
+          <button
+            key={type}
+            onClick={() => setOuvert(type)}
+            style={{
+              fontWeight: ouvert === type ? "bold" : "normal",
+              border: ouvert === type ? "2px solid var(--couleur-texte)" : "1px solid var(--couleur-bordure)",
+              borderRadius: 6,
+              background: "#fff",
+            }}
+          >
+            + {type}
+          </button>
+        ))}
+        <button
+          onClick={() => setOuvert("FTS")}
+          style={{
+            fontWeight: ouvert === "FTS" ? "bold" : "normal",
+            border: ouvert === "FTS" ? "2px solid var(--couleur-texte)" : "1px solid var(--couleur-bordure)",
+            borderRadius: 6,
+            background: "#fff",
+          }}
+        >
+          {ficheSoudage ? "Fiche soudage" : "+ FTS"}
+        </button>
+        <button
+          onClick={() => setOuvert("TQC")}
+          style={{
+            fontWeight: ouvert === "TQC" ? "bold" : "normal",
+            border: ouvert === "TQC" ? "2px solid var(--couleur-texte)" : "1px solid var(--couleur-bordure)",
+            borderRadius: 6,
+            background: "#fff",
+          }}
+        >
+          {tqc ? "TQC" : "+ TQC"}
+        </button>
+      </div>
+      {ouvert === "FTS" && (
+        <FicheSoudageForm
+          jointId={jointId}
+          jointNumero={jointNumero}
+          fiche={ficheSoudage}
+          autresJoints={autresJointsSansFiche}
+          onFermer={fermer}
+        />
+      )}
+      {ouvert === "TQC" && <TqcForm jointId={jointId} tqc={tqc} onFermer={fermer} />}
+      {ouvert === "DIM" && (
+        <ControleDimensionnelForm
+          jointId={jointId}
+          outils={outils}
+          produitsDimensionnels={produitsDimensionnels}
+          matiere={matiere}
+          onCree={fermer}
+          onAnnuler={fermer}
+        />
+      )}
+      {ouvert === "VT" && (
+        <ControleGeneriqueForm endpoint="/api/controles-visuels" jointId={jointId} onCree={fermer} onAnnuler={fermer} />
+      )}
+      {ouvert === "PT" && (
+        <ControleRessuageForm
+          jointId={jointId}
+          controlesVisuels={controlesVisuels}
+          consommables={consommables.filter((c) => TYPES_PAR_METHODE.PT.includes(c.type))}
+          onCree={fermer}
+          onAnnuler={fermer}
+        />
+      )}
+      {ouvert === "MT" && (
+        <ControleCndConsommablesForm
+          endpoint="/api/controles-magnetoscopie"
+          jointId={jointId}
+          consommables={consommables.filter((c) => TYPES_PAR_METHODE.MT.includes(c.type))}
+          outils={outils}
+          onCree={fermer}
+          onAnnuler={fermer}
+        />
+      )}
+      {ouvert === "RT" && (
+        <ControleCndConsommablesForm
+          endpoint="/api/controles-radiographie"
+          jointId={jointId}
+          consommables={consommables.filter((c) => TYPES_PAR_METHODE.RT.includes(c.type))}
+          outils={outils}
+          onCree={fermer}
+          onAnnuler={fermer}
+        />
+      )}
+      {ouvert === "UT" && (
+        <ControleCndConsommablesForm
+          endpoint="/api/controles-ultrasons"
+          jointId={jointId}
+          consommables={consommables.filter((c) => TYPES_PAR_METHODE.UT.includes(c.type))}
+          outils={outils}
+          onCree={fermer}
+          onAnnuler={fermer}
+        />
+      )}
+    </div>
+  );
+}

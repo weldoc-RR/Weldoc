@@ -1,0 +1,255 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { SignerQrPin } from "@/components/signer-qr-pin";
+import { FileUpload } from "@/components/file-upload";
+
+export type FicheSoudage = {
+  id: string;
+  procede: string | null;
+  preechauffageC: number | null;
+  temperatureInterpasses: number | null;
+  postchauffageC: number | null;
+  tensionV: number | null;
+  intensiteA: number | null;
+  vitesseMmMin: number | null;
+  energieKJMm: number | null;
+  nombrePasses: number | null;
+  tempsMin: number | null;
+  observations: string | null;
+  photosUrls: string[];
+  signatureId: string | null;
+  joints: { id: string; numero: string; indiceReparation: number }[];
+} | null;
+
+type JointCandidat = { id: string; numero: string; indiceReparation: number };
+
+const CHAMPS_NUMERIQUES: { cle: keyof NonNullable<FicheSoudage>; label: string }[] = [
+  { cle: "preechauffageC", label: "Préchauffage (°C)" },
+  { cle: "temperatureInterpasses", label: "Température interpasses (°C)" },
+  { cle: "postchauffageC", label: "Postchauffage (°C)" },
+  { cle: "tensionV", label: "Tension (V)" },
+  { cle: "intensiteA", label: "Intensité (A)" },
+  { cle: "vitesseMmMin", label: "Vitesse (mm/min)" },
+  { cle: "energieKJMm", label: "Énergie (kJ/mm)" },
+  { cle: "nombrePasses", label: "Nombre de passes" },
+  { cle: "tempsMin", label: "Temps (min)" },
+];
+
+function numeroAffiche(j: JointCandidat) {
+  return j.indiceReparation > 0 ? `${j.numero} R${j.indiceReparation}` : j.numero;
+}
+
+// Fiche de suivi de soudage (voir cahier des charges, un exemple réel
+// n'ayant pas encore été fourni pour finaliser tous les champs) :
+// identification déjà connue via Joint (soudeur/QS/WPS/QMOS/consommable),
+// jamais redemandée ici. Une même fiche peut couvrir plusieurs joints à
+// la fois ("saisie groupée", voir POST/PATCH /api/fiches-soudage) quand
+// le même soudeur a réalisé plusieurs soudures avec les mêmes
+// paramètres : les autres joints de l'affaire pas encore couverts sont
+// proposés en cases à cocher. Modifiable tant que la fiche n'est pas
+// signée ; une fois signée (QR/matricule + PIN, une seule fois pour tous
+// les joints couverts), plus aucune modification n'est acceptée.
+export function FicheSoudageForm({
+  jointId,
+  jointNumero,
+  fiche,
+  autresJoints,
+  onFermer,
+}: {
+  jointId: string;
+  jointNumero: string;
+  fiche: FicheSoudage;
+  autresJoints: JointCandidat[];
+  onFermer: () => void;
+}) {
+  const router = useRouter();
+  const [ficheId, setFicheId] = useState<string | null>(fiche?.id ?? null);
+  const [jointIds, setJointIds] = useState<string[]>(fiche ? fiche.joints.map((j) => j.id) : [jointId]);
+  const [procede, setProcede] = useState(fiche?.procede ?? "");
+  const [valeurs, setValeurs] = useState<Record<string, string>>(() =>
+    Object.fromEntries(CHAMPS_NUMERIQUES.map((c) => [c.cle, fiche?.[c.cle]?.toString() ?? ""]))
+  );
+  const [observations, setObservations] = useState(fiche?.observations ?? "");
+  const [photosUrls, setPhotosUrls] = useState<string[]>(fiche?.photosUrls ?? []);
+  const [signatureId, setSignatureId] = useState<string | null>(null);
+  const [erreur, setErreur] = useState<string | null>(null);
+  const [enCours, setEnCours] = useState(false);
+
+  const dejaSignee = Boolean(fiche?.signatureId);
+
+  // Cases à cocher : ce joint (toujours en tête), les autres joints déjà
+  // couverts par cette fiche (pour pouvoir les décocher), et les autres
+  // joints de l'affaire sans fiche (candidats à ajouter au lot).
+  const candidats: JointCandidat[] = [
+    { id: jointId, numero: jointNumero, indiceReparation: 0 },
+    ...(fiche?.joints.filter((j) => j.id !== jointId) ?? []),
+    ...autresJoints,
+  ].filter((j, i, arr) => arr.findIndex((jj) => jj.id === j.id) === i);
+  const libelleJoint = (c: JointCandidat) => (c.id === jointId ? jointNumero : numeroAffiche(c));
+
+  function cocher(id: string, coche: boolean) {
+    setJointIds((liste) => (coche ? [...liste, id] : liste.filter((i) => i !== id)));
+  }
+
+  function retirerPhoto(index: number) {
+    setPhotosUrls((liste) => liste.filter((_, i) => i !== index));
+  }
+
+  async function enregistrer(e: React.FormEvent) {
+    e.preventDefault();
+    setErreur(null);
+    setEnCours(true);
+    const corps: Record<string, unknown> = {
+      procede: procede || undefined,
+      observations: observations || undefined,
+      photosUrls,
+      jointIds,
+    };
+    for (const c of CHAMPS_NUMERIQUES) {
+      corps[c.cle] = valeurs[c.cle] ? Number(valeurs[c.cle]) : undefined;
+    }
+    if (signatureId) corps.signatureId = signatureId;
+
+    const res = await fetch(ficheId ? `/api/fiches-soudage/${ficheId}` : "/api/fiches-soudage", {
+      method: ficheId ? "PATCH" : "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(corps),
+    });
+    setEnCours(false);
+    if (!res.ok) {
+      const corpsErr = await res.json().catch(() => null);
+      setErreur(corpsErr?.error ?? "Impossible d'enregistrer.");
+      return;
+    }
+    const donnees = await res.json();
+    setFicheId(donnees.id);
+    router.refresh();
+    if (signatureId) onFermer();
+  }
+
+  if (dejaSignee) {
+    return (
+      <div style={{ border: "1px solid var(--couleur-bordure)", padding: "0.6rem", marginTop: "0.4rem", maxWidth: 600 }}>
+        <p style={{ color: "var(--couleur-conforme)", fontSize: "0.85rem" }}>✓ Fiche de suivi de soudage signée (lecture seule).</p>
+        <p style={{ fontSize: "0.85rem" }}>
+          Joints couverts : {fiche?.joints.map(numeroAffiche).join(", ")}
+        </p>
+        <p style={{ fontSize: "0.85rem" }}>
+          Procédé : {fiche?.procede ?? "—"} · Préchauffage : {fiche?.preechauffageC ?? "—"}°C · Postchauffage :{" "}
+          {fiche?.postchauffageC ?? "—"}°C · Passes : {fiche?.nombrePasses ?? "—"}
+        </p>
+        {fiche?.observations && <p style={{ fontSize: "0.85rem" }}>{fiche.observations}</p>}
+        {fiche && fiche.photosUrls.length > 0 && (
+          <p style={{ fontSize: "0.85rem" }}>
+            {fiche.photosUrls.map((url) => (
+              <a key={url} href={url} target="_blank" rel="noreferrer" style={{ marginRight: "0.5rem" }}>
+                photo
+              </a>
+            ))}
+          </p>
+        )}
+        <button type="button" onClick={onFermer}>
+          Fermer
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <form onSubmit={enregistrer} style={{ border: "1px solid var(--couleur-bordure)", borderRadius: 6, padding: "1rem", marginTop: "0.5rem", maxWidth: 660 }}>
+      {candidats.length > 1 && (
+        <div style={{ fontSize: "0.9rem", marginBottom: "0.5rem" }}>
+          Joints couverts par cette fiche (cochez les autres soudures faites avec les mêmes paramètres) :
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginTop: "0.4rem" }}>
+            {candidats.map((c) => (
+              <label key={c.id} style={{ display: "flex", alignItems: "center", gap: "0.35rem", border: "1px solid var(--couleur-bordure)", padding: "0.25rem 0.5rem", borderRadius: 5 }}>
+                <input
+                  type="checkbox"
+                  checked={jointIds.includes(c.id)}
+                  disabled={c.id === jointId}
+                  onChange={(e) => cocher(c.id, e.target.checked)}
+                />
+                {libelleJoint(c)}
+                {c.id === jointId && " (ce joint)"}
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
+      <label style={{ fontSize: "0.95rem", display: "block" }}>
+        Procédé
+        <input type="text" value={procede} onChange={(e) => setProcede(e.target.value)} style={{ display: "block", width: "100%" }} />
+      </label>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "0.6rem", marginTop: "0.6rem" }}>
+        {CHAMPS_NUMERIQUES.map((c) => (
+          <label key={c.cle} style={{ fontSize: "0.9rem" }}>
+            {c.label}
+            <input
+              type="number"
+              step="0.01"
+              value={valeurs[c.cle]}
+              onChange={(e) => setValeurs((v) => ({ ...v, [c.cle]: e.target.value }))}
+              style={{ display: "block", width: "100%" }}
+            />
+          </label>
+        ))}
+      </div>
+      <label style={{ fontSize: "0.95rem", display: "block", marginTop: "0.6rem" }}>
+        Observations (interruptions, reprises...)
+        <textarea value={observations} onChange={(e) => setObservations(e.target.value)} rows={3} style={{ display: "block", width: "100%", padding: "0.5rem", fontFamily: "inherit", fontSize: "1rem" }} />
+      </label>
+
+      <div style={{ fontSize: "0.95rem", marginTop: "0.6rem" }}>
+        Photos (book photo de la soudure, optionnel)
+        {photosUrls.length > 0 && (
+          <ul style={{ margin: "0.3rem 0", padding: 0, listStyle: "none" }}>
+            {photosUrls.map((url, i) => (
+              <li key={url} style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.2rem" }}>
+                <a href={url} target="_blank" rel="noreferrer">
+                  {url.length > 50 ? `${url.slice(0, 50)}…` : url}
+                </a>
+                <button type="button" onClick={() => retirerPhoto(i)}>
+                  Retirer
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+        <FileUpload onDepose={(url) => setPhotosUrls((liste) => [...liste, url])} />
+      </div>
+
+      <div style={{ marginTop: "0.6rem", display: "flex", gap: "0.5rem", flexWrap: "wrap", alignItems: "center" }}>
+        <button type="submit" disabled={enCours}>
+          {enCours ? "Enregistrement..." : "Enregistrer (sans signer)"}
+        </button>
+        <button type="button" onClick={onFermer}>
+          Fermer
+        </button>
+        {erreur && <span style={{ color: "var(--couleur-non-conforme)", fontSize: "0.9rem" }}>{erreur}</span>}
+      </div>
+
+      <div style={{ marginTop: "0.6rem" }}>
+        <p style={{ fontSize: "0.9rem", margin: "0 0 0.3rem 0" }}>
+          Signer pour clore la fiche — {jointIds.length} joint(s) couvert(s) — (matricule/QR + PIN), plus aucune
+          modification possible ensuite :
+        </p>
+        {!ficheId ? (
+          <p style={{ fontSize: "0.9rem", color: "var(--couleur-texte-discret)" }}>Enregistrez d&apos;abord (sans signer) pour pouvoir signer.</p>
+        ) : signatureId ? (
+          <button type="submit" disabled={enCours}>
+            {enCours ? "..." : "Confirmer et signer"}
+          </button>
+        ) : (
+          <SignerQrPin
+            documentType="FICHE_TECHNIQUE_SOUDAGE"
+            documentId={ficheId}
+            versionDocument={procede || "v1"}
+            onSigne={setSignatureId}
+          />
+        )}
+      </div>
+    </form>
+  );
+}

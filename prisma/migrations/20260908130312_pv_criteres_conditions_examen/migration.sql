@@ -1,0 +1,55 @@
+-- AlterTable
+ALTER TABLE "ControleVisuel" ADD COLUMN     "categorieConstruction" TEXT,
+ADD COLUMN     "eclairage" TEXT,
+ADD COLUMN     "editionReferentiel" TEXT,
+ADD COLUMN     "etatSurface" TEXT,
+ADD COLUMN     "methodeExamen" TEXT,
+ADD COLUMN     "moyensUtilises" TEXT,
+ADD COLUMN     "niveauExamen" TEXT,
+ADD COLUMN     "numeroPV" TEXT,
+ADD COLUMN     "referentielAcceptation" TEXT,
+ADD COLUMN     "surfacesExaminees" TEXT;
+-- AlterTable
+ALTER TABLE "ControleRessuage" ADD COLUMN     "categorieConstruction" TEXT,
+ADD COLUMN     "eclairage" TEXT,
+ADD COLUMN     "editionReferentiel" TEXT,
+ADD COLUMN     "etatSurface" TEXT,
+ADD COLUMN     "methodeExamen" TEXT,
+ADD COLUMN     "moyensUtilises" TEXT,
+ADD COLUMN     "niveauExamen" TEXT,
+ADD COLUMN     "numeroPV" TEXT,
+ADD COLUMN     "referentielAcceptation" TEXT,
+ADD COLUMN     "surfacesExaminees" TEXT;
+-- AlterTable
+ALTER TABLE "ControleMagnetoscopie" ADD COLUMN     "categorieConstruction" TEXT,
+ADD COLUMN     "eclairage" TEXT,
+ADD COLUMN     "editionReferentiel" TEXT,
+ADD COLUMN     "etatSurface" TEXT,
+ADD COLUMN     "methodeExamen" TEXT,
+ADD COLUMN     "moyensUtilises" TEXT,
+ADD COLUMN     "niveauExamen" TEXT,
+ADD COLUMN     "numeroPV" TEXT,
+ADD COLUMN     "referentielAcceptation" TEXT,
+ADD COLUMN     "surfacesExaminees" TEXT;
+-- AlterTable
+ALTER TABLE "ControleRadiographie" ADD COLUMN     "categorieConstruction" TEXT,
+ADD COLUMN     "eclairage" TEXT,
+ADD COLUMN     "editionReferentiel" TEXT,
+ADD COLUMN     "etatSurface" TEXT,
+ADD COLUMN     "methodeExamen" TEXT,
+ADD COLUMN     "moyensUtilises" TEXT,
+ADD COLUMN     "niveauExamen" TEXT,
+ADD COLUMN     "numeroPV" TEXT,
+ADD COLUMN     "referentielAcceptation" TEXT,
+ADD COLUMN     "surfacesExaminees" TEXT;
+-- AlterTable
+ALTER TABLE "ControleUltrasons" ADD COLUMN     "categorieConstruction" TEXT,
+ADD COLUMN     "eclairage" TEXT,
+ADD COLUMN     "editionReferentiel" TEXT,
+ADD COLUMN     "etatSurface" TEXT,
+ADD COLUMN     "methodeExamen" TEXT,
+ADD COLUMN     "moyensUtilises" TEXT,
+ADD COLUMN     "niveauExamen" TEXT,
+ADD COLUMN     "numeroPV" TEXT,
+ADD COLUMN     "referentielAcceptation" TEXT,
+ADD COLUMN     "surfacesExaminees" TEXT;

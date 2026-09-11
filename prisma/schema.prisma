@@ -7,7 +7,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 enum NiveauDecision {
@@ -30,12 +29,84 @@ model Personnel {
 
   fonctions       PersonnelFonction[]
   qualifications  Qualification[]
+  habilitations   Habilitation[]
+  formations      Formation[]
+  acuitesVisuelles AcuiteVisuelle[]
   chartesAcceptees ChartAcceptation[]
   jointsSoudes    Joint[]              @relation("Soudeur")
   controlesRealises ControleDimensionnel[] @relation("Controleur")
+  controlesVisuelsRealises ControleVisuel[] @relation("ControleurVisuel")
+  controlesRessuageRealises ControleRessuage[] @relation("ControleurRessuage")
+  controlesMagnetoscopieRealises ControleMagnetoscopie[] @relation("ControleurMagnetoscopie")
+  controlesRadiographieRealises  ControleRadiographie[]  @relation("ControleurRadiographie")
+  controlesUltrasonsRealises     ControleUltrasons[]     @relation("ControleurUltrasons")
   signatures      Signature[]
+  indisponibilites Indisponibilite[]
+  affectations    Affectation[]
+  compte          Compte?
+  photosAjoutees  Photo[]              @relation("AuteurPhoto")
+  notesRexAjoutees NoteRex[]           @relation("AuteurNoteRex")
+  evenementsPointsReglementaires PointReglementaireEvenement[]
+  pvExternesImportes PVExterne[]       @relation("ImporteurPVExterne")
+  pvExternesRevises  PVExterne[]       @relation("ReviseurPVExterne")
+  etatsDesLieuxRediges EtatDesLieux[]
+  documentsExternesImportes DocumentExterne[] @relation("ImporteurDocumentExterne")
+  documentsExternesValides  DocumentExterne[] @relation("ValidateurDocumentExterne")
+  documentsExternesConcerne DocumentExterne[] @relation("PersonnelConcerneDocumentExterne")
+  fichesRexRedigees FicheREX[]
+  scansTqcRealises  ScanTqc[] @relation("OperateurScanTqc")
+  autorisationsSignature AutorisationSignature[]
+  autorisationsSignatureAccordees AutorisationSignature[] @relation("AccordeParAutorisationSignature")
+  documentsJustificatifs DocumentJustificatifPersonnel[]
+  documentsJustificatifsAjoutes DocumentJustificatifPersonnel[] @relation("AjouteParDocumentJustificatif")
 
   @@index([societe])
+}
+
+// ============================================================================
+// AUTHENTIFICATION ET DROITS
+// ============================================================================
+// Le compte porte uniquement les identifiants de connexion. L'identifiant de
+// connexion est le matricule déjà présent sur Personnel (jamais dupliqué).
+// Le niveau de décision (1/2/3) qui détermine les droits reste sur Personnel :
+// un compte ne fait qu'authentifier une personne qui existe déjà.
+enum StatutCompte {
+  ACTIF
+  SUSPENDU
+}
+
+model Compte {
+  id                String       @id @default(cuid())
+  personnel         Personnel    @relation(fields: [personnelId], references: [id])
+  personnelId       String       @unique
+  motDePasseHash    String
+  statut            StatutCompte @default(ACTIF)
+  derniereConnexion DateTime?
+  // Verrouillage automatique temporaire après plusieurs échecs de connexion
+  // consécutifs (voir src/lib/auth.ts, SEUIL_TENTATIVES_ECHOUEES) — distinct
+  // de `statut` (SUSPENDU), qui reste une décision humaine tracée. Remis à
+  // zéro dès une connexion réussie.
+  tentativesEchouees Int         @default(0)
+  verrouilleJusqua   DateTime?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  sessions          Session[]
+}
+
+// Sessions stockées côté serveur (et non un simple jeton auto-suffisant) afin
+// de pouvoir les révoquer immédiatement (compte suspendu, déconnexion) et
+// garder une trace des connexions.
+model Session {
+  id         String    @id @default(cuid())
+  compte     Compte    @relation(fields: [compteId], references: [id])
+  compteId   String
+  tokenHash  String    @unique
+  creeLe     DateTime  @default(now())
+  expireLe   DateTime
+  revoqueLe  DateTime?
+
+  @@index([compteId])
 }
 
 model PersonnelFonction {
@@ -52,7 +123,7 @@ enum TypeQualification {
   CND
 }
 
-enum StatutQualification {
+enum StatutValidite {
   VALIDE
   BIENTOT_ECHEANCE
   EXPIRE
@@ -60,6 +131,17 @@ enum StatutQualification {
   SUSPENDU
 }
 
+// Le "type de qualification" (BW-A1, FW-I2, SW-A...) et les champs qui en
+// précisent le domaine (groupe de matériaux, position, plages
+// d'épaisseur/diamètre) sont structurés plutôt que noyés dans
+// `domaineValidite` en texte libre, pour permettre plus tard un
+// rapprochement automatique avec le domaine de validité d'un WPS (voir la
+// limite "QS" documentée dans le README). La désignation exacte dépend du
+// référentiel utilisé par l'entreprise ou le client (ISO 9606-1 ou
+// équivalent) : Weldoc ne présuppose ni n'impose de nomenclature, ces
+// valeurs sont saisies par la personne qui enregistre la qualification —
+// voir l'avertissement sur les normes protégées dans
+// src/lib/tolerances.ts, aucune valeur n'est pré-remplie par l'application.
 model Qualification {
   id             String              @id @default(cuid())
   personnel      Personnel           @relation(fields: [personnelId], references: [id])
@@ -67,12 +149,35 @@ model Qualification {
   type           TypeQualification
   reference      String
   norme          String
+  referentiel    Referentiel?        @relation(fields: [referentielId], references: [id])
+  referentielId  String?
   procede        String?
   materiaux      String?
+  codeQualification String?
+  groupeMateriaux   String?
+  positionSoudage   String?
+  epaisseurMinMm    Float?
+  epaisseurMaxMm    Float?
+  diametreMinMm     Float?
+  diametreMaxMm     Float?
   domaineValidite String?
+  // Organisme (ou personne) qui a examiné/délivré la qualification, sous sa
+  // responsabilité — pas forcément l'entreprise elle-même. Texte libre : sa
+  // forme dépend du référentiel et de qui réalise l'examen.
+  organismeExamen String?
   dateObtention  DateTime
   dateExpiration DateTime?
-  statut         StatutQualification @default(VALIDE)
+  // Certains référentiels exigent, en plus de l'échéance finale, des
+  // confirmations périodiques (ex. tous les 6 mois) pour que la
+  // qualification reste valable jusqu'à cette échéance — distinct d'une
+  // reconduction/prolongation complète. La périodicité dépend du
+  // référentiel/de l'entreprise, jamais imposée par Weldoc ; null = pas de
+  // confirmation périodique exigée. La prochaine échéance de confirmation
+  // se calcule à la lecture à partir du dernier événement
+  // CONFIRMATION_VALIDITE (voir src/lib/confirmationQualification.ts),
+  // jamais stockée.
+  frequenceConfirmationMois Int?
+  statut         StatutValidite @default(VALIDE)
   certificatUrl  String?
 
   evenements     QualificationEvenement[]
@@ -82,6 +187,7 @@ model Qualification {
 
 enum TypeEvenementQualification {
   OBTENTION
+  CONFIRMATION_VALIDITE
   RECONDUCTION_PROPOSEE
   RECONDUCTION_VALIDEE
   SUSPENSION
@@ -96,9 +202,100 @@ model QualificationEvenement {
   date            DateTime                    @default(now())
   preuveJointIds  String[]
   valideParId     String?
+  // Référence libre vers Signature.id (voir plus bas), comme signatureId
+  // ailleurs dans l'application — pas de clé étrangère directe, Signature
+  // reste générique par (documentType, documentId).
+  signatureId     String?
   commentaire     String?
 }
 
+// Habilitations (électrique, accès site, engins...) : conceptuellement
+// proches des qualifications soudage/CND mais plus génériques. Un
+// renouvellement n'écrase jamais l'ancien enregistrement : c'est une
+// nouvelle ligne, l'historique reste visible via la liste complète.
+model Habilitation {
+  id             String         @id @default(cuid())
+  personnel      Personnel      @relation(fields: [personnelId], references: [id])
+  personnelId    String
+  intitule       String
+  reference      String?
+  dateObtention  DateTime
+  dateExpiration DateTime?
+  statut         StatutValidite @default(VALIDE)
+  certificatUrl  String?
+  createdAt      DateTime       @default(now())
+
+  @@index([personnelId])
+}
+
+// Formations suivies. Comme pour les habilitations, un recyclage se
+// traduit par un nouvel enregistrement plutôt qu'une modification du
+// précédent.
+model Formation {
+  id              String         @id @default(cuid())
+  personnel       Personnel      @relation(fields: [personnelId], references: [id])
+  personnelId     String
+  intitule        String
+  organisme       String?
+  dateRealisation DateTime
+  dateExpiration  DateTime?
+  statut          StatutValidite @default(VALIDE)
+  certificatUrl   String?
+  createdAt       DateTime       @default(now())
+
+  @@index([personnelId])
+}
+
+// Test d'acuité visuelle (near/far, perception des couleurs selon le cas) :
+// exigence réglementaire récurrente pour soudeurs et contrôleurs.
+model AcuiteVisuelle {
+  id             String         @id @default(cuid())
+  personnel      Personnel      @relation(fields: [personnelId], references: [id])
+  personnelId    String
+  dateTest       DateTime
+  dateExpiration DateTime?
+  apte           Boolean
+  organisme      String?
+  certificatUrl  String?
+  statut         StatutValidite @default(VALIDE)
+  createdAt      DateTime       @default(now())
+
+  @@index([personnelId])
+}
+
+// Documents justificatifs du personnel (voir le cahier des charges,
+// fiche personne : "..., documents justificatifs, ..."), au-delà des
+// qualifications/habilitations/formations/acuités visuelles déjà
+// modélisées : tout document libre attaché à une personne (pièce
+// d'identité, permis, CACES, autorisation spécifique...). Même principe
+// que les CCPU/documents externes : un lien vers un fichier déjà
+// hébergé, pas de téléversement direct dans Weldoc. Un renouvellement
+// (nouvelle pièce, nouvelle échéance) est un nouvel enregistrement,
+// jamais une modification du précédent (même regroupement "actuel +
+// historique" que les habilitations sur /personnel).
+model DocumentJustificatifPersonnel {
+  id             String         @id @default(cuid())
+  personnel      Personnel      @relation(fields: [personnelId], references: [id])
+  personnelId    String
+  intitule       String
+  reference      String?
+  documentUrl    String
+  dateDocument   DateTime?
+  dateExpiration DateTime?
+  statut         StatutValidite @default(VALIDE)
+  ajoutePar      Personnel      @relation("AjouteParDocumentJustificatif", fields: [ajouteParId], references: [id])
+  ajouteParId    String
+  createdAt      DateTime       @default(now())
+
+  @@index([personnelId])
+}
+
+// Charte d'utilisation et d'intégrité (voir cahier des charges,
+// "Identification et signature") : doit être acceptée avant toute
+// signature de document, et réacceptée à chaque nouvelle version. Une
+// nouvelle version est une nouvelle ligne, jamais une modification de la
+// précédente ; la version "en vigueur" est simplement la plus récente par
+// `publieLe` (calculée à la lecture, comme ailleurs dans l'application).
 model ChartVersion {
   id            String   @id @default(cuid())
   version       String   @unique
@@ -118,26 +315,224 @@ model ChartAcceptation {
   @@unique([personnelId, chartVersionId])
 }
 
+// Le cahier des charges est écrit en vocabulaire "chantier", mais Weldoc doit
+// aussi pouvoir suivre une fabrication en atelier (où "chantier"/"site" au
+// sens travaux n'ont pas forcément de sens) : typeRealisation permet aux
+// futurs modules de s'adapter, et chantier/site redeviennent optionnels.
+enum TypeRealisation {
+  CHANTIER
+  ATELIER
+}
+
 model Affaire {
   id                String   @id @default(cuid())
   numero            String   @unique
   client            String
   projet            String
-  chantier          String
-  site              String
+  typeRealisation   TypeRealisation @default(CHANTIER)
+  chantier          String?
+  site              String?
   responsableId     String?
   chargeAffairesId  String?
   coordinateurSoudageId String?
   dateDebut         DateTime?
   dateFin           DateTime?
   cahierDesChargesUrl String?
+  // Nombre de joints prévus sur l'affaire, saisi une fois (ex. d'après le
+  // plan d'isométrie) pour permettre un avancement "38 joints soudés sur
+  // 120 prévus" en plus de l'avancement par phase — voir
+  // src/lib/avancement.ts. Simple champ éditable comme les autres
+  // informations générales de l'affaire (client, projet, dates...), pas
+  // une donnée réglementaire tracée par l'audit trail.
+  nombreJointsPrevus Int?
+  // Types de contrôle exigés sur chaque joint d'origine de l'affaire (DIM,
+  // VT, PT, MT, RT, UT — mêmes sigles que BadgeControle), saisi une fois
+  // pour permettre l'alerte "contrôles manquants" (voir le cahier des
+  // charges, "ALERTES") : src/lib/controlesManquants.ts compare cette
+  // liste aux contrôles réellement enregistrés sur chaque joint. Vide par
+  // défaut = comportement additif, aucune alerte tant que rien n'est
+  // déclaré (même principe que MatierePrevue/AutorisationSignature).
+  controlesRequis  String[] @default([])
+  // Types de document exigés sur chaque joint d'origine de l'affaire
+  // (FICHE_SOUDAGE, CCPU_MATIERE, CERTIFICAT_MATIERE, TQC — voir
+  // src/lib/documentsManquants.ts), même principe additif que
+  // controlesRequis ci-dessus : vide par défaut, aucune alerte tant que
+  // rien n'est déclaré.
+  documentsRequis  String[] @default([])
+  // Exige, sur cette affaire, qu'une personne ait au moins une
+  // qualification (soudage ou CND) au dossier avant de souder un joint ou
+  // de réaliser un contrôle CND — pas seulement qu'aucune ne soit expirée
+  // (voir src/lib/aptitudePersonnel.ts, verifierQualificationBloquante).
+  // Faux par défaut = comportement additif inchangé : une personne sans
+  // aucune qualification enregistrée n'est bloquée que sur les affaires
+  // qui activent explicitement cette exigence, comme
+  // controlesRequis/documentsRequis ci-dessus.
+  qualificationSurDossierObligatoire Boolean @default(false)
   createdAt         DateTime @default(now())
 
   referentiels      AffaireReferentiel[]
   matieres          Matiere[]
+  matieresPrevues   MatierePrevue[]
   joints            Joint[]
   fncs              FNC[]
   sequences         Sequence[]
+  affectations      Affectation[]
+  demandesSequencement DemandeModificationSequencement[]
+  pieces            Piece[]
+  photos            Photo[]
+  pointsReglementaires PointReglementaire[]
+  bilanIntervention BilanIntervention?
+  diffusions        DiffusionRFI[]
+  revisionsRapport  RevisionRFI[]
+  perimetresTravaux PerimetreTravaux[]
+  chronologie       EvenementChronologie[]
+  bilanDosimetrique BilanDosimetrique?
+  portiquesRadioprotection PortiqueRadioprotection[]
+  pvExternes        PVExterne[]
+  etatsDesLieux     EtatDesLieux[]
+  documentsExternes DocumentExterne[]
+  scansTqc          ScanTqc[]
+  notesRex          NoteRex[]
+}
+
+// ============================================================================
+// RAPPORT DE FIN D'INTERVENTION (RFI) — voir le modèle réel fourni par
+// l'entreprise. Complète le rapport de fin de fabrication générique
+// (dossierFinFabrication.ts) avec la structure précise attendue chez EDF :
+// cartouche (entité, offre de service, accessibilité, diffusion,
+// historique de révisions), travaux réalisés par intervenant, chronologie,
+// bilan radioprotection, bilan global/REX. Les intitulés de section restent
+// ceux du modèle fourni ; les valeurs elles-mêmes ne sont jamais préremplies
+// avec des données réelles d'un chantier (confidentialité).
+// ============================================================================
+
+enum AccessibiliteDocument {
+  LIBRE
+  INTERNE
+  LIMITEE
+  CONFIDENTIELLE
+}
+
+// Contenu narratif propre au RFI, un par affaire. Rempli au fur et à
+// mesure ; la trace des évolutions du document se fait via RevisionRFI
+// (indice/date/nature des évolutions), pas par un historique séparé pour
+// chaque champ ci-dessous — cohérent avec le fonctionnement d'un document
+// Word réel à cartouche de révisions.
+model BilanIntervention {
+  id                     String    @id @default(cuid())
+  affaire                Affaire   @relation(fields: [affaireId], references: [id])
+  affaireId              String    @unique
+
+  entiteEmettrice        String?
+  referenceOffreService  String?
+  accessibilite          AccessibiliteDocument?
+
+  definitionIntervention String?
+  rexPosesDeposes        String?
+  ecartsTravauxPrevusRealises String?
+  conformiteTravaux      String?
+
+  bilanActionsRadioprotection String?
+  analyseEcartsRadioprotectionAmelioration String?
+
+  bonnesPratiques        String?
+  dysfonctionnements     String?
+  mesuresCorrectivesSuivantes String?
+}
+
+enum PorteeDiffusion {
+  INTERNE
+  EXTERNE
+}
+
+// Liste de diffusion du RFI (voir cartouche du modèle réel) : des noms et
+// organismes en texte libre, pas forcément des fiches Personnel (souvent
+// des destinataires externes au CNPE/à l'entreprise).
+model DiffusionRFI {
+  id        String          @id @default(cuid())
+  affaire   Affaire         @relation(fields: [affaireId], references: [id])
+  affaireId String
+  portee    PorteeDiffusion
+  nom       String
+  organisme String?
+
+  @@index([affaireId])
+}
+
+// Historique des révisions du RFI lui-même (indice/date/nature des
+// évolutions/rédacteur(s)/vérificateur(s)/approbateur(s)) — un nouvel
+// enregistrement à chaque évolution du document, jamais une modification
+// du précédent.
+model RevisionRFI {
+  id               String   @id @default(cuid())
+  affaire          Affaire  @relation(fields: [affaireId], references: [id])
+  affaireId        String
+  indice           String
+  date             DateTime @default(now())
+  natureEvolutions String
+  redacteurs       String?
+  verificateurs    String?
+  approbateurs     String?
+  createdAt        DateTime @default(now())
+
+  @@index([affaireId])
+}
+
+// Qui a la charge de quels travaux (ex. "à la charge ULM", "à la charge
+// des prestataires"...) — texte libre, l'intitulé des intervenants et le
+// découpage des responsabilités dépendant entièrement du projet.
+model PerimetreTravaux {
+  id          String  @id @default(cuid())
+  affaire     Affaire @relation(fields: [affaireId], references: [id])
+  affaireId   String
+  intervenant String
+  description String
+  ordre       Int     @default(0)
+
+  @@index([affaireId])
+}
+
+// Chronologie de l'intervention (résumé, voir "6.1 Résumé de
+// l'intervention" du modèle réel) : une ligne par événement notable, dans
+// l'ordre où ils sont survenus.
+model EvenementChronologie {
+  id          String   @id @default(cuid())
+  affaire     Affaire  @relation(fields: [affaireId], references: [id])
+  affaireId   String
+  date        DateTime
+  description String
+
+  @@index([affaireId])
+}
+
+// Bilan dosimétrique global de l'intervention (voir "Bilan radioprotection"
+// du modèle réel) : un par affaire. Le détail par activité renvoie à
+// l'outil de suivi dosimétrique externe de l'entreprise (CERAP ou
+// équivalent), hors périmètre de Weldoc pour l'instant.
+model BilanDosimetrique {
+  id         String  @id @default(cuid())
+  affaire    Affaire @relation(fields: [affaireId], references: [id])
+  affaireId  String  @unique
+  edpiMsv    Float?
+  edpoMsv    Float?
+  realiseMsv Float?
+  deltaMsv   Float?
+  alea       String?
+}
+
+// Relevés des portiques de contrôle radiologique en sortie de zone
+// (catégories C1/C2/C3 du modèle réel — texte libre, pas de nomenclature
+// imposée par Weldoc).
+model PortiqueRadioprotection {
+  id           String  @id @default(cuid())
+  affaire      Affaire @relation(fields: [affaireId], references: [id])
+  affaireId    String
+  categorie    String
+  nombre       Int
+  localisation String?
+  observations String?
+
+  @@index([affaireId])
 }
 
 model Referentiel {
@@ -146,6 +541,8 @@ model Referentiel {
   domaine     String
   version     String?
   affaires    AffaireReferentiel[]
+  qualifications Qualification[]
+  produitsDimensionnels ProduitDimensionnel[]
 }
 
 model AffaireReferentiel {
@@ -183,6 +580,25 @@ model Phase {
   obligatoire  Boolean     @default(true)
   statut       StatutPhase @default(A_FAIRE)
   justificationNA String?
+  // Procédure/instruction/formulaire/PV/fiche technique applicable (voir
+  // le cahier des charges, "DOCUMENTATION ET PROCÉDURES INTERNES") : un
+  // lien vers une révision précise de la bibliothèque ProcedureInterne, ce
+  // qui conserve automatiquement "la version réellement utilisée à
+  // l'exécution" — une révision n'y est jamais modifiée après coup (même
+  // principe que WPS/QMOS), donc ce lien suffit, pas besoin d'un
+  // historique séparé.
+  procedureInterne   ProcedureInterne? @relation(fields: [procedureInterneId], references: [id])
+  procedureInterneId String?
+  photos       Photo[]
+  pointsReglementaires PointReglementaire[]
+  pvExternes   PVExterne[]
+  documentsExternes DocumentExterne[]
+  // Référence libre vers Signature.id (documentType "PHASE"), comme
+  // signatureId ailleurs dans le modèle — voir POST /api/phases/signer :
+  // l'exécutant sélectionne les phases réalisées et s'identifie une seule
+  // fois (QR/matricule + PIN), ce qui vaut signature pour chacune d'elles
+  // et les passe TERMINEE.
+  signatureId  String?
 }
 
 model Matiere {
@@ -191,11 +607,13 @@ model Matiere {
   affaireId      String
   fournisseur    String
   designation    String
+  reference      String?
   normeProduit   String
   nuance         String
   diametre       Float?
   epaisseur      Float?
   finition       String?
+  etat           String?
   numeroCoulee   String
   numeroLot      String?
   ccpuDocumentUrl String?
@@ -204,6 +622,26 @@ model Matiere {
   joints         Joint[]
 
   @@index([numeroCoulee])
+}
+
+// Ce qui est commandé/prévu pour l'affaire (norme produit, nuance,
+// diamètre/épaisseur), saisi une seule fois par l'encadrement, puis
+// comparé automatiquement à chaque matière réceptionnée (voir
+// src/lib/conformiteMatiere.ts) pour signaler un écart avant que la
+// matière ne soit mise en œuvre. Comme pour l'affectation adaptée,
+// Weldoc ne bloque jamais la réception : les alertes restent
+// indicatives, la décision reste humaine et tracée si elle passe outre.
+model MatierePrevue {
+  id             String   @id @default(cuid())
+  affaire        Affaire  @relation(fields: [affaireId], references: [id])
+  affaireId      String
+  designation    String
+  normeProduit   String
+  nuance         String
+  diametre       Float?
+  epaisseur      Float?
+  quantitePrevue String?
+  createdAt      DateTime @default(now())
 }
 
 model Joint {
@@ -215,12 +653,33 @@ model Joint {
   spool           String?
   typeJoint       String?
   dn              String?
+  // Repère du joint sur le plan isométrique/croquis de tuyauterie (ex.
+  // "R", "N14", "DZ vers SVA" — voir le cahier des charges, TQC : "ISO
+  // manuel sur tablette... localisation des soudures"). Texte libre, la
+  // codification du repère dépend du plan/croquis de chaque affaire.
+  repereCroquis   String?
   diametre        Float?
   epaisseur       Float?
   matiere         Matiere? @relation(fields: [matiereId], references: [id])
   matiereId       String?
+  // Pièce d'atelier que ce joint concerne (voir le cahier des charges,
+  // fabrication en atelier), optionnel — une affaire "chantier" n'a
+  // jamais de pièce à lier. Permet à une pièce prise en charge de suivre
+  // les joints/contrôles qui la concernent au fil de la fabrication,
+  // plutôt que de rester un objet indépendant sans lien.
+  piece           Piece?   @relation(fields: [pieceId], references: [id])
+  pieceId         String?
+  // wpsReference/qmosReference restent en texte libre pour les cas non
+  // encore couverts par la bibliothèque (voir Wps/Qmos ci-dessous) ; wpsId/
+  // qmosId sont le lien structuré vers une fiche réutilisable quand elle
+  // existe — les deux peuvent coexister le temps que la bibliothèque se
+  // remplisse.
   wpsReference    String?
+  wps             Wps?     @relation(fields: [wpsId], references: [id])
+  wpsId           String?
   qmosReference   String?
+  qmos            Qmos?    @relation(fields: [qmosId], references: [id])
+  qmosId          String?
   qsReference     String?
   soudeur         Personnel? @relation("Soudeur", fields: [soudeurId], references: [id])
   soudeurId       String?
@@ -230,19 +689,55 @@ model Joint {
   jointParentId   String?
   reparations     Joint[]  @relation("Reparations")
   indiceReparation Int     @default(0)
+  // Nature de l'action de remise en conformité pour ce joint, quand c'est
+  // une réparation (null pour un joint d'origine, indiceReparation 0).
+  typeAction      TypeActionRemiseEnConformite?
 
-  ficheSoudage    FicheTechniqueSoudage?
+  // Une fiche technique de suivi de soudage peut couvrir plusieurs joints
+  // à la fois (voir FicheTechniqueSoudage ci-dessous : "saisie groupée",
+  // quand le même soudeur a réalisé plusieurs soudures avec les mêmes
+  // paramètres) — un joint n'appartient jamais qu'à une seule fiche.
+  ficheSoudage    FicheTechniqueSoudage? @relation(fields: [ficheSoudageId], references: [id])
+  ficheSoudageId  String?
+  tqc             TQC?
   controlesDim    ControleDimensionnel[]
+  controlesVisuels ControleVisuel[]
+  controlesRessuage ControleRessuage[]
+  controlesMagnetoscopie ControleMagnetoscopie[]
+  controlesRadiographie  ControleRadiographie[]
+  controlesUltrasons     ControleUltrasons[]
   fncs            FNC[]
+  // FNC dont CE joint (une réparation) est l'action corrective — distinct
+  // de `fncs`, qui liste les FNC ouvertes SUR ce joint.
+  fncsResolues    FNC[]    @relation("ActionCorrectiveFNC")
+  affectations    Affectation[]
+  photos          Photo[]
+  pointsReglementaires PointReglementaire[]
+  pvExternes      PVExterne[]
+  documentsExternes DocumentExterne[]
+  scansTqc        ScanTqc[]
 
   @@unique([affaireId, numero, indiceReparation])
   @@index([affaireId])
 }
 
+// Fiche de suivi de soudage (voir le cahier des charges, "FICHE TECHNIQUE
+// DE SUIVI DE SOUDAGE" : "un exemple réel sera intégré ultérieurement pour
+// finaliser tous les champs" — les champs ci-dessous restent donc une
+// première version). L'identification du joint/soudeur/QS/WPS/QMOS/
+// consommable/diamètre/épaisseur n'est jamais redemandée ici : elle vient
+// déjà de Joint. Une même fiche peut couvrir plusieurs joints (`joints`)
+// quand le même soudeur a réalisé plusieurs soudures avec les mêmes
+// paramètres dans la même période ("saisie groupée", voir le cahier des
+// charges, PRINCIPE CENTRAL : "une donnée saisie une seule fois") — un
+// joint n'appartient jamais qu'à une seule fiche à la fois. Modifiable
+// (champs, et joints couverts) tant qu'elle n'est pas signée
+// (voir POST/PATCH /api/fiches-soudage) ; une fois signée, plus aucune
+// modification n'est acceptée — la signature atteste des valeurs finales
+// pour l'ensemble des joints couverts.
 model FicheTechniqueSoudage {
   id                    String   @id @default(cuid())
-  joint                 Joint    @relation(fields: [jointId], references: [id])
-  jointId               String   @unique
+  joints                Joint[]
   procede               String?
   preechauffageC        Float?
   temperatureInterpasses Float?
@@ -250,11 +745,75 @@ model FicheTechniqueSoudage {
   tensionV              Float?
   intensiteA            Float?
   vitesseMmMin          Float?
+  energieKJMm           Float?
   nombrePasses          Int?
   tempsMin              Float?
   observations          String?
   photosUrls            String[]
   signatureId           String?
+}
+
+// TQC — "tel que construit" (voir le cahier des charges) : localisation
+// des soudures, équipement/support concerné, écarts et observations par
+// rapport au prévu. Les dimensions mesurées et les photos ne sont jamais
+// dupliquées ici : elles restent sur le contrôle dimensionnel et le book
+// photo du joint (déjà liables via Photo.jointId), qui font foi. Version
+// "ISO manuel" du cahier des charges (trois méthodes combinables prévues :
+// ISO manuel, scan 3D, book photo) — le scan 3D reste une fonction
+// complémentaire non obligatoire, hors périmètre pour l'instant. Modifiable
+// tant que non signé (POST /api/joints/[id]/tqc), même principe que la
+// fiche technique de suivi de soudage.
+model TQC {
+  id           String  @id @default(cuid())
+  joint        Joint   @relation(fields: [jointId], references: [id])
+  jointId      String  @unique
+  localisation String?
+  equipement   String?
+  support      String?
+  ecarts       String?
+  observations String?
+  // ISO manuel sur tablette (troisième méthode du TQC, voir le cahier des
+  // charges) : annotation graphique à main levée (stylet, doigt ou
+  // souris) par-dessus un fond optionnel déjà hébergé (schéma iso). Les
+  // traits sont conservés comme des tracés vectoriels (liste de points en
+  // coordonnées relatives 0..1, indépendantes de la taille d'écran) —
+  // jamais une image figée — pour rester modifiables comme le reste du
+  // TQC tant qu'il n'est pas signé. Voir IsoTrait dans
+  // src/app/joints/iso-canvas.tsx pour la forme exacte du JSON.
+  isoFondUrl   String?
+  isoTraits    Json?
+  signatureId  String?
+}
+
+// Scan 3D (voir le cahier des charges, "TQC (TEL QUE CONSTRUIT)" >
+// "Scan 3D") : deuxième des trois méthodes du TQC, complémentaire et non
+// obligatoire. Ne conserve que la trace du scan externe — fichier source,
+// date, opérateur, zone couverte, logiciel/version, fichier généré et
+// document ISO/TQC qui en résulte — même principe que les CCPU et PV
+// externes déjà en place : un lien vers un fichier déjà hébergé, pas un
+// téléversement direct dans Weldoc. Une zone peut couvrir plusieurs joints
+// à la fois (`joints`), sans jamais redemander leurs dimensions ou leurs
+// photos, déjà saisies ailleurs. Comme un état des lieux ou un document
+// externe : un nouveau scan de la même zone est un nouvel enregistrement,
+// jamais une modification du précédent — pas de PATCH sur ce modèle.
+model ScanTqc {
+  id               String    @id @default(cuid())
+  affaire          Affaire   @relation(fields: [affaireId], references: [id])
+  affaireId        String
+  zone             String
+  dateScan         DateTime
+  operateur        Personnel @relation("OperateurScanTqc", fields: [operateurId], references: [id])
+  operateurId      String
+  logiciel         String?
+  versionLogiciel  String?
+  fichierSourceUrl String
+  fichierGenereUrl String?
+  isoResultantUrl  String?
+  createdAt        DateTime  @default(now())
+
+  joints           Joint[]
+
+  @@index([affaireId])
 }
 
 enum StatutOutil {
@@ -276,6 +835,10 @@ model Outil {
   qrCodeValeur    String      @unique
 
   controles       ControleDimensionnel[]
+  controlesMagnetoscopie ControleMagnetoscopie[]
+  controlesRadiographie  ControleRadiographie[]
+  controlesUltrasons     ControleUltrasons[]
+  documentsExternes DocumentExterne[]
 }
 
 enum ResultatConformite {
@@ -292,6 +855,13 @@ model ControleDimensionnel {
   controleurId   String
   outil          Outil?              @relation(fields: [outilId], references: [id])
   outilId        String?
+  // Produit de la bibliothèque dimensionnelle utilisé, quand il y en a un
+  // (voir ProduitDimensionnel ci-dessous) — sinon les critères viennent du
+  // moteur de tolérances placeholder (src/lib/tolerances.ts). Dans les
+  // deux cas, `criteresAppliques` garde une copie des critères réellement
+  // appliqués au moment du contrôle (jamais recalculée après coup).
+  produitDimensionnel   ProduitDimensionnel? @relation(fields: [produitDimensionnelId], references: [id])
+  produitDimensionnelId String?
   dateControle   DateTime            @default(now())
   mesures        Json
   criteresAppliques Json
@@ -299,6 +869,310 @@ model ControleDimensionnel {
   signatureId    String?
 
   fncsGenerees   FNC[]
+}
+
+// Bibliothèque dimensionnelle (voir le cahier des charges, "BIBLIOTHÈQUE
+// DIMENSIONNELLE") : produits normalisés (tubes, tôles, raccords,
+// brides...) avec leurs critères dimensionnels déjà déterminés par une
+// personne compétente à partir de la norme réelle — jamais recalculés par
+// une formule Weldoc, contrairement au moteur placeholder de
+// src/lib/tolerances.ts (que cette bibliothèque vise à terme à
+// remplacer, référence par référence, à mesure qu'elle se remplit). Même
+// principe de versionnage que WPS/QMOS/ProcedureInterne/DocumentExterne :
+// une nouvelle révision (norme mise à jour) est un nouvel enregistrement.
+model ProduitDimensionnel {
+  id                  String   @id @default(cuid())
+  reference           String
+  version             String   @default("Rev 0")
+  designation         String
+  type                String?
+  normeProduit        String
+  diametreNominalMm   Float?
+  epaisseurNominaleMm Float?
+  finition            String?
+  etat                String?
+  classeType          String?
+  diametreMiniMm      Float
+  diametreMaxiMm      Float
+  epaisseurMiniMm     Float
+  epaisseurMaxiMm     Float
+  referentiel         Referentiel? @relation(fields: [referentielId], references: [id])
+  referentielId       String?
+  retiree             Boolean  @default(false)
+  createdAt           DateTime @default(now())
+
+  controles           ControleDimensionnel[]
+
+  @@index([reference])
+}
+
+// ============================================================================
+// CONTRÔLE VISUEL ET CND (VT, PT/ressuage — MT/RT/UT à construire de la même
+// façon, module par module)
+// ============================================================================
+// Résultat générique conforme/non conforme/à vérifier, distinct de
+// ResultatConformite (propre aux tolérances dimensionnelles) car les termes
+// n'ont pas le même sens pour une indication visuelle ou CND.
+enum ResultatControle {
+  CONFORME
+  NON_CONFORME
+  A_VERIFIER
+}
+
+// Les 6 champs numeroPV.../moyensUtilises ci-dessous (et sur les 4 autres
+// méthodes de contrôle plus bas) sont propres au procès-verbal lui-même,
+// distincts de ce qui est déjà tracé ailleurs (type de joint, diamètre,
+// épaisseur, matière restent sur Joint ; jamais redemandés ici, voir le
+// PRINCIPE CENTRAL du cahier des charges). Tous facultatifs et en texte
+// libre : leurs valeurs possibles dépendent du référentiel de l'entreprise,
+// jamais imposées par Weldoc.
+model ControleVisuel {
+  id             String            @id @default(cuid())
+  joint          Joint             @relation(fields: [jointId], references: [id])
+  jointId        String
+  controleur     Personnel         @relation("ControleurVisuel", fields: [controleurId], references: [id])
+  controleurId   String
+  procedureRef   String
+  procedureVersion String?
+  numeroPV       String?
+  referentielAcceptation String?
+  editionReferentiel     String?
+  categorieConstruction  String?
+  niveauExamen           String?
+  methodeExamen          String?
+  surfacesExaminees      String?
+  etatSurface            String?
+  eclairage              String?
+  moyensUtilises         String?
+  dateControle   DateTime          @default(now())
+  // Indications : localisation, nature, dimensions, critère applicable,
+  // conforme (bool), commentaire, photoUrl — une indication conforme reste
+  // documentée, elle ne signifie pas automatiquement une non-conformité.
+  indications    Json
+  resultat       ResultatControle
+  signatureId    String?
+
+  controlesRessuagePrealable ControleRessuage[]
+  fncsGenerees   FNC[]
+
+  @@index([jointId])
+}
+
+enum TypeConsommableCND {
+  // Ressuage (PT)
+  PENETRANT
+  REVELATEUR
+  NETTOYANT
+  // Magnétoscopie (MT)
+  POUDRE_MAGNETIQUE
+  PRODUIT_CONTRASTE
+  DEMAGNETISANT
+  // Radiographie (RT)
+  FILM_RADIOGRAPHIQUE
+  PRODUIT_DEVELOPPEMENT
+  // Ultrasons (UT)
+  COUPLANT
+  // Autre produit non listé ci-dessus
+  AUTRE
+}
+
+// Bibliothèque des consommables CND : un produit/lot est enregistré une
+// seule fois puis réutilisé sur chaque PV qui l'a employé, plutôt que
+// ressaisi à chaque contrôle.
+model ConsommableCND {
+  id            String             @id @default(cuid())
+  type          TypeConsommableCND
+  fabricant     String
+  reference     String
+  lot           String
+  peremption    DateTime?
+  certificatUrl String?
+
+  utilisationsRessuage      ControleRessuageConsommable[]
+  utilisationsMagnetoscopie ControleMagnetoscopieConsommable[]
+  utilisationsRadiographie  ControleRadiographieConsommable[]
+  utilisationsUltrasons     ControleUltrasonsConsommable[]
+
+  @@unique([type, fabricant, reference, lot])
+}
+
+model ControleRessuage {
+  id             String            @id @default(cuid())
+  joint          Joint             @relation(fields: [jointId], references: [id])
+  jointId        String
+  controleur     Personnel         @relation("ControleurRessuage", fields: [controleurId], references: [id])
+  controleurId   String
+  // Le contrôle visuel préalable est obligatoire : on ne fait pas de
+  // ressuage sur un joint dont l'état de surface n'a pas été vérifié.
+  controleVisuelPrealable   ControleVisuel @relation(fields: [controleVisuelPrealableId], references: [id])
+  controleVisuelPrealableId String
+  procedureRef   String
+  procedureVersion String?
+  numeroPV       String?
+  referentielAcceptation String?
+  editionReferentiel     String?
+  categorieConstruction  String?
+  niveauExamen           String?
+  methodeExamen          String?
+  surfacesExaminees      String?
+  etatSurface            String?
+  eclairage              String?
+  moyensUtilises         String?
+  dateControle   DateTime          @default(now())
+  indications    Json
+  resultat       ResultatControle
+  signatureId    String?
+
+  consommables   ControleRessuageConsommable[]
+  fncsGenerees   FNC[]
+
+  @@index([jointId])
+}
+
+model ControleRessuageConsommable {
+  id                 String           @id @default(cuid())
+  controleRessuage   ControleRessuage @relation(fields: [controleRessuageId], references: [id])
+  controleRessuageId String
+  consommable        ConsommableCND   @relation(fields: [consommableId], references: [id])
+  consommableId      String
+
+  @@unique([controleRessuageId, consommableId])
+}
+
+// MT/RT/UT : même structure que le contrôle visuel (indications en JSON,
+// résultat déduit des indications, FNC automatique si non conforme), et
+// comme le ressuage, un lien optionnel vers les consommables utilisés
+// (bibliothèque commune ConsommableCND, jamais ressaisis).
+model ControleMagnetoscopie {
+  id             String            @id @default(cuid())
+  joint          Joint             @relation(fields: [jointId], references: [id])
+  jointId        String
+  controleur     Personnel         @relation("ControleurMagnetoscopie", fields: [controleurId], references: [id])
+  controleurId   String
+  // Équipement/banc utilisé (bibliothèque métrologie/outillage partagée
+  // avec le contrôle dimensionnel — voir Outil) : un outil expiré ou hors
+  // service bloque le contrôle, comme pour le contrôle dimensionnel.
+  outil          Outil?            @relation(fields: [outilId], references: [id])
+  outilId        String?
+  procedureRef   String
+  procedureVersion String?
+  numeroPV       String?
+  referentielAcceptation String?
+  editionReferentiel     String?
+  categorieConstruction  String?
+  niveauExamen           String?
+  methodeExamen          String?
+  surfacesExaminees      String?
+  etatSurface            String?
+  eclairage              String?
+  moyensUtilises         String?
+  dateControle   DateTime          @default(now())
+  indications    Json
+  resultat       ResultatControle
+  signatureId    String?
+
+  consommables   ControleMagnetoscopieConsommable[]
+  fncsGenerees   FNC[]
+
+  @@index([jointId])
+}
+
+model ControleMagnetoscopieConsommable {
+  id                      String                @id @default(cuid())
+  controleMagnetoscopie   ControleMagnetoscopie @relation(fields: [controleMagnetoscopieId], references: [id])
+  controleMagnetoscopieId String
+  consommable             ConsommableCND        @relation(fields: [consommableId], references: [id])
+  consommableId           String
+
+  @@unique([controleMagnetoscopieId, consommableId])
+}
+
+model ControleRadiographie {
+  id             String            @id @default(cuid())
+  joint          Joint             @relation(fields: [jointId], references: [id])
+  jointId        String
+  controleur     Personnel         @relation("ControleurRadiographie", fields: [controleurId], references: [id])
+  controleurId   String
+  // Appareil/source radiographique utilisé (voir Outil, même bibliothèque
+  // que le contrôle dimensionnel) : un outil expiré ou hors service
+  // bloque le contrôle.
+  outil          Outil?            @relation(fields: [outilId], references: [id])
+  outilId        String?
+  procedureRef   String
+  procedureVersion String?
+  numeroPV       String?
+  referentielAcceptation String?
+  editionReferentiel     String?
+  categorieConstruction  String?
+  niveauExamen           String?
+  methodeExamen          String?
+  surfacesExaminees      String?
+  etatSurface            String?
+  eclairage              String?
+  moyensUtilises         String?
+  dateControle   DateTime          @default(now())
+  indications    Json
+  resultat       ResultatControle
+  signatureId    String?
+
+  consommables   ControleRadiographieConsommable[]
+  fncsGenerees   FNC[]
+
+  @@index([jointId])
+}
+
+model ControleRadiographieConsommable {
+  id                     String               @id @default(cuid())
+  controleRadiographie   ControleRadiographie @relation(fields: [controleRadiographieId], references: [id])
+  controleRadiographieId String
+  consommable            ConsommableCND       @relation(fields: [consommableId], references: [id])
+  consommableId          String
+
+  @@unique([controleRadiographieId, consommableId])
+}
+
+model ControleUltrasons {
+  id             String            @id @default(cuid())
+  joint          Joint             @relation(fields: [jointId], references: [id])
+  jointId        String
+  controleur     Personnel         @relation("ControleurUltrasons", fields: [controleurId], references: [id])
+  controleurId   String
+  // Appareil ultrasons utilisé (voir Outil, même bibliothèque que le
+  // contrôle dimensionnel) : un outil expiré ou hors service bloque le
+  // contrôle.
+  outil          Outil?            @relation(fields: [outilId], references: [id])
+  outilId        String?
+  procedureRef   String
+  procedureVersion String?
+  numeroPV       String?
+  referentielAcceptation String?
+  editionReferentiel     String?
+  categorieConstruction  String?
+  niveauExamen           String?
+  methodeExamen          String?
+  surfacesExaminees      String?
+  etatSurface            String?
+  eclairage              String?
+  moyensUtilises         String?
+  dateControle   DateTime          @default(now())
+  indications    Json
+  resultat       ResultatControle
+  signatureId    String?
+
+  consommables   ControleUltrasonsConsommable[]
+  fncsGenerees   FNC[]
+
+  @@index([jointId])
+}
+
+model ControleUltrasonsConsommable {
+  id                  String            @id @default(cuid())
+  controleUltrasons   ControleUltrasons @relation(fields: [controleUltrasonsId], references: [id])
+  controleUltrasonsId String
+  consommable         ConsommableCND    @relation(fields: [consommableId], references: [id])
+  consommableId       String
+
+  @@unique([controleUltrasonsId, consommableId])
 }
 
 enum StatutFNC {
@@ -325,15 +1199,345 @@ model FNC {
   jointId           String?
   controleOrigine   ControleDimensionnel? @relation(fields: [controleOrigineId], references: [id])
   controleOrigineId String?
+  // Une FNC ne peut avoir qu'une seule origine parmi les contrôles
+  // ci-dessous. Un champ par type de contrôle plutôt qu'une relation
+  // polymorphe unique, pour rester cohérent avec controleOrigine ci-dessus ;
+  // à revoir si le nombre de méthodes CND grandit encore.
+  controleVisuelOrigine   ControleVisuel? @relation(fields: [controleVisuelOrigineId], references: [id])
+  controleVisuelOrigineId String?
+  controleRessuageOrigine   ControleRessuage? @relation(fields: [controleRessuageOrigineId], references: [id])
+  controleRessuageOrigineId String?
+  controleMagnetoscopieOrigine   ControleMagnetoscopie? @relation(fields: [controleMagnetoscopieOrigineId], references: [id])
+  controleMagnetoscopieOrigineId String?
+  controleRadiographieOrigine    ControleRadiographie?  @relation(fields: [controleRadiographieOrigineId], references: [id])
+  controleRadiographieOrigineId  String?
+  controleUltrasonsOrigine       ControleUltrasons?     @relation(fields: [controleUltrasonsOrigineId], references: [id])
+  controleUltrasonsOrigineId     String?
   description       String
   impact            ImpactFNC
   statut            StatutFNC @default(DETECTION)
   actionCorrective  String?
+  // Le joint de réparation qui constitue l'action corrective de cette FNC
+  // (voir POST /api/joints/[id]/reparation). Distinct de `joint` ci-dessus,
+  // qui est le joint sur lequel la FNC a été détectée.
+  actionCorrectiveJoint   Joint?    @relation("ActionCorrectiveFNC", fields: [actionCorrectiveJointId], references: [id])
+  actionCorrectiveJointId String?
   dateCreation      DateTime  @default(now())
   dateCloture       DateTime?
   valideeParId      String?
+  photos            Photo[]
+  documentsExternes DocumentExterne[]
+  rex               FicheREX?
 }
 
+// Retour d'expérience (voir le cahier des charges, "RETOUR D'EXPÉRIENCE
+// (REX)") : une fiche de synthèse par FNC, rédigée une fois la cause
+// comprise et une solution mise en œuvre. Le classement par matériau/
+// procédé/fournisseur/type de joint/chantier n'est jamais dupliqué ici :
+// il se lit déjà sur le joint et l'affaire de la FNC (Joint.matiere,
+// Joint.wps, Affaire.chantier...), consultés à la lecture sur
+// /rex. "Identification de problématiques similaires" reste explicitement
+// "à terme" au cahier des charges — pas construit ici : l'IA n'assiste
+// pas encore cette recherche, seul le classement manuel par type de
+// problème permet de repérer des cas proches.
+model FicheREX {
+  id            String    @id @default(cuid())
+  fnc           FNC       @relation(fields: [fncId], references: [id])
+  fncId         String    @unique
+  typeProbleme  String
+  origine       String?
+  cause         String
+  solution      String
+  resultat      String?
+  redacteur     Personnel @relation(fields: [redacteurId], references: [id])
+  redacteurId   String
+  dateRedaction DateTime  @default(now())
+
+  @@index([typeProbleme])
+}
+
+// Notes REX (voir le cahier des charges, "RETOUR D'EXPÉRIENCE (REX)") :
+// contrairement à FicheREX (une fiche par FNC, rédigée après coup à la
+// clôture), une note se prend à tout moment de l'affaire, par n'importe
+// quel intervenant, sans attendre qu'une FNC existe — une observation sur
+// un fournisseur, une matière, une méthode qui pose question... Alimente
+// le REX progressivement plutôt que tout d'un coup à la fin ; jamais
+// modifiée ni supprimée une fois postée (comme un constat), seulement
+// consultée au moment de rédiger une fiche REX.
+model NoteRex {
+  id        String    @id @default(cuid())
+  affaire   Affaire   @relation(fields: [affaireId], references: [id])
+  affaireId String
+  texte     String
+  auteur    Personnel @relation("AuteurNoteRex", fields: [auteurId], references: [id])
+  auteurId  String
+  createdAt DateTime  @default(now())
+
+  @@index([affaireId])
+}
+
+// Book photo (voir le cahier des charges) : photos horodatées rattachées à
+// une affaire et, optionnellement, à une phase/un joint/une FNC précis —
+// utilisées pour la prise en charge, le suivi, les contrôles, les FNC, le
+// TQC et la restitution. `url` reste du texte libre pour l'instant : pas
+// encore de téléversement de fichier intégré à Weldoc (comme
+// `FicheTechniqueSoudage.photosUrls`/`Piece.photosUrls` ailleurs dans le
+// modèle) — une vraie prise en charge de fichiers suppose de choisir un
+// hébergeur, à discuter avec l'entreprise avant de s'engager sur un coût
+// récurrent.
+model Photo {
+  id          String    @id @default(cuid())
+  affaire     Affaire   @relation(fields: [affaireId], references: [id])
+  affaireId   String
+  phase       Phase?    @relation(fields: [phaseId], references: [id])
+  phaseId     String?
+  joint       Joint?    @relation(fields: [jointId], references: [id])
+  jointId     String?
+  fnc         FNC?      @relation(fields: [fncId], references: [id])
+  fncId       String?
+  etatDesLieux   EtatDesLieux? @relation(fields: [etatDesLieuxId], references: [id])
+  etatDesLieuxId String?
+  url         String
+  commentaire String?
+  // Annotation graphique à main levée par-dessus la photo (voir le cahier
+  // des charges, "BOOK PHOTO" : "annotables") — même mécanisme que l'ISO
+  // manuel du TQC (voir IsoTrait dans src/app/joints/iso-canvas.tsx) :
+  // des tracés vectoriels en coordonnées relatives (0..1), jamais une
+  // image figée, pour rester modifiables à tout moment (le book photo n'a
+  // pas de notion de signature contrairement au TQC).
+  annotations Json?
+  auteur      Personnel @relation("AuteurPhoto", fields: [auteurId], references: [id])
+  auteurId    String
+  dateAjout   DateTime  @default(now())
+
+  @@index([affaireId])
+  @@index([jointId])
+  @@index([etatDesLieuxId])
+}
+
+// Dossier réglementaire (voir le cahier des charges, "DOSSIER
+// RÉGLEMENTAIRE" / "Blocage réglementaire") : distinct du rapport de fin
+// de fabrication (compilation globale, voir dossierFinFabrication.ts) —
+// ici, chaque exigence réglementaire (ex. "Attestation de conformité OHA",
+// "Note d'optimisation de la radioprotection"...) est suivie une par une,
+// avec un statut qui peut évoluer. L'intitulé et le référentiel restent en
+// texte libre : leur liste dépend entièrement du projet/référentiel client
+// (RCC-M, CODAP...), jamais imposée par Weldoc. Rattaché à l'affaire et,
+// optionnellement, à un joint ou une phase précis (sinon il concerne
+// l'affaire dans son ensemble).
+model PointReglementaire {
+  id          String    @id @default(cuid())
+  affaire     Affaire   @relation(fields: [affaireId], references: [id])
+  affaireId   String
+  joint       Joint?    @relation(fields: [jointId], references: [id])
+  jointId     String?
+  phase       Phase?    @relation(fields: [phaseId], references: [id])
+  phaseId     String?
+  intitule    String
+  // Règle/référentiel dont dépend ce point (traçabilité exigée au cahier
+  // des charges, "PRINCIPE DE CONCEPTION") — texte libre, jamais une norme
+  // recopiée.
+  referentiel String?
+  createdAt   DateTime  @default(now())
+
+  evenements  PointReglementaireEvenement[]
+
+  @@index([affaireId])
+}
+
+// Les 5 statuts prévus au cahier des charges. Le statut "actuel" d'un
+// point n'est jamais stocké directement sur PointReglementaire : c'est
+// toujours le dernier événement de son historique (même principe que les
+// qualifications, QualificationEvenement) — un changement de statut est un
+// nouvel enregistrement, jamais une modification du précédent.
+enum StatutPointReglementaire {
+  NON_BLOQUANT
+  BLOQUANT
+  SOUS_RESERVE
+  ATTENTE_DECISION
+  DEBLOCAGE_AUTORISE
+}
+
+model PointReglementaireEvenement {
+  id                   String                   @id @default(cuid())
+  pointReglementaire   PointReglementaire       @relation(fields: [pointReglementaireId], references: [id])
+  pointReglementaireId String
+  statut               StatutPointReglementaire
+  commentaire          String?
+  auteur               Personnel                @relation(fields: [auteurId], references: [id])
+  auteurId             String
+  // Signature du déblocage (voir POST /api/signatures, documentType
+  // "POINT_REGLEMENTAIRE") : réservée aux passages en DEBLOCAGE_AUTORISE,
+  // qui exigent aussi le niveau 3 côté serveur — l'IA ne décide jamais
+  // seule qu'un point bloquant peut être levé.
+  signatureId          String?
+  date                 DateTime                 @default(now())
+
+  @@index([pointReglementaireId])
+}
+
+// PV externes (voir le cahier des charges, "PV EXTERNES") : documents
+// produits par un prestataire externe (rapport de CND sous-traité,
+// certificat d'étalonnage, PV d'ouverture/fermeture de chantier...),
+// importés et liés à une affaire et, optionnellement, à un joint ou une
+// phase précis. `url` reste du texte libre pour l'instant, comme les
+// autres pièces jointes de l'application — pas de téléversement de
+// fichier intégré à Weldoc (voir Photo). La revue (qui, quand, conforme
+// ou non) n'est jamais modifiée une fois faite : un document corrigé se
+// réimporte comme un nouveau PVExterne, jamais en écrasant l'ancien.
+enum ConclusionRevuePVExterne {
+  CONFORME
+  NON_CONFORME
+}
+
+model PVExterne {
+  id           String    @id @default(cuid())
+  affaire      Affaire   @relation(fields: [affaireId], references: [id])
+  affaireId    String
+  joint        Joint?    @relation(fields: [jointId], references: [id])
+  jointId      String?
+  phase        Phase?    @relation(fields: [phaseId], references: [id])
+  phaseId      String?
+  intitule     String
+  prestataire  String?
+  url          String
+  dateDocument DateTime?
+  importePar   Personnel @relation("ImporteurPVExterne", fields: [importeParId], references: [id])
+  importeParId String
+  dateImport   DateTime  @default(now())
+
+  // Revue tracée par une personne habilitée (cahier des charges : "niveau
+  // 3 si requis" — Weldoc l'exige systématiquement, pour rester simple et
+  // sûr par défaut). Les trois champs se remplissent ensemble, une seule
+  // fois.
+  revueConclusion  ConclusionRevuePVExterne?
+  revueCommentaire String?
+  revuePar         Personnel? @relation("ReviseurPVExterne", fields: [revueParId], references: [id])
+  revueParId       String?
+  dateRevue        DateTime?
+
+  @@index([affaireId])
+  @@index([jointId])
+}
+
+// Documents externes et bibliothèque documentaire (voir le cahier des
+// charges, "DOCUMENTS EXTERNES ET BIBLIOTHÈQUE DOCUMENTAIRE") : documents
+// de fournisseurs/sous-traitants/prestataires CND ou traitement
+// thermique/organismes externes. Distinct de PVExterne (toujours rattaché
+// à UNE affaire) : ici un même document peut se relier à plusieurs
+// affaires/joints/phases/FNC/personnel/équipements à la fois — "un
+// document n'est jamais téléchargé plusieurs fois pour plusieurs usages".
+// Même principe de versionnage que WPS/QMOS/ProcedureInterne
+// (`annoterStatutProcedures`, réutilisée telle quelle) : une nouvelle
+// révision est un nouvel enregistrement, jamais une modification de la
+// précédente. La validation réutilise `ConclusionRevuePVExterne` (même
+// forme conforme/non conforme) plutôt qu'un nouvel enum équivalent.
+model DocumentExterne {
+  id           String    @id @default(cuid())
+  reference    String
+  version      String    @default("Rev 0")
+  titre        String
+  categorie    String?
+  url          String
+  dateDocument DateTime?
+  importePar   Personnel @relation("ImporteurDocumentExterne", fields: [importeParId], references: [id])
+  importeParId String
+  dateImport   DateTime  @default(now())
+
+  valideConclusion  ConclusionRevuePVExterne?
+  valideCommentaire String?
+  validePar         Personnel? @relation("ValidateurDocumentExterne", fields: [valideParId], references: [id])
+  valideParId       String?
+  dateValidation    DateTime?
+
+  retiree      Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+
+  affaires     Affaire[]
+  joints       Joint[]
+  phases       Phase[]
+  fncs         FNC[]
+  personnel    Personnel[] @relation("PersonnelConcerneDocumentExterne")
+  outils       Outil[]
+
+  @@index([reference])
+}
+
+// Prise en charge / restitution du chantier (voir le cahier des charges,
+// "PRISE EN CHARGE ET RESTITUTION DU CHANTIER") : un état des lieux en
+// début d'intervention, un autre en fin — jamais le même enregistrement
+// modifié en place (un nouveau constat, même type, reste un nouvel
+// EtatDesLieux ; le plus récent de chaque type fait foi). La comparaison
+// avant/après (photos, observations) se fait à la lecture en
+// rapprochant le dernier PRISE_EN_CHARGE et le dernier RESTITUTION d'une
+// affaire — rien à stocker en plus pour ça.
+enum TypeEtatDesLieux {
+  PRISE_EN_CHARGE
+  RESTITUTION
+}
+
+model EtatDesLieux {
+  id            String           @id @default(cuid())
+  affaire       Affaire          @relation(fields: [affaireId], references: [id])
+  affaireId     String
+  type          TypeEtatDesLieux
+  zone          String?
+  redacteur     Personnel        @relation(fields: [redacteurId], references: [id])
+  redacteurId   String
+  dateConstat   DateTime         @default(now())
+
+  observations           String?
+  degradationsConstatees String?
+  documentsEntree        String?
+
+  // Modifiable (constat + réserves) tant que non signé ; une fois
+  // signatureId renseigné, plus aucune modification n'est acceptée — même
+  // principe que la fiche technique de suivi de soudage.
+  signatureId   String?
+
+  photos        Photo[]
+  reserves      ReserveConstat[]
+
+  @@index([affaireId])
+}
+
+// Une réserve, une fiche d'aléa ou une FNC (cahier des charges : "en cas
+// de problème") : ici, la réserve simple, transmissible au client. Un
+// problème plus grave se déclare comme FNC via le module FNC déjà
+// existant (en la reliant à la même affaire) plutôt que de dupliquer ce
+// workflow ici.
+model ReserveConstat {
+  id                String       @id @default(cuid())
+  etatDesLieux      EtatDesLieux @relation(fields: [etatDesLieuxId], references: [id])
+  etatDesLieuxId    String
+  description       String
+  transmiseAuClient Boolean      @default(false)
+  dateAjout         DateTime     @default(now())
+
+  @@index([etatDesLieuxId])
+}
+
+// Actions possibles de remise en conformité, comme listées au cahier des
+// charges.
+enum TypeActionRemiseEnConformite {
+  REPARATION
+  MEULAGE
+  RESURFACAGE
+  REPRISE
+  REMPLACEMENT
+  CONTROLE_COMPLEMENTAIRE
+}
+
+// Une signature n'est produite qu'au bout du parcours demandé au cahier des
+// charges : identification (QR ou matricule) → authentification (PIN,
+// haché comme un mot de passe — voir Personnel.pinHash) → vérification que
+// la charte en vigueur a été acceptée → création de cet enregistrement
+// (horodatage automatique). Voir POST /api/signatures. `documentType`/
+// `documentId` restent génériques (pas de clé étrangère) car une signature
+// peut porter sur n'importe quel type de document (contrôle, fiche de
+// soudage, événement de qualification...) ; chaque table qui peut être
+// signée porte son propre `signatureId` en texte libre, jamais une relation
+// directe vers ce modèle.
 model Signature {
   id             String    @id @default(cuid())
   personnel      Personnel @relation(fields: [personnelId], references: [id])
@@ -346,6 +1550,34 @@ model Signature {
   @@index([documentType, documentId])
 }
 
+// Autorisations de signature (voir le cahier des charges, fiche personne :
+// "autorisations, ... autorisations de signature" ; et "IDENTIFICATION ET
+// SIGNATURE" : "contrôle des droits" fait partie du parcours de signature,
+// après l'identification et le PIN, avant la signature elle-même). Permet
+// de nommer explicitement qui a le droit de signer un type de document
+// donné (`documentType`, la même valeur que Signature.documentType),
+// au-delà du simple niveau. N'agit que si au moins une autorisation
+// existe pour ce documentType : tant qu'aucune n'est configurée, le
+// contrôle d'accès déjà en place (niveau, sur chaque route) continue de
+// s'appliquer sans changement — voir src/lib/autorisationsSignature.ts.
+// Révoquer une autorisation ne supprime jamais la ligne : `active`
+// repasse à false et le changement est tracé par l'audit trail, comme le
+// niveau d'une personne ou le statut d'un compte.
+model AutorisationSignature {
+  id            String    @id @default(cuid())
+  personnel     Personnel @relation(fields: [personnelId], references: [id])
+  personnelId   String
+  documentType  String
+  active        Boolean   @default(true)
+  accordeePar   Personnel @relation("AccordeParAutorisationSignature", fields: [accordeeParId], references: [id])
+  accordeeParId String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@unique([personnelId, documentType])
+  @@index([documentType])
+}
+
 model AuditTrail {
   id            String   @id @default(cuid())
   utilisateurId String
@@ -355,4 +1587,281 @@ model AuditTrail {
   ancienneValeur Json?
   nouvelleValeur Json?
   motif         String?
+}
+
+// ============================================================================
+// PLANNING ET ORGANIGRAMME
+// ============================================================================
+// Une indisponibilité déclarée (congé, maladie, formation, autre) : sert de
+// base à la détection de conflit avant affectation.
+model Indisponibilite {
+  id          String    @id @default(cuid())
+  personnel   Personnel @relation(fields: [personnelId], references: [id])
+  personnelId String
+  dateDebut   DateTime
+  dateFin     DateTime
+  motif       String
+  createdAt   DateTime  @default(now())
+
+  @@index([personnelId])
+}
+
+enum StatutAffectation {
+  PLANIFIEE
+  EN_COURS
+  TERMINEE
+  ANNULEE
+}
+
+// Affecter une personne à une affaire (et éventuellement un joint précis).
+// La vérification (qualification, habilitation, disponibilité, compétence)
+// se fait à la création et produit des alertes — voir src/lib/planning.ts —
+// mais ne bloque jamais la création : conformément au cahier des charges
+// ("signale... peut proposer"), Weldoc alerte, la décision reste humaine.
+model Affectation {
+  id          String            @id @default(cuid())
+  personnel   Personnel         @relation(fields: [personnelId], references: [id])
+  personnelId String
+  affaire     Affaire           @relation(fields: [affaireId], references: [id])
+  affaireId   String
+  joint       Joint?            @relation(fields: [jointId], references: [id])
+  jointId     String?
+  fonction    String
+  // Codes d'habilitation/accès site (ex. "CODES GTA" chez certains
+  // clients) en texte libre : leur nomenclature est propre à
+  // l'entreprise/au site, jamais interprétée par Weldoc.
+  codes       String?
+  dateDebut   DateTime
+  dateFin     DateTime
+  // Temps prévu (voir le cahier des charges, "TEMPS ET PRODUCTIVITÉ"), en
+  // minutes, quand cette affectation concerne un joint précis (jointId
+  // renseigné) — distinct du temps théorique (Wps.tempsTheoriqueMin) et
+  // du temps réel (FicheTechniqueSoudage.tempsMin).
+  dureeEstimeeMin Float?
+  statut      StatutAffectation @default(PLANIFIEE)
+  creeParId   String
+  createdAt   DateTime          @default(now())
+
+  @@index([personnelId])
+  @@index([affaireId])
+}
+
+// Adresses email destinataires du récapitulatif d'alertes (envoyé chaque
+// lundi — voir src/lib/alertesEmail.ts). Volontairement une simple liste
+// d'adresses plutôt que rattachée à une fiche Personnel : ce ne sont pas
+// forcément des comptes Weldoc (ex. la boîte mail d'un responsable qualité).
+model DestinataireAlerte {
+  id        String   @id @default(cuid())
+  nom       String?
+  email     String   @unique
+  actif     Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+// ============================================================================
+// SÉQUENCEMENT DU DOSSIER DE FABRICATION
+// ============================================================================
+enum StatutDemandeSequencement {
+  EN_ATTENTE
+  ACCEPTEE
+  REFUSEE
+  MODIFICATION_DEMANDEE
+}
+
+// Demande de modification du séquencement envoyée par le terrain (ex. faire
+// une phase avant une autre non encore terminée). Transmise au niveau 3, qui
+// accepte/refuse/demande une modification/impose des conditions — jamais
+// décidée automatiquement. Une demande ACCEPTEE autorise, pour les phases
+// qu'elle liste, à passer outre le blocage "séquence précédente non
+// terminée" (voir POST /api/phases et PATCH /api/phases).
+model DemandeModificationSequencement {
+  id                  String                    @id @default(cuid())
+  affaire             Affaire                   @relation(fields: [affaireId], references: [id])
+  affaireId           String
+  phasesConcerneesIds String[]
+  motif               String
+  urgent              Boolean                   @default(false)
+  photoUrl            String?
+  documentUrl         String?
+  demandeParId        String
+  dateDemande         DateTime                  @default(now())
+  statut              StatutDemandeSequencement @default(EN_ATTENTE)
+  decisionParId       String?
+  dateDecision        DateTime?
+  commentaireDecision String?
+  conditions          String?
+
+  @@index([affaireId])
+}
+
+// ============================================================================
+// PIÈCES (fabrication en atelier)
+// ============================================================================
+// Contrairement au chantier, où les joints d'une affaire sont en général
+// connus à l'avance, une fabrication en atelier reçoit souvent des pièces
+// au fil de l'eau. Une Pièce trace sa prise en charge (référence, photos
+// des repères présents dessus comme preuve) et son statut au fil de
+// l'activité — indépendamment des joints, qui restent la soudure elle-même.
+enum StatutPiece {
+  PRISE_EN_CHARGE
+  EN_FABRICATION
+  TERMINEE
+  EXPEDIEE
+}
+
+model Piece {
+  id                 String      @id @default(cuid())
+  affaire            Affaire     @relation(fields: [affaireId], references: [id])
+  affaireId          String
+  reference          String
+  designation        String?
+  photosUrls         String[]
+  priseEnChargeParId String
+  datePriseEnCharge  DateTime    @default(now())
+  statut             StatutPiece @default(PRISE_EN_CHARGE)
+  // Joints/contrôles qui concernent cette pièce au fil de la fabrication
+  // en atelier (voir Joint.pieceId ci-dessous) — la pièce reste l'objet
+  // suivi (prise en charge → fabrication → terminée → expédiée), les
+  // joints restent les soudures elles-mêmes, jamais dupliquées.
+  joints             Joint[]
+
+  @@unique([affaireId, reference])
+  @@index([affaireId])
+}
+
+// ============================================================================
+// BIBLIOTHÈQUE WPS/DMOS ET QMOS
+// ============================================================================
+// Une révision de WPS ou de QMOS n'écrase jamais la précédente : c'est un
+// nouvel enregistrement, avec la même `reference` métier (ex. "DMOS-001")
+// et une `version` différente (ex. "Rev 0", "Rev 1"). La version "en
+// vigueur" n'est jamais stockée : elle est calculée à la lecture (la plus
+// récente par dateEmission pour une référence donnée, voir
+// src/lib/procedures.ts), comme le statut des qualifications ou de
+// l'outillage ailleurs dans l'application. `retiree` est la seule chose
+// qu'une personne peut positionner explicitement (ex. norme devenue
+// obsolète), sans jamais modifier le contenu d'une version existante.
+model Qmos {
+  id             String    @id @default(cuid())
+  reference      String
+  version        String    @default("Rev 0")
+  procede        String
+  normeReference String
+  laboratoire    String?
+  dateEssai      DateTime?
+  certificatUrl  String?
+  retiree        Boolean   @default(false)
+  createdAt      DateTime  @default(now())
+
+  wps            Wps[]
+  joints         Joint[]
+
+  @@unique([reference, version])
+  @@index([reference])
+}
+
+// Type d'assemblage soudé, terminologie générique (pas propre à un
+// référentiel) : bout-à-bout, angle, emmanché-soudé, rechargement.
+enum TypeAssemblageSoudure {
+  BOUT_A_BOUT
+  ANGLE
+  EMMANCHE_SOUDE
+  RECHARGEMENT
+  AUTRE
+}
+
+model Wps {
+  id             String    @id @default(cuid())
+  reference      String
+  version        String    @default("Rev 0")
+  typeAssemblage TypeAssemblageSoudure?
+  procede        String
+  normeReference String
+  materiaux      String?
+  // Groupe de matériaux (ex. ISO/TR 15608), structuré comme sur
+  // Qualification.groupeMateriaux — c'est ce champ, avec procede, qui sert
+  // de base au rapprochement automatique QS/WPS (voir
+  // src/lib/verificationQS.ts), pas le texte libre `materiaux` ci-dessus.
+  groupeMateriaux String?
+  epaisseurMinMm Float?
+  epaisseurMaxMm Float?
+  diametreMinMm  Float?
+  diametreMaxMm  Float?
+  positions      String?
+  // Notes libres sur la préparation (talon, jeu, mode de préparation,
+  // support envers...) : le schéma lui-même (image/PDF) reste dans
+  // documentUrl, pas reproduit en texte ici.
+  preparationNotes String?
+  qmos           Qmos?     @relation(fields: [qmosId], references: [id])
+  qmosId         String?
+  documentUrl    String?
+  dateEmission   DateTime
+  retiree        Boolean   @default(false)
+  createdAt      DateTime  @default(now())
+  // Temps théorique de référence (voir le cahier des charges, "TEMPS ET
+  // PRODUCTIVITÉ" : distinguer temps théorique/prévu/réel) — un barème
+  // fixé par l'entreprise pour ce WPS, en minutes. Optionnel : reste vide
+  // tant que l'entreprise n'a pas défini ce barème.
+  tempsTheoriqueMin Float?
+
+  joints         Joint[]
+  passes         WpsPasse[]
+
+  @@unique([reference, version])
+  @@index([reference])
+}
+
+// Détail passe par passe d'un WPS/DMOS : ce qu'un soudeur suit réellement
+// pendant le soudage. Créé avec le WPS et jamais modifié ensuite (comme le
+// reste d'une révision) — une correction se fait via une nouvelle révision
+// du WPS, avec ses propres passes.
+model WpsPasse {
+  id             String  @id @default(cuid())
+  wps            Wps     @relation(fields: [wpsId], references: [id])
+  wpsId          String
+  ordre          Int
+  procede        String
+  modeOperatoire String?
+  position       String?
+  metalApportType String?
+  metalApportDesignationNormalisee  String?
+  metalApportDesignationCommerciale String?
+  metalApportDiametreMm Float?
+  gazEndroitNature   String?
+  gazEndroitDebit    String?
+  gazEnversNature    String?
+  gazEnversDebit     String?
+  natureCourantPolarite String?
+  intensiteAMin      Float?
+  intensiteAMax      Float?
+  tensionVMin        Float?
+  tensionVMax        Float?
+  temperatureMiniPieceC       Float?
+  temperatureMaxiEntrePassesC Float?
+  observations   String?
+
+  @@index([wpsId])
+}
+
+// Bibliothèque des procédures internes de l'entreprise (voir le cahier
+// des charges, "DOCUMENTATION ET PROCÉDURES INTERNES") : procédure,
+// instruction, formulaire, PV type, fiche technique... `type` reste en
+// texte libre (ces catégories varient d'une entreprise à l'autre). Même
+// principe de versionnage que WPS/QMOS (src/lib/procedures.ts,
+// `annoterStatutProcedures`, réutilisé tel quel) : une nouvelle révision
+// est un nouvel enregistrement, jamais une modification de la précédente.
+model ProcedureInterne {
+  id           String   @id @default(cuid())
+  reference    String
+  version      String   @default("Rev 0")
+  titre        String
+  type         String?
+  documentUrl  String?
+  dateEmission DateTime
+  retiree      Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  phases       Phase[]
+
+  @@index([reference])
 }

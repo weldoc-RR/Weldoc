@@ -1,0 +1,365 @@
+import { redirect } from "next/navigation";
+import Link from "next/link";
+import { prisma } from "@/lib/prisma";
+import { getUtilisateurConnecteServeur } from "@/lib/auth";
+import { calculerStatutOutil } from "@/lib/statutOutil";
+import { calculerStatut } from "@/lib/statutValidite";
+import { calculerProchaineConfirmation } from "@/lib/confirmationQualification";
+import { pointBloque } from "@/lib/dossierReglementaire";
+import { controlesManquants } from "@/lib/controlesManquants";
+import { documentsManquants, LIBELLES_DOCUMENT } from "@/lib/documentsManquants";
+import { documentsObsoletes, LIBELLE_TYPE } from "@/lib/documentsObsoletes";
+import { rolesNonCorrespondants } from "@/lib/rolesNonCorrespondants";
+import { Destinataires } from "./destinataires";
+
+export const dynamic = "force-dynamic";
+
+// Alertes centralisées (voir le cahier des charges, "ALERTES" : "Qualifications
+// à échéance, habilitations expirées, documents obsolètes, FNC ouvertes,
+// blocages, validations niveau 3 en attente, dossiers réglementaires
+// incomplets, contrôles manquants, outils métrologiques expirés, documents
+// manquants") : un seul écran plutôt que d'aller chercher chaque signal sur
+// sa page d'origine (personnel, système qualité, dossier réglementaire...).
+// Chaque catégorie ci-dessous réutilise le calcul déjà en place ailleurs
+// (calculerStatut, statutActuel/pointBloque) — rien n'est recalculé
+// différemment ici. "Contrôles manquants" compare maintenant les contrôles
+// réellement enregistrés à ceux déclarés requis par affaire (voir
+// src/lib/controlesManquants.ts et /affaires/[id]/reglementaire — additif :
+// une affaire n'ayant rien déclaré n'apparaît jamais ici). "Validations
+// niveau 3 en attente" couvre maintenant, en plus des reconductions de
+// qualification, les documents externes non validés et les PV externes
+// non revus (deux états déjà modélisés, DocumentExterne.valideConclusion/
+// PVExterne.revueConclusion, simplement pas encore remontés ici). Le
+// rapport de fin de fabrication n'y figure pas : rien ne permet
+// aujourd'hui de distinguer une affaire réellement prête à valider d'une
+// affaire encore en cours, et Weldoc ne devine jamais ce genre de seuil.
+// Elle couvre aussi les demandes de modification de séquencement en
+// attente (voir /avancement/[id], "Demandes de modification de
+// séquencement" — jusqu'ici sans aucune interface). "Documents
+// manquants" fonctionne maintenant comme "contrôles manquants" :
+// Affaire.documentsRequis (voir src/lib/documentsManquants.ts) déclare
+// une fois quels documents sont exigés par joint (fiche de soudage,
+// CCPU/certificat matière, TQC), comparés à ce qui est réellement
+// renseigné — additif, même principe. "Documents obsolètes" couvre
+// maintenant le dernier point de la liste "ALERTES" du cahier des
+// charges (voir src/lib/documentsObsoletes.ts) : une révision de WPS/
+// QMOS/procédure interne/produit dimensionnel qui n'est plus "en
+// vigueur" (annoterStatutProcedures) mais qui reste référencée par un
+// joint, une phase ou un contrôle — jamais recalculé après coup, jamais
+// remplacé automatiquement, seulement signalé. "Rôle ne correspond pas à
+// l'action" (voir src/lib/verificationRole.ts et rolesNonCorrespondants.ts)
+// est un nouvel axe, distinct des précédents : jusqu'ici le rôle (la ou
+// les fonctions d'une personne) restait purement descriptif, alors que le
+// cahier des charges le prévoit comme un axe des droits à part entière —
+// même principe indicatif que la QS (voir /joints), jamais bloquant.
+export default async function AlertesPage() {
+  const utilisateur = await getUtilisateurConnecteServeur();
+  if (!utilisateur) {
+    redirect("/login");
+  }
+
+  const [
+    outils,
+    qualifications,
+    qualificationsToutes,
+    habilitations,
+    fncsOuvertes,
+    pointsReglementaires,
+    destinataires,
+    jointsControlesManquants,
+    jointsDocumentsManquants,
+    documentsExternesEnAttente,
+    pvExternesEnAttente,
+    demandesSequencementEnAttente,
+    documentsObsoletesUtilises,
+    rolesNonCorrespondantsListe,
+  ] = await Promise.all([
+      prisma.outil.findMany({ where: { statut: { not: "HORS_SERVICE" } } }),
+      prisma.qualification.findMany({
+        where: { statut: { not: "SUSPENDU" }, frequenceConfirmationMois: { not: null } },
+        include: { personnel: { select: { nom: true, prenom: true } }, evenements: true },
+      }),
+      prisma.qualification.findMany({
+        where: { statut: { not: "SUSPENDU" } },
+        include: { personnel: { select: { nom: true, prenom: true } }, evenements: { orderBy: { date: "desc" }, take: 1 } },
+      }),
+      prisma.habilitation.findMany({
+        where: { statut: { not: "SUSPENDU" } },
+        include: { personnel: { select: { nom: true, prenom: true } } },
+      }),
+      prisma.fNC.findMany({
+        where: { statut: { not: "CLOTUREE" } },
+        include: { affaire: { select: { numero: true } }, joint: { select: { numero: true, indiceReparation: true } } },
+      }),
+      prisma.pointReglementaire.findMany({
+        include: { affaire: { select: { numero: true } }, evenements: { orderBy: { date: "desc" }, take: 1 } },
+      }),
+      prisma.destinataireAlerte.findMany({ orderBy: { email: "asc" } }),
+      controlesManquants(),
+      documentsManquants(),
+      prisma.documentExterne.findMany({
+        where: { valideConclusion: null, retiree: false },
+        orderBy: { dateImport: "asc" },
+      }),
+      prisma.pVExterne.findMany({
+        where: { revueConclusion: null },
+        include: { affaire: { select: { numero: true } } },
+        orderBy: { dateImport: "asc" },
+      }),
+      prisma.demandeModificationSequencement.findMany({
+        where: { statut: "EN_ATTENTE" },
+        include: { affaire: { select: { numero: true } } },
+        orderBy: { dateDemande: "asc" },
+      }),
+      documentsObsoletes(),
+      rolesNonCorrespondants(),
+    ]);
+
+  const alertesQualification = qualificationsToutes
+    .map((q) => ({ qualification: q, statut: calculerStatut(q.dateExpiration) }))
+    .filter((a) => a.statut === "EXPIRE" || a.statut === "BIENTOT_ECHEANCE")
+    .sort((a, b) => (a.qualification.dateExpiration?.getTime() ?? 0) - (b.qualification.dateExpiration?.getTime() ?? 0));
+
+  const alertesHabilitation = habilitations
+    .map((h) => ({ habilitation: h, statut: calculerStatut(h.dateExpiration) }))
+    .filter((a) => a.statut === "EXPIRE" || a.statut === "BIENTOT_ECHEANCE")
+    .sort((a, b) => (a.habilitation.dateExpiration?.getTime() ?? 0) - (b.habilitation.dateExpiration?.getTime() ?? 0));
+
+  // Le dernier événement de chaque point fait foi (déjà trié par date
+  // décroissante côté requête, take:1) — même principe que
+  // src/lib/systemeQualite.ts pour ce même calcul.
+  const pointsBloquants = pointsReglementaires.filter((p) => p.evenements[0] && pointBloque(p.evenements[0].statut));
+
+  const alertes = outils
+    .map((o) => ({ outil: o, statut: calculerStatutOutil(o.dateEcheance) }))
+    .filter((a) => a.statut === "EXPIRE" || a.statut === "BIENTOT_ECHEANCE")
+    .sort((a, b) => (a.outil.dateEcheance?.getTime() ?? 0) - (b.outil.dateEcheance?.getTime() ?? 0));
+
+  const alertesConfirmation = qualifications
+    .map((q) => {
+      const datesConfirmations = q.evenements.filter((e) => e.type === "CONFIRMATION_VALIDITE").map((e) => e.date);
+      return {
+        qualification: q,
+        confirmation: calculerProchaineConfirmation(q.frequenceConfirmationMois, q.dateObtention, datesConfirmations),
+      };
+    })
+    .filter((a) => a.confirmation.enRetard || a.confirmation.bientotDue)
+    .sort((a, b) => (a.confirmation.prochaineDateDue?.getTime() ?? 0) - (b.confirmation.prochaineDateDue?.getTime() ?? 0));
+
+  const alertesReconduction = qualificationsToutes
+    .filter((q) => q.evenements[0]?.type === "RECONDUCTION_PROPOSEE")
+    .sort((a, b) => (a.evenements[0]?.date.getTime() ?? 0) - (b.evenements[0]?.date.getTime() ?? 0));
+
+  return (
+    <main style={{ padding: "2rem" }}>
+      <h1 style={{ marginBottom: "1rem" }}>Alertes</h1>
+
+      <h2>Qualifications à échéance ou expirées</h2>
+      {alertesQualification.length === 0 ? (
+        <p>Aucune alerte pour l&apos;instant.</p>
+      ) : (
+        <ul>
+          {alertesQualification.map(({ qualification: q, statut }) => (
+            <li key={q.id} style={{ color: statut === "EXPIRE" ? "var(--couleur-non-conforme)" : "var(--couleur-a-verifier)" }}>
+              <strong>{q.reference}</strong> ({q.personnel.prenom} {q.personnel.nom}) —{" "}
+              {statut === "EXPIRE" ? "expirée" : "à échéance"} le {q.dateExpiration?.toLocaleDateString("fr-FR")} (
+              <Link href="/personnel">voir la fiche personnel</Link>)
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <h2>Habilitations à échéance ou expirées</h2>
+      {alertesHabilitation.length === 0 ? (
+        <p>Aucune alerte pour l&apos;instant.</p>
+      ) : (
+        <ul>
+          {alertesHabilitation.map(({ habilitation: h, statut }) => (
+            <li key={h.id} style={{ color: statut === "EXPIRE" ? "var(--couleur-non-conforme)" : "var(--couleur-a-verifier)" }}>
+              <strong>{h.intitule}</strong> ({h.personnel.prenom} {h.personnel.nom}) —{" "}
+              {statut === "EXPIRE" ? "expirée" : "à échéance"} le {h.dateExpiration?.toLocaleDateString("fr-FR")} (
+              <Link href="/personnel">voir la fiche personnel</Link>)
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <h2>FNC ouvertes</h2>
+      {fncsOuvertes.length === 0 ? (
+        <p>Aucune alerte pour l&apos;instant.</p>
+      ) : (
+        <ul>
+          {fncsOuvertes.map((f) => (
+            <li key={f.id} style={{ color: f.impact === "BLOQUANTE" ? "var(--couleur-non-conforme)" : "var(--couleur-a-verifier)" }}>
+              <strong>{f.reference}</strong> ({f.impact === "BLOQUANTE" ? "bloquante" : "non bloquante"}) — affaire{" "}
+              {f.affaire.numero}
+              {f.joint && `, joint ${f.joint.indiceReparation > 0 ? `${f.joint.numero} R${f.joint.indiceReparation}` : f.joint.numero}`}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <h2>Dossier réglementaire — points bloquants</h2>
+      {pointsBloquants.length === 0 ? (
+        <p>Aucune alerte pour l&apos;instant.</p>
+      ) : (
+        <ul>
+          {pointsBloquants.map((p) => (
+            <li key={p.id} style={{ color: "var(--couleur-non-conforme)" }}>
+              <strong>{p.intitule}</strong> — affaire {p.affaire.numero} (
+              <Link href={`/affaires/${p.affaireId}/reglementaire`}>voir le dossier réglementaire</Link>)
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <h2>Contrôles manquants</h2>
+      {jointsControlesManquants.length === 0 ? (
+        <p>Aucune alerte pour l&apos;instant.</p>
+      ) : (
+        <ul>
+          {jointsControlesManquants.map((j) => (
+            <li key={j.jointId} style={{ color: "var(--couleur-a-verifier)" }}>
+              Joint <strong>{j.numero}</strong> — affaire {j.affaireNumero} — contrôle(s) manquant(s) :{" "}
+              {j.manquants.join(", ")} (<Link href="/joints">voir les joints</Link>)
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <h2>Documents manquants</h2>
+      {jointsDocumentsManquants.length === 0 ? (
+        <p>Aucune alerte pour l&apos;instant.</p>
+      ) : (
+        <ul>
+          {jointsDocumentsManquants.map((j) => (
+            <li key={j.jointId} style={{ color: "var(--couleur-a-verifier)" }}>
+              Joint <strong>{j.numero}</strong> — affaire {j.affaireNumero} — document(s) manquant(s) :{" "}
+              {j.manquants.map((sigle) => LIBELLES_DOCUMENT[sigle]).join(", ")} (<Link href="/joints">voir les joints</Link>)
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <h2>Documents obsolètes</h2>
+      {documentsObsoletesUtilises.length === 0 ? (
+        <p>Aucune alerte pour l&apos;instant.</p>
+      ) : (
+        <ul>
+          {documentsObsoletesUtilises.map((d, i) => (
+            <li key={i} style={{ color: "var(--couleur-a-verifier)" }}>
+              {LIBELLE_TYPE[d.type]} <strong>{d.reference}</strong> ({d.version}) — plus en vigueur, encore utilisé
+              sur {d.utiliseSur} (<Link href={d.lienHref}>voir</Link>)
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <h2>Rôle ne correspond pas à l&apos;action</h2>
+      {rolesNonCorrespondantsListe.length === 0 ? (
+        <p>Aucune alerte pour l&apos;instant.</p>
+      ) : (
+        <ul>
+          {rolesNonCorrespondantsListe.map((r) => (
+            <li key={r.jointId} style={{ color: "var(--couleur-a-verifier)" }}>
+              Joint <strong>{r.numero}</strong> — affaire {r.affaireNumero} — {r.soudeurNom} n&apos;a pas la fonction
+              &quot;Soudeur&quot; enregistrée (<Link href="/joints">voir les joints</Link>)
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <h2>Vérifications d'outillage</h2>
+      {alertes.length === 0 ? (
+        <p>Aucune alerte pour l'instant.</p>
+      ) : (
+        <ul>
+          {alertes.map(({ outil, statut }) => (
+            <li key={outil.id} style={{ color: statut === "EXPIRE" ? "var(--couleur-non-conforme)" : "var(--couleur-a-verifier)" }}>
+              <strong>{outil.reference}</strong> ({outil.type}) —{" "}
+              {statut === "EXPIRE" ? "vérification expirée" : "à renouveler"} le{" "}
+              {outil.dateEcheance?.toLocaleDateString("fr-FR")}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <h2>Confirmations de validité de qualification</h2>
+      {alertesConfirmation.length === 0 ? (
+        <p>Aucune alerte pour l&apos;instant.</p>
+      ) : (
+        <ul>
+          {alertesConfirmation.map(({ qualification: q, confirmation }) => (
+            <li key={q.id} style={{ color: confirmation.enRetard ? "var(--couleur-non-conforme)" : "var(--couleur-a-verifier)" }}>
+              <strong>{q.reference}</strong> ({q.personnel.prenom} {q.personnel.nom}) —{" "}
+              {confirmation.enRetard ? "confirmation en retard depuis" : "confirmation à faire avant"} le{" "}
+              {confirmation.prochaineDateDue?.toLocaleDateString("fr-FR")}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <h2>Reconductions de qualification proposées</h2>
+      {alertesReconduction.length === 0 ? (
+        <p>Aucune alerte pour l&apos;instant.</p>
+      ) : (
+        <ul>
+          {alertesReconduction.map((q) => (
+            <li key={q.id} style={{ color: "var(--couleur-a-verifier)" }}>
+              <strong>{q.reference}</strong> ({q.personnel.prenom} {q.personnel.nom}) — proposée le{" "}
+              {q.evenements[0]?.date.toLocaleDateString("fr-FR")}, en attente de validation (
+              <Link href="/personnel">voir la fiche personnel</Link>)
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <h2>Documents externes en attente de validation</h2>
+      {documentsExternesEnAttente.length === 0 ? (
+        <p>Aucune alerte pour l&apos;instant.</p>
+      ) : (
+        <ul>
+          {documentsExternesEnAttente.map((d) => (
+            <li key={d.id} style={{ color: "var(--couleur-a-verifier)" }}>
+              <strong>{d.reference}</strong> ({d.version}) — {d.titre} — importé le{" "}
+              {d.dateImport.toLocaleDateString("fr-FR")}, en attente de validation (
+              <Link href="/documents">voir les documents externes</Link>)
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <h2>PV externes en attente de revue</h2>
+      {pvExternesEnAttente.length === 0 ? (
+        <p>Aucune alerte pour l&apos;instant.</p>
+      ) : (
+        <ul>
+          {pvExternesEnAttente.map((p) => (
+            <li key={p.id} style={{ color: "var(--couleur-a-verifier)" }}>
+              <strong>{p.intitule}</strong> — affaire {p.affaire.numero} — importé le{" "}
+              {p.dateImport.toLocaleDateString("fr-FR")}, en attente de revue (
+              <Link href={`/affaires/${p.affaireId}/pv-externes`}>voir les PV externes</Link>)
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <h2>Demandes de modification de séquencement en attente</h2>
+      {demandesSequencementEnAttente.length === 0 ? (
+        <p>Aucune alerte pour l&apos;instant.</p>
+      ) : (
+        <ul>
+          {demandesSequencementEnAttente.map((d) => (
+            <li key={d.id} style={{ color: d.urgent ? "var(--couleur-non-conforme)" : "var(--couleur-a-verifier)" }}>
+              Affaire {d.affaire.numero}
+              {d.urgent && " (urgent)"} — {d.motif} — demandée le {d.dateDemande.toLocaleDateString("fr-FR")} (
+              <Link href={`/avancement/${d.affaireId}`}>voir l&apos;avancement</Link>)
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <Destinataires initiaux={destinataires} />
+    </main>
+  );
+}

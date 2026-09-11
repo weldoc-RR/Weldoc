@@ -5,6 +5,7 @@ import { getUtilisateurConnecteServeur } from "@/lib/auth";
 import { calculerStatut } from "@/lib/statutValidite";
 import { calculerProchaineConfirmation } from "@/lib/confirmationQualification";
 import { compterAlertesStatuts } from "@/lib/resumeStatutsPersonnel";
+import { AjouterPersonnel } from "./ajouter-personnel";
 import { AjouterQualification } from "./ajouter-qualification";
 import { AjouterHabilitation } from "./ajouter-habilitation";
 import { AjouterFormation } from "./ajouter-formation";
@@ -96,6 +97,8 @@ export default async function PersonnelPage() {
       <p style={{ marginTop: 0 }}>
         <Link href="/charte">Charte d&apos;utilisation et d&apos;intégrité →</Link>
       </p>
+
+      <AjouterPersonnel />
 
       {personnel.length > 0 && (
         <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginBottom: "1.5rem" }}>

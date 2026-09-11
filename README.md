@@ -105,7 +105,14 @@ Créer une affaire → créer un joint (numérotation auto M800, M801...)
     les autorisations de signature : le contrôle ne devient actif que si
     l'entreprise l'a configuré).
 - `src/app/api/` — points d'entrée de l'application :
-  - `POST /api/personnel` — créer une fiche personne minimale (identité + niveau)
+  - `POST /api/personnel` — créer une fiche personne minimale (identité + niveau).
+    **Interface** (jusqu'ici API seule, sans aucun écran pour embaucher/
+    enregistrer quelqu'un — découvert en construisant le module rôle) :
+    bouton "+ Enregistrer une personne" en tête de `/personnel`
+    (`ajouter-personnel.tsx`), identité + société + niveau de décision +
+    une fonction optionnelle (d'autres pourront être ajoutées ensuite via
+    "+ Ajouter une fonction", voir ci-dessous) — même `<datalist>` de
+    fonctions suggérées que sur ce dernier bouton.
   - `POST /api/auth/comptes` — créer le compte de connexion d'une personne
     (le tout premier compte de l'entreprise s'amorce librement ; les suivants
     exigent d'être créés par une personne de niveau 3)

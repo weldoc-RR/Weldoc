@@ -59,6 +59,7 @@ model Personnel {
   autorisationsSignatureAccordees AutorisationSignature[] @relation("AccordeParAutorisationSignature")
   documentsJustificatifs DocumentJustificatifPersonnel[]
   documentsJustificatifsAjoutes DocumentJustificatifPersonnel[] @relation("AjouteParDocumentJustificatif")
+  signaturesPhase SignaturePhase[]
 
   @@index([societe])
 }
@@ -332,12 +333,28 @@ model Affaire {
   typeRealisation   TypeRealisation @default(CHANTIER)
   chantier          String?
   site              String?
+  // Tranche (site nucléaire découpé en tranches/unités) — associée au site
+  // ci-dessus, jamais dupliquée ailleurs.
+  tranche           String?
   responsableId     String?
   chargeAffairesId  String?
   coordinateurSoudageId String?
   dateDebut         DateTime?
   dateFin           DateTime?
   cahierDesChargesUrl String?
+  // En-tête d'activité (voir le cahier des charges, "FICHE DE SUIVI
+  // D'ACTIVITÉ AVEC CONTRÔLE TECHNIQUE PAR PHASE") : cartouche d'un document
+  // type nucléaire/EDF, saisi une fois pour l'affaire plutôt que sur chaque
+  // phase (même principe que BilanIntervention pour le RFI). Tous ces
+  // champs restent facultatifs : une affaire qui n'a pas ce type de fiche
+  // les laisse simplement vides.
+  libelleActivite   String?
+  metier            String?
+  equipementsConcernes String[] @default([])
+  otTaches          String[] @default([])
+  domaineRequisInstallation String?
+  conditionsParticulieresPrealables String?
+  numeroAdrModele   String?
   // Nombre de joints prévus sur l'affaire, saisi une fois (ex. d'après le
   // plan d'isométrie) pour permettre un avancement "38 joints soudés sur
   // 120 prévus" en plus de l'avancement par phase — voir
@@ -393,6 +410,7 @@ model Affaire {
   documentsExternes DocumentExterne[]
   scansTqc          ScanTqc[]
   notesRex          NoteRex[]
+  revisionsFicheActivite RevisionFicheActivite[]
 }
 
 // ============================================================================
@@ -473,6 +491,25 @@ model RevisionRFI {
   redacteurs       String?
   verificateurs    String?
   approbateurs     String?
+  createdAt        DateTime @default(now())
+
+  @@index([affaireId])
+}
+
+// Historique des indices de la fiche de suivi d'activité (voir le cahier
+// des charges, "FICHE DE SUIVI D'ACTIVITÉ AVEC CONTRÔLE TECHNIQUE PAR
+// PHASE") — même principe que RevisionRFI ci-dessus, mais pour ce document
+// distinct : un nouvel enregistrement à chaque évolution (indice A, B,
+// C...), jamais une modification du précédent. C'est la trace du document
+// lui-même (ce qui a changé dans la fiche), pas de l'AuditTrail des
+// données qu'elle contient.
+model RevisionFicheActivite {
+  id               String   @id @default(cuid())
+  affaire          Affaire  @relation(fields: [affaireId], references: [id])
+  affaireId        String
+  indice           String
+  date             DateTime @default(now())
+  natureEvolution  String
   createdAt        DateTime @default(now())
 
   @@index([affaireId])
@@ -599,6 +636,23 @@ model Phase {
   // fois (QR/matricule + PIN), ce qui vaut signature pour chacune d'elles
   // et les passe TERMINEE.
   signatureId  String?
+  // Contrôle technique par phase (voir le cahier des charges, "FICHE DE
+  // SUIVI D'ACTIVITÉ AVEC CONTRÔLE TECHNIQUE PAR PHASE") : ce que le
+  // contrôleur technique doit vérifier sur cette phase précise, distinct
+  // de la procédure interne ci-dessus (procedureInterne indique quel
+  // document appliquer, ces champs précisent l'attendu du contrôle
+  // lui-même). Facultatifs : une phase qui n'en a pas besoin les laisse
+  // vides.
+  libelleControleTechnique   String?
+  attendusControleTechnique  String?
+  numeroAdrSpecifique        String?
+  // Signatures détaillées (fonction, habilitation, NNI, entreprise) pour
+  // les phases qui en ont besoin — voir SignaturePhase ci-dessous. Vient
+  // en complément de signatureId ci-dessus, pas à sa place : signatureId
+  // reste le mécanisme simple (un exécutant signe, la phase passe
+  // TERMINEE) ; SignaturePhase permet d'enregistrer, en plus, chaque
+  // signataire impliqué dans le contrôle technique de cette phase.
+  signaturesDetaillees SignaturePhase[]
 }
 
 model Matiere {
@@ -1546,8 +1600,50 @@ model Signature {
   documentId     String
   dateSignature  DateTime  @default(now())
   versionDocument String
+  signaturePhase  SignaturePhase?
 
   @@index([documentType, documentId])
+}
+
+// Rôle tenu par un signataire sur le contrôle technique d'une phase (voir
+// le cahier des charges, "FICHE DE SUIVI D'ACTIVITÉ AVEC CONTRÔLE
+// TECHNIQUE PAR PHASE"). Distinct de PersonnelFonction (le métier général
+// d'une personne, ex. "soudeur") : ici, le rôle qu'elle tient dans le
+// contrôle technique de cette phase précise, qui peut différer de son
+// métier habituel.
+enum FonctionSignature {
+  EXECUTANT
+  CONTROLEUR_TECHNIQUE
+  SURVEILLANT
+  VERIFICATEUR
+}
+
+// Signature détaillée d'une phase à contrôle technique : qui a signé, dans
+// quelle fonction, avec quelle habilitation, sous quel NNI et pour quelle
+// entreprise/service. S'appuie sur Signature pour l'acte de signature
+// lui-même (identification QR/PIN, horodatage, version du document — même
+// parcours que POST /api/signatures) plutôt que de dupliquer ces champs :
+// SignaturePhase n'ajoute que les informations propres au contrôle
+// technique, absentes du modèle Signature générique. Une même personne
+// peut tenir plusieurs fonctions sur une même phase (ex. exécutant ET
+// vérificateur) : chaque fonction correspond alors à sa propre signature
+// et donc à sa propre ligne ici.
+model SignaturePhase {
+  id                String            @id @default(cuid())
+  phase             Phase             @relation(fields: [phaseId], references: [id])
+  phaseId           String
+  personnel         Personnel         @relation(fields: [personnelId], references: [id])
+  personnelId       String
+  fonction          FonctionSignature
+  habilitation      String?
+  nni               String?
+  entrepriseService String?
+  signature         Signature         @relation(fields: [signatureId], references: [id])
+  signatureId       String            @unique
+  createdAt         DateTime          @default(now())
+
+  @@index([phaseId])
+  @@index([personnelId])
 }
 
 // Autorisations de signature (voir le cahier des charges, fiche personne :

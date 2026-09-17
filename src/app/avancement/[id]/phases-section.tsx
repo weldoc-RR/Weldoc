@@ -3,11 +3,84 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { PhaseLigne } from "./phase-ligne";
+import type { SignatureDetaillee } from "./signatures-detaillees-phase";
 
 type Procedure = { id: string; reference: string; version: string; titre: string };
-type Phase = { id: string; nom: string; statut: string; justificationNA: string | null; procedureInterneId: string | null };
+type Phase = {
+  id: string;
+  nom: string;
+  ordre: number;
+  statut: string;
+  justificationNA: string | null;
+  procedureInterneId: string | null;
+  libelleControleTechnique: string | null;
+  attendusControleTechnique: string | null;
+  numeroAdrSpecifique: string | null;
+  signaturesDetaillees: SignatureDetaillee[];
+};
 type InfoSignature = { nom: string; prenom: string; dateSignature: string };
 type Sequence = { id: string; nom: string; phases: Phase[] };
+
+// Ajoute une phase à une séquence (voir POST /api/phases) : l'ordre
+// proposé par défaut est simplement "après la dernière phase existante",
+// modifiable avant envoi.
+function AjouterPhase({ sequenceId, prochainOrdre }: { sequenceId: string; prochainOrdre: number }) {
+  const router = useRouter();
+  const [nom, setNom] = useState("");
+  const [ordre, setOrdre] = useState(prochainOrdre);
+  const [obligatoire, setObligatoire] = useState(true);
+  const [erreur, setErreur] = useState<string | null>(null);
+  const [enCours, setEnCours] = useState(false);
+
+  async function ajouter(e: React.FormEvent) {
+    e.preventDefault();
+    if (!nom.trim()) return;
+    setErreur(null);
+    setEnCours(true);
+
+    const res = await fetch("/api/phases", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sequenceId, nom, ordre, obligatoire }),
+    });
+
+    setEnCours(false);
+    if (!res.ok) {
+      const corps = await res.json().catch(() => null);
+      setErreur(corps?.error ?? "Impossible d'ajouter la phase.");
+      return;
+    }
+    setNom("");
+    router.refresh();
+  }
+
+  return (
+    <form onSubmit={ajouter} style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem", alignItems: "center", padding: "0.4rem 0" }}>
+      <input
+        type="text"
+        placeholder="Nom de la nouvelle phase"
+        value={nom}
+        onChange={(e) => setNom(e.target.value)}
+        style={{ fontSize: "0.85rem", padding: "0.2rem", minWidth: 200 }}
+      />
+      <input
+        type="number"
+        title="Ordre"
+        value={ordre}
+        onChange={(e) => setOrdre(Number(e.target.value))}
+        style={{ fontSize: "0.85rem", padding: "0.2rem", width: 60 }}
+      />
+      <label style={{ fontSize: "0.8rem", display: "flex", alignItems: "center", gap: "0.2rem" }}>
+        <input type="checkbox" checked={obligatoire} onChange={(e) => setObligatoire(e.target.checked)} />
+        Obligatoire
+      </label>
+      <button type="submit" disabled={enCours || !nom.trim()} style={{ fontSize: "0.85rem" }}>
+        {enCours ? "..." : "Ajouter la phase"}
+      </button>
+      {erreur && <span style={{ color: "var(--couleur-non-conforme)", fontSize: "0.8rem" }}>{erreur}</span>}
+    </form>
+  );
+}
 
 // Signature groupée des phases (voir le cahier des charges,
 // "IDENTIFICATION ET SIGNATURE") : l'exécutant coche les phases qu'il
@@ -67,30 +140,33 @@ export function PhasesSection({
 
   return (
     <div>
-      {sequencesAvecPhases.every((s) => s.phases.length === 0) ? (
-        <p>Aucune phase pour l&apos;instant.</p>
+      {sequencesAvecPhases.length === 0 ? (
+        <p>Aucune séquence pour l&apos;instant.</p>
       ) : (
-        sequencesAvecPhases.map(
-          (s) =>
-            s.phases.length > 0 && (
-              <div key={s.id} style={{ marginBottom: "1rem" }}>
-                <h3 style={{ fontSize: "1rem", marginBottom: "0.2rem" }}>{s.nom}</h3>
-                {s.phases.map((p) => (
-                  <PhaseLigne
-                    key={p.id}
-                    phase={p}
-                    procedures={procedures}
-                    signature={signatures[p.id]}
-                    selection={
-                      p.statut === "TERMINEE" || p.statut === "NON_APPLICABLE"
-                        ? undefined
-                        : { coche: selectionnees.has(p.id), onToggle: () => toggle(p.id) }
-                    }
-                  />
-                ))}
-              </div>
-            )
-        )
+        sequencesAvecPhases.map((s) => (
+          <div key={s.id} style={{ marginBottom: "1rem" }}>
+            <h3 style={{ fontSize: "1rem", marginBottom: "0.2rem" }}>{s.nom}</h3>
+            {s.phases.length === 0 && (
+              <p style={{ fontSize: "0.85rem", color: "var(--couleur-texte-discret)" }}>Aucune phase pour l&apos;instant.</p>
+            )}
+            {s.phases.map((p) => (
+              <PhaseLigne
+                key={p.id}
+                phase={p}
+                procedures={procedures}
+                signature={signatures[p.id]}
+                signaturesDetaillees={p.signaturesDetaillees}
+                peutSupprimer={p.statut === "A_FAIRE" && !signatures[p.id] && p.signaturesDetaillees.length === 0}
+                selection={
+                  p.statut === "TERMINEE" || p.statut === "NON_APPLICABLE"
+                    ? undefined
+                    : { coche: selectionnees.has(p.id), onToggle: () => toggle(p.id) }
+                }
+              />
+            ))}
+            <AjouterPhase sequenceId={s.id} prochainOrdre={Math.max(0, ...s.phases.map((p) => p.ordre)) + 1} />
+          </div>
+        ))
       )}
 
       <form
@@ -136,7 +212,9 @@ export function PhasesSection({
       </form>
       <p style={{ fontSize: "0.75rem", color: "var(--couleur-texte-discret)", marginTop: "0.3rem" }}>
         Cocher une ou plusieurs phases réalisées, puis s&apos;identifier une seule fois (même code PIN que pour
-        signer un document) : ça vaut signature pour chacune et les passe &quot;Terminée&quot;.
+        signer un document) : ça vaut signature pour chacune et les passe &quot;Terminée&quot;. Le bouton
+        &quot;Contrôle technique / signatures&quot; d&apos;une phase permet de voir et d&apos;ajouter les signatures
+        détaillées (exécutant, contrôleur technique, surveillant, vérificateur).
       </p>
     </div>
   );

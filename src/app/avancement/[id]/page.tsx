@@ -49,12 +49,41 @@ export default async function AvancementAffairePage({ params }: { params: { id: 
   const [sequencesAvecPhases, procedures] = await Promise.all([
     prisma.sequence.findMany({
       where: { affaireId: params.id },
-      include: { phases: { orderBy: { ordre: "asc" } } },
+      include: {
+        phases: {
+          orderBy: { ordre: "asc" },
+          include: {
+            signaturesDetaillees: {
+              include: { personnel: { select: { nom: true, prenom: true } }, signature: { select: { dateSignature: true } } },
+              orderBy: { createdAt: "asc" },
+            },
+          },
+        },
+      },
       orderBy: { ordre: "asc" },
     }),
     prisma.procedureInterne.findMany({ where: { retiree: false }, orderBy: [{ reference: "asc" }, { dateEmission: "desc" }] }),
   ]);
   const procInternesOptions = procedures.map((p) => ({ id: p.id, reference: p.reference, version: p.version, titre: p.titre }));
+
+  // Les composants client (PhasesSection) ne reçoivent que des données
+  // sérialisables : les dates de signature sont converties en texte ici,
+  // comme signatureParPhaseId plus bas pour la signature simple.
+  const sequencesPourAffichage = sequencesAvecPhases.map((s) => ({
+    ...s,
+    phases: s.phases.map((p) => ({
+      ...p,
+      signaturesDetaillees: p.signaturesDetaillees.map((sd) => ({
+        id: sd.id,
+        fonction: sd.fonction,
+        habilitation: sd.habilitation,
+        nni: sd.nni,
+        entrepriseService: sd.entrepriseService,
+        personnel: sd.personnel,
+        signature: { dateSignature: sd.signature.dateSignature.toISOString() },
+      })),
+    })),
+  }));
 
   // Signature de chaque phase déjà signée (voir POST /api/phases/signer) :
   // Phase.signatureId reste une référence libre (comme ailleurs dans le
@@ -259,7 +288,7 @@ export default async function AvancementAffairePage({ params }: { params: { id: 
         <Link href="/procedures">la bibliothèque de procédures</Link>). Pour clore une phase réalisée, la cocher
         puis signer (QR/PIN) plutôt que de changer son statut manuellement.
       </p>
-      <PhasesSection sequencesAvecPhases={sequencesAvecPhases} procedures={procInternesOptions} signatures={signatureParPhaseId} />
+      <PhasesSection sequencesAvecPhases={sequencesPourAffichage} procedures={procInternesOptions} signatures={signatureParPhaseId} />
     </main>
   );
 }

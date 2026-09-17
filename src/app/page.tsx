@@ -26,7 +26,21 @@ export default async function HomePage() {
 
   return (
     <main style={{ padding: "2rem" }}>
-      <h1 style={{ marginBottom: "0.25rem" }}>Affaires</h1>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", flexWrap: "wrap", gap: "0.5rem" }}>
+        <h1 style={{ marginBottom: "0.25rem" }}>Affaires</h1>
+        <Link
+          href="/affaires/nouvelle"
+          style={{
+            fontWeight: 600,
+            padding: "0.5rem 0.9rem",
+            borderRadius: "var(--rayon-carte)",
+            background: "var(--couleur-primaire)",
+            color: "#fff",
+          }}
+        >
+          + Nouvelle affaire
+        </Link>
+      </div>
       <p style={{ color: "var(--couleur-texte-attenue)", marginTop: 0 }}>
         Préparation, réalisation, contrôle et traçabilité des affaires — chaque affaire regroupe ses joints, son
         planning, son dossier réglementaire et son rapport de fin de fabrication.
@@ -63,7 +77,8 @@ export default async function HomePage() {
                 FNC
               </div>
               <p style={{ fontSize: "0.85rem", margin: "0.5rem 0 0 0" }}>
-                <Link href={`/affaires/${a.id}/dossier`}>Rapport de fin de fabrication →</Link>{" "}
+                <Link href={`/affaires/${a.id}/fiche-activite`}>Fiche de suivi d&apos;activité →</Link>{" "}
+                · <Link href={`/affaires/${a.id}/dossier`}>Rapport de fin de fabrication →</Link>{" "}
                 · <Link href={`/affaires/${a.id}/photos`}>Book photo →</Link>{" "}
                 · <Link href={`/affaires/${a.id}/reglementaire`}>Dossier réglementaire →</Link>{" "}
                 · <Link href={`/affaires/${a.id}/planning`}>Planning →</Link>{" "}

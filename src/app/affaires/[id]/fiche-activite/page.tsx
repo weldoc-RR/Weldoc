@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
@@ -20,6 +21,14 @@ const LIBELLE_FONCTION: Record<string, string> = {
   CONTROLEUR_TECHNIQUE: "Contrôleur technique",
   SURVEILLANT: "Surveillant",
   VERIFICATEUR: "Vérificateur",
+};
+
+// Code court (comme les colonnes "S / V" du document de référence) pour
+// les fonctions autres qu'exécutant, qui a sa propre colonne.
+const CODE_FONCTION: Record<string, string> = {
+  CONTROLEUR_TECHNIQUE: "CT",
+  SURVEILLANT: "S",
+  VERIFICATEUR: "V",
 };
 
 // Fiche de suivi d'activité avec contrôle technique par phase (voir le
@@ -49,6 +58,7 @@ export default async function FicheActivitePage({ params }: { params: { id: stri
         phases: {
           orderBy: { ordre: "asc" },
           include: {
+            procedureInterne: { select: { reference: true, version: true } },
             signaturesDetaillees: {
               include: { personnel: { select: { nom: true, prenom: true } }, signature: { select: { dateSignature: true } } },
               orderBy: { createdAt: "asc" },
@@ -69,23 +79,62 @@ export default async function FicheActivitePage({ params }: { params: { id: stri
       : [];
 
   const peutModifier = aNiveauMinimum(utilisateur.niveau, "NIVEAU_2");
+  const dernierIndice = revisions[0]?.indice ?? null;
 
   return (
-    <main style={{ padding: "2rem", maxWidth: 900 }}>
+    <main style={{ padding: "2rem", maxWidth: 960 }}>
       <style>{`@media print { .no-print { display: none; } }`}</style>
       <p className="no-print">
         <Link href="/">← Affaires</Link> · <Link href={`/avancement/${affaire.id}`}>Avancement et phases →</Link>
       </p>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start" }}>
-        <h1>Fiche de suivi d&apos;activité</h1>
+      <div className="no-print" style={{ display: "flex", justifyContent: "flex-end" }}>
         <BoutonImprimer />
       </div>
-      <h2 style={{ marginTop: 0 }}>
-        {affaire.numero} — {affaire.client} / {affaire.projet}
-      </h2>
 
-      {/* ————— Cartouche (toujours affiché : c'est le contenu du document) ————— */}
-      <div style={{ fontSize: "0.9rem" }}>
+      {/* ————— Cartouche du document (mise en page inspirée d'un dossier de
+          suivi d'intervention réel, sans logo ni élément de marque tiers :
+          seule l'identité visuelle Weldoc apparaît) ————— */}
+      <div style={{ display: "flex", border: "1px solid var(--couleur-bordure)", marginTop: "1rem", fontSize: "0.85rem" }}>
+        <div
+          style={{
+            width: 140,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            borderRight: "1px solid var(--couleur-bordure)",
+            fontFamily: "var(--font-titres)",
+            fontWeight: 800,
+            fontSize: "1.4rem",
+            color: "var(--couleur-primaire)",
+            padding: "0.5rem",
+            textAlign: "center",
+          }}
+        >
+          WELDOC
+        </div>
+        <div style={{ flex: 1, padding: "0.5rem 0.9rem", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+          <div style={{ fontFamily: "var(--font-titres)", fontWeight: 700, fontSize: "1.2rem" }}>Fiche de suivi d&apos;activité</div>
+          <div style={{ color: "var(--couleur-texte-attenue)" }}>
+            {affaire.numero} — {affaire.client} / {affaire.projet}
+          </div>
+        </div>
+        <div style={{ borderLeft: "1px solid var(--couleur-bordure)", padding: "0.5rem 0.9rem", minWidth: 190 }}>
+          <div>
+            <strong>Réf. Weldoc :</strong> {affaire.numero}
+          </div>
+          <div>
+            <strong>Indice :</strong> {dernierIndice ?? "—"}
+          </div>
+          {affaire.numeroAdrModele && (
+            <div>
+              <strong>N° ADR modèle :</strong> {affaire.numeroAdrModele}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ————— En-tête d'activité (toujours affiché : c'est le contenu du document) ————— */}
+      <div style={{ fontSize: "0.9rem", marginTop: "1rem" }}>
         <p>
           <strong>Activité :</strong> {affaire.libelleActivite || "—"}
         </p>
@@ -156,69 +205,120 @@ export default async function FicheActivitePage({ params }: { params: { id: stri
       )}
       {peutModifier && <AjouterRevisionFicheActivite affaireId={affaire.id} />}
 
-      {/* ————— Tableau des phases : contrôle technique et signatures ————— */}
-      <h3 style={{ marginTop: "2rem" }}>Phases, contrôle technique et signatures</h3>
+      {/* ————— Tableau des phases : une table continue, en-têtes de section
+          grisées et numérotation par séquence.phase — mise en page inspirée
+          d'un dossier de suivi d'intervention réel (voir le cahier des
+          charges, "FICHE DE SUIVI D'ACTIVITÉ AVEC CONTRÔLE TECHNIQUE PAR
+          PHASE"), sans aucun élément de marque tierce. ————— */}
+      <h3 style={{ marginTop: "2rem" }}>Phases</h3>
       {sequences.every((s) => s.phases.length === 0) ? (
         <p>
           Aucune phase pour l&apos;instant — voir <Link href={`/avancement/${affaire.id}`}>l&apos;écran d&apos;avancement</Link> pour en
           ajouter et saisir le contrôle technique de chacune.
         </p>
       ) : (
-        sequences.map(
-          (s) =>
-            s.phases.length > 0 && (
-              <div key={s.id} style={{ marginBottom: "1.25rem" }}>
-                <h4 style={{ marginBottom: "0.3rem" }}>{s.nom}</h4>
-                <table style={{ borderCollapse: "collapse", width: "100%", fontSize: "0.85rem" }}>
-                  <thead>
+        <table style={{ borderCollapse: "collapse", width: "100%", fontSize: "0.8rem" }}>
+          <thead>
+            <tr>
+              {["N°", "Libellé de l'opération", "Mode opératoire / Indice", "Exécutant — Date / NNI ou Nom", "Signatures S / V / CT", "Commentaires"].map(
+                (h) => (
+                  <th
+                    key={h}
+                    style={{ textAlign: "left", borderBottom: "2px solid var(--couleur-bordure)", padding: "0.3rem 0.4rem", whiteSpace: "nowrap" }}
+                  >
+                    {h}
+                  </th>
+                )
+              )}
+            </tr>
+          </thead>
+          <tbody>
+            {sequences.map(
+              (s, iSeq) =>
+                s.phases.length > 0 && (
+                  <Fragment key={s.id}>
                     <tr>
-                      {["Phase", "Statut", "Contrôle technique — libellé", "Attendus", "N° ADR", "Signatures"].map((h) => (
-                        <th key={h} style={{ textAlign: "left", borderBottom: "1px solid var(--couleur-bordure)", padding: "0.25rem 0.4rem" }}>
-                          {h}
-                        </th>
-                      ))}
+                      <td
+                        colSpan={6}
+                        style={{
+                          background: "var(--couleur-fond-discret)",
+                          fontWeight: 700,
+                          padding: "0.35rem 0.5rem",
+                          borderTop: "1px solid var(--couleur-bordure)",
+                          borderBottom: "1px solid var(--couleur-bordure)",
+                        }}
+                      >
+                        {iSeq + 1}. {s.nom.toUpperCase()}
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {s.phases.map((p) => {
+                    {s.phases.map((p, iPhase) => {
                       const signatureSimple = p.signatureId ? signaturesSimples.find((sig) => sig.id === p.signatureId) : undefined;
+                      const executant = p.signaturesDetaillees.find((sd) => sd.fonction === "EXECUTANT");
+                      const autres = p.signaturesDetaillees.filter((sd) => sd.fonction !== "EXECUTANT");
+                      const commentaires = [
+                        p.attendusControleTechnique && `Attendus : ${p.attendusControleTechnique}`,
+                        p.numeroAdrSpecifique && `ADR : ${p.numeroAdrSpecifique}`,
+                      ].filter(Boolean);
                       return (
                         <tr key={p.id} style={{ borderBottom: "1px solid var(--couleur-bordure)" }}>
-                          <td style={{ padding: "0.3rem 0.4rem", verticalAlign: "top" }}>{p.nom}</td>
-                          <td style={{ padding: "0.3rem 0.4rem", verticalAlign: "top" }}>{LIBELLE_STATUT[p.statut] ?? p.statut}</td>
-                          <td style={{ padding: "0.3rem 0.4rem", verticalAlign: "top" }}>{p.libelleControleTechnique || "—"}</td>
-                          <td style={{ padding: "0.3rem 0.4rem", verticalAlign: "top" }}>{p.attendusControleTechnique || "—"}</td>
-                          <td style={{ padding: "0.3rem 0.4rem", verticalAlign: "top" }}>{p.numeroAdrSpecifique || "—"}</td>
+                          <td style={{ padding: "0.3rem 0.4rem", verticalAlign: "top", whiteSpace: "nowrap" }}>
+                            {iSeq + 1}.{iPhase + 1}
+                          </td>
                           <td style={{ padding: "0.3rem 0.4rem", verticalAlign: "top" }}>
-                            {p.signaturesDetaillees.length === 0 && !signatureSimple ? (
+                            {p.nom}
+                            {p.libelleControleTechnique && (
+                              <div style={{ fontSize: "0.75rem", color: "var(--couleur-texte-attenue)" }}>{p.libelleControleTechnique}</div>
+                            )}
+                            <div style={{ fontSize: "0.75rem", color: "var(--couleur-texte-discret)" }}>{LIBELLE_STATUT[p.statut] ?? p.statut}</div>
+                          </td>
+                          <td style={{ padding: "0.3rem 0.4rem", verticalAlign: "top" }}>
+                            {p.procedureInterne ? `${p.procedureInterne.reference} — ${p.procedureInterne.version}` : "—"}
+                          </td>
+                          <td style={{ padding: "0.3rem 0.4rem", verticalAlign: "top" }}>
+                            {executant ? (
+                              <>
+                                {executant.nni ?? `${executant.personnel.prenom} ${executant.personnel.nom}`}
+                                <div style={{ fontSize: "0.75rem", color: "var(--couleur-texte-attenue)" }}>
+                                  {executant.signature.dateSignature.toLocaleDateString("fr-FR")}
+                                </div>
+                              </>
+                            ) : signatureSimple ? (
+                              <>
+                                {signatureSimple.personnel.prenom} {signatureSimple.personnel.nom}
+                                <div style={{ fontSize: "0.75rem", color: "var(--couleur-texte-attenue)" }}>
+                                  {signatureSimple.dateSignature.toLocaleDateString("fr-FR")}
+                                </div>
+                              </>
+                            ) : (
+                              "—"
+                            )}
+                          </td>
+                          <td style={{ padding: "0.3rem 0.4rem", verticalAlign: "top" }}>
+                            {autres.length === 0 ? (
                               "—"
                             ) : (
                               <ul style={{ margin: 0, paddingLeft: "1rem" }}>
-                                {signatureSimple && (
-                                  <li>
-                                    Exécutant — {signatureSimple.personnel.prenom} {signatureSimple.personnel.nom} (
-                                    {signatureSimple.dateSignature.toLocaleDateString("fr-FR")})
-                                  </li>
-                                )}
-                                {p.signaturesDetaillees.map((sd) => (
+                                {autres.map((sd) => (
                                   <li key={sd.id}>
-                                    {LIBELLE_FONCTION[sd.fonction] ?? sd.fonction} — {sd.personnel.prenom} {sd.personnel.nom}
-                                    {sd.habilitation && ` — hab. ${sd.habilitation}`}
-                                    {sd.nni && ` — NNI ${sd.nni}`}
-                                    {sd.entrepriseService && ` — ${sd.entrepriseService}`} ({sd.signature.dateSignature.toLocaleDateString("fr-FR")})
+                                    <strong>{CODE_FONCTION[sd.fonction] ?? (LIBELLE_FONCTION[sd.fonction] ?? sd.fonction)} :</strong>{" "}
+                                    {sd.nni ?? `${sd.personnel.prenom} ${sd.personnel.nom}`} (
+                                    {sd.signature.dateSignature.toLocaleDateString("fr-FR")})
                                   </li>
                                 ))}
                               </ul>
                             )}
                           </td>
+                          <td style={{ padding: "0.3rem 0.4rem", verticalAlign: "top" }}>
+                            {commentaires.length === 0 ? "—" : commentaires.map((c, i) => <div key={i}>{c}</div>)}
+                          </td>
                         </tr>
                       );
                     })}
-                  </tbody>
-                </table>
-              </div>
-            )
-        )
+                  </Fragment>
+                )
+            )}
+          </tbody>
+        </table>
       )}
       <p className="no-print" style={{ fontSize: "0.85rem" }}>
         Ajouter/supprimer une phase, saisir son contrôle technique ou signer se fait depuis{" "}

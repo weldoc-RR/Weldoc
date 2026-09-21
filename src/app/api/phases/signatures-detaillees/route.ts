@@ -8,7 +8,6 @@ const CreerSignatureDetailleeSchema = z.object({
   phaseId: z.string().min(1),
   fonction: z.enum(["EXECUTANT", "CONTROLEUR_TECHNIQUE", "SURVEILLANT", "VERIFICATEUR"]),
   habilitation: z.string().optional(),
-  nni: z.string().optional(),
   entrepriseService: z.string().optional(),
   identifiant: z.string().min(1),
   pin: z.string().min(1),
@@ -18,8 +17,9 @@ const CreerSignatureDetailleeSchema = z.object({
 // contrôle technique (voir le cahier des charges, "FICHE DE SUIVI
 // D'ACTIVITÉ AVEC CONTRÔLE TECHNIQUE PAR PHASE"), la signature d'une
 // personne dans une fonction donnée (exécutant, contrôleur technique,
-// surveillant, vérificateur), avec son habilitation/NNI/entreprise au
-// moment de la signature. Même parcours d'identification que les autres
+// surveillant, vérificateur), avec son habilitation/entreprise au
+// moment de la signature — le nom vient de l'identification elle-même,
+// jamais resaisi. Même parcours d'identification que les autres
 // signatures (QR/matricule + PIN) — voir src/lib/signature.ts — mais avec
 // un documentType dédié ("PHASE_CONTROLE_TECHNIQUE") pour ne pas se
 // mélanger avec la signature simple de l'exécutant (POST
@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
-  const { phaseId, fonction, habilitation, nni, entrepriseService, identifiant, pin } = parsed.data;
+  const { phaseId, fonction, habilitation, entrepriseService, identifiant, pin } = parsed.data;
 
   const phase = await prisma.phase.findUnique({ where: { id: phaseId } });
   if (!phase) {
@@ -60,7 +60,6 @@ export async function POST(req: NextRequest) {
       personnelId: resultat.personnel.id,
       fonction,
       habilitation: habilitation || null,
-      nni: nni || null,
       entrepriseService: entrepriseService || null,
       signatureId: resultat.signature.id,
     },

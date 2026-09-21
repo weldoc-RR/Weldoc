@@ -5,6 +5,7 @@ import { requireAuth, requireNiveau } from "@/lib/auth";
 import { verifierSequencementAutorise } from "@/lib/sequencement";
 import { pointsBloquants } from "@/lib/dossierReglementaire";
 import { tracerModification } from "@/lib/auditTrail";
+import { ficheActiviteValidee } from "@/lib/ficheActivite";
 
 const CreatePhaseSchema = z.object({
   sequenceId: z.string().min(1),
@@ -31,6 +32,9 @@ export async function GET(req: NextRequest) {
 }
 
 // POST /api/phases — ajoute une phase à une séquence (niveau 2 minimum).
+// Refusé si la fiche de suivi d'activité de l'affaire est déjà validée
+// (voir src/lib/ficheActivite.ts) : le séquencement ne se prépare qu'une
+// fois, avant validation par le préparateur.
 export async function POST(req: NextRequest) {
   const droits = await requireNiveau(req, "NIVEAU_2");
   if ("erreur" in droits) return droits.erreur;
@@ -39,6 +43,17 @@ export async function POST(req: NextRequest) {
   const parsed = CreatePhaseSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+  }
+
+  const sequence = await prisma.sequence.findUnique({ where: { id: parsed.data.sequenceId }, select: { affaireId: true } });
+  if (!sequence) {
+    return NextResponse.json({ error: "Séquence introuvable." }, { status: 404 });
+  }
+  if (await ficheActiviteValidee(sequence.affaireId)) {
+    return NextResponse.json(
+      { error: "La fiche de suivi d'activité est validée : le séquencement de phases ne peut plus être modifié." },
+      { status: 409 }
+    );
   }
 
   const phase = await prisma.phase.create({ data: parsed.data });
@@ -66,6 +81,7 @@ export async function DELETE(req: NextRequest) {
   const phase = await prisma.phase.findUnique({
     where: { id: parsed.data.id },
     include: {
+      sequence: { select: { affaireId: true } },
       _count: {
         select: { photos: true, pointsReglementaires: true, pvExternes: true, documentsExternes: true, signaturesDetaillees: true },
       },
@@ -73,6 +89,12 @@ export async function DELETE(req: NextRequest) {
   });
   if (!phase) {
     return NextResponse.json({ error: "Phase introuvable." }, { status: 404 });
+  }
+  if (await ficheActiviteValidee(phase.sequence.affaireId)) {
+    return NextResponse.json(
+      { error: "La fiche de suivi d'activité est validée : le séquencement de phases ne peut plus être modifié." },
+      { status: 409 }
+    );
   }
 
   const dejaUtilisee =

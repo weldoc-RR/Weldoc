@@ -5,7 +5,11 @@ import { prisma } from "@/lib/prisma";
 import { getUtilisateurConnecteServeur, aNiveauMinimum } from "@/lib/auth";
 import { FormulaireEnTete } from "./formulaire-en-tete";
 import { AjouterRevisionFicheActivite } from "./ajouter-revision-fiche-activite";
+import { AjouterPhaseFiche } from "./ajouter-phase-fiche";
+import { SupprimerPhaseFiche } from "./supprimer-phase-fiche";
+import { ValiderFicheActivite } from "./valider-fiche-activite";
 import { BoutonImprimer } from "../dossier/bouton-imprimer";
+import { estPreparateur } from "@/lib/verificationRole";
 
 export const dynamic = "force-dynamic";
 
@@ -49,7 +53,7 @@ export default async function FicheActivitePage({ params }: { params: { id: stri
     notFound();
   }
 
-  const [revisions, sequences] = await Promise.all([
+  const [revisions, sequences, fonctionsUtilisateur, validation] = await Promise.all([
     prisma.revisionFicheActivite.findMany({ where: { affaireId: params.id }, orderBy: { date: "desc" } }),
     prisma.sequence.findMany({
       where: { affaireId: params.id },
@@ -67,6 +71,12 @@ export default async function FicheActivitePage({ params }: { params: { id: stri
         },
       },
     }),
+    prisma.personnelFonction.findMany({ where: { personnelId: utilisateur.personnelId }, select: { fonction: true } }),
+    prisma.signature.findFirst({
+      where: { documentType: "FICHE_ACTIVITE", documentId: params.id },
+      orderBy: { dateSignature: "desc" },
+      include: { personnel: { select: { nom: true, prenom: true } } },
+    }),
   ]);
 
   // Signature simple de l'exécutant (voir POST /api/phases/signer) :
@@ -80,6 +90,12 @@ export default async function FicheActivitePage({ params }: { params: { id: stri
 
   const peutModifier = aNiveauMinimum(utilisateur.niveau, "NIVEAU_2");
   const dernierIndice = revisions[0]?.indice ?? null;
+  const estUtilisateurPreparateur = estPreparateur(fonctionsUtilisateur.map((f) => f.fonction));
+  // Tant que la fiche n'est pas validée, le préparateur peut lister les
+  // phases (les ajouter/les retirer) directement depuis ce document — voir
+  // POST/DELETE /api/phases, qui refusent de toute façon toute
+  // modification une fois la fiche validée.
+  const peutEditerPhases = estUtilisateurPreparateur && !validation;
 
   return (
     <main style={{ padding: "2rem", maxWidth: 960 }}>
@@ -132,6 +148,13 @@ export default async function FicheActivitePage({ params }: { params: { id: stri
           )}
         </div>
       </div>
+
+      {validation && (
+        <p style={{ marginTop: "0.75rem", color: "var(--couleur-conforme)", fontSize: "0.85rem" }}>
+          ✓ Fiche validée par {validation.personnel.prenom} {validation.personnel.nom} le{" "}
+          {validation.dateSignature.toLocaleDateString("fr-FR")} — le séquencement des phases est verrouillé.
+        </p>
+      )}
 
       {/* ————— En-tête d'activité (toujours affiché : c'est le contenu du document) ————— */}
       <div style={{ fontSize: "0.9rem", marginTop: "1rem" }}>
@@ -211,16 +234,13 @@ export default async function FicheActivitePage({ params }: { params: { id: stri
           charges, "FICHE DE SUIVI D'ACTIVITÉ AVEC CONTRÔLE TECHNIQUE PAR
           PHASE"), sans aucun élément de marque tierce. ————— */}
       <h3 style={{ marginTop: "2rem" }}>Phases</h3>
-      {sequences.every((s) => s.phases.length === 0) ? (
-        <p>
-          Aucune phase pour l&apos;instant — voir <Link href={`/avancement/${affaire.id}`}>l&apos;écran d&apos;avancement</Link> pour en
-          ajouter et saisir le contrôle technique de chacune.
-        </p>
+      {sequences.every((s) => s.phases.length === 0) && !peutEditerPhases ? (
+        <p>Aucune phase pour l&apos;instant.</p>
       ) : (
         <table style={{ borderCollapse: "collapse", width: "100%", fontSize: "0.8rem" }}>
           <thead>
             <tr>
-              {["N°", "Libellé de l'opération", "Mode opératoire / Indice", "Exécutant — Date / NNI ou Nom", "Signatures S / V / CT", "Commentaires"].map(
+              {["N°", "Libellé de l'opération", "Mode opératoire / Indice", "Exécutant — Nom / Date", "Signatures S / V / CT", "Commentaires"].map(
                 (h) => (
                   <th
                     key={h}
@@ -235,7 +255,7 @@ export default async function FicheActivitePage({ params }: { params: { id: stri
           <tbody>
             {sequences.map(
               (s, iSeq) =>
-                s.phases.length > 0 && (
+                (s.phases.length > 0 || peutEditerPhases) && (
                   <Fragment key={s.id}>
                     <tr>
                       <td
@@ -263,6 +283,7 @@ export default async function FicheActivitePage({ params }: { params: { id: stri
                         <tr key={p.id} style={{ borderBottom: "1px solid var(--couleur-bordure)" }}>
                           <td style={{ padding: "0.3rem 0.4rem", verticalAlign: "top", whiteSpace: "nowrap" }}>
                             {iSeq + 1}.{iPhase + 1}
+                            {peutEditerPhases && <SupprimerPhaseFiche phaseId={p.id} nom={p.nom} />}
                           </td>
                           <td style={{ padding: "0.3rem 0.4rem", verticalAlign: "top" }}>
                             {p.nom}
@@ -277,7 +298,7 @@ export default async function FicheActivitePage({ params }: { params: { id: stri
                           <td style={{ padding: "0.3rem 0.4rem", verticalAlign: "top" }}>
                             {executant ? (
                               <>
-                                {executant.nni ?? `${executant.personnel.prenom} ${executant.personnel.nom}`}
+                                {executant.personnel.prenom} {executant.personnel.nom}
                                 <div style={{ fontSize: "0.75rem", color: "var(--couleur-texte-attenue)" }}>
                                   {executant.signature.dateSignature.toLocaleDateString("fr-FR")}
                                 </div>
@@ -301,7 +322,7 @@ export default async function FicheActivitePage({ params }: { params: { id: stri
                                 {autres.map((sd) => (
                                   <li key={sd.id}>
                                     <strong>{CODE_FONCTION[sd.fonction] ?? (LIBELLE_FONCTION[sd.fonction] ?? sd.fonction)} :</strong>{" "}
-                                    {sd.nni ?? `${sd.personnel.prenom} ${sd.personnel.nom}`} (
+                                    {sd.personnel.prenom} {sd.personnel.nom} (
                                     {sd.signature.dateSignature.toLocaleDateString("fr-FR")})
                                   </li>
                                 ))}
@@ -314,6 +335,9 @@ export default async function FicheActivitePage({ params }: { params: { id: stri
                         </tr>
                       );
                     })}
+                    {peutEditerPhases && (
+                      <AjouterPhaseFiche sequenceId={s.id} prochainOrdre={Math.max(0, ...s.phases.map((p) => p.ordre)) + 1} />
+                    )}
                   </Fragment>
                 )
             )}
@@ -321,9 +345,16 @@ export default async function FicheActivitePage({ params }: { params: { id: stri
         </table>
       )}
       <p className="no-print" style={{ fontSize: "0.85rem" }}>
-        Ajouter/supprimer une phase, saisir son contrôle technique ou signer se fait depuis{" "}
+        {peutEditerPhases
+          ? "Ajouter/supprimer une phase se fait ci-dessus. "
+          : estUtilisateurPreparateur
+            ? ""
+            : "Seul un préparateur peut lister les phases (les ajouter ou les retirer). "}
+        Saisir le contrôle technique ou signer se fait depuis{" "}
         <Link href={`/avancement/${affaire.id}`}>l&apos;écran d&apos;avancement</Link> — ce document se met à jour automatiquement.
       </p>
+
+      {estUtilisateurPreparateur && !validation && <ValiderFicheActivite affaireId={affaire.id} />}
     </main>
   );
 }

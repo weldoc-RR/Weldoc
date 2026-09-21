@@ -23,6 +23,7 @@ export const FONCTIONS_SUGGEREES = [
   "Soudeur",
   "Contrôleur",
   "Contrôleur CND",
+  "Préparateur",
   "Chargé de travaux",
   "Contremaître",
   "Chargé d'affaires",
@@ -35,6 +36,7 @@ export const FONCTIONS_SUGGEREES = [
 ];
 
 export const FONCTION_SOUDEUR = "Soudeur";
+export const FONCTION_PREPARATEUR = "Préparateur";
 
 function normalise(fonction: string): string {
   return fonction.trim().toLowerCase();
@@ -48,4 +50,14 @@ function normalise(fonction: string): string {
 export function correspondFonction(fonctionsPersonne: string[], fonctionAttendue: string): boolean {
   const attendue = normalise(fonctionAttendue);
   return fonctionsPersonne.some((f) => normalise(f) === attendue);
+}
+
+// Ici, contrairement au rapprochement ci-dessus (purement indicatif), la
+// fonction "Préparateur" sert de condition d'accès réelle : qui peut
+// éditer le séquencement de la fiche de suivi d'activité et la valider
+// (voir POST /api/affaires/[id]/valider-fiche-activite, POST/DELETE
+// /api/phases). Voulu ainsi par l'entreprise pour cette action précise —
+// ne pas généraliser ce principe à d'autres actions sans le demander.
+export function estPreparateur(fonctionsPersonne: string[]): boolean {
+  return correspondFonction(fonctionsPersonne, FONCTION_PREPARATEUR);
 }

@@ -28,8 +28,13 @@ type ResultatIdentification =
 // ("IDENTIFICATION ET SIGNATURE"), mais sans encore créer de signature :
 // extrait pour être partagé entre `creerSignature` (une signature) et
 // `signerPlusieursDocuments` (plusieurs documents signés en une seule
-// identification, ex. plusieurs phases cochées en même temps).
-async function identifierPourSigner(identifiant: string, pin: string, documentType: string): Promise<ResultatIdentification> {
+// identification, ex. plusieurs phases cochées en même temps). Exporté
+// aussi pour les validations qui doivent vérifier autre chose que le
+// niveau AVANT de créer la signature (ex. la fonction "Préparateur" pour
+// POST /api/affaires/[id]/valider-fiche-activite) : la personne qui signe
+// peut être différente de celle connectée sur l'appareil (tablette
+// partagée), donc le contrôle doit porter sur elle, pas sur la session.
+export async function identifierPourSigner(identifiant: string, pin: string, documentType: string): Promise<ResultatIdentification> {
   const personnel = await prisma.personnel.findFirst({
     where: { OR: [{ matricule: identifiant }, { qrCodeValeur: identifiant }] },
   });

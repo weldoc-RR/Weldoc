@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 
 type Valeurs = {
   libelleActivite: string | null;
-  tranche: string | null;
   equipementsConcernes: string[];
 };
 
@@ -16,7 +15,6 @@ type Valeurs = {
 export function FormulaireEnTete({ affaireId, valeurs }: { affaireId: string; valeurs: Valeurs }) {
   const router = useRouter();
   const [libelleActivite, setLibelleActivite] = useState(valeurs.libelleActivite ?? "");
-  const [tranche, setTranche] = useState(valeurs.tranche ?? "");
   const [equipementsConcernes, setEquipementsConcernes] = useState(valeurs.equipementsConcernes.join("\n"));
   const [enCours, setEnCours] = useState(false);
   const [succes, setSucces] = useState(false);
@@ -40,7 +38,6 @@ export function FormulaireEnTete({ affaireId, valeurs }: { affaireId: string; va
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         libelleActivite: libelleActivite || null,
-        tranche: tranche || null,
         equipementsConcernes: versListe(equipementsConcernes),
       }),
     });
@@ -60,10 +57,6 @@ export function FormulaireEnTete({ affaireId, valeurs }: { affaireId: string; va
       <label>
         Libellé de l&apos;activité
         <input type="text" value={libelleActivite} onChange={(e) => setLibelleActivite(e.target.value)} style={{ display: "block", width: "100%", padding: "0.5rem" }} />
-      </label>
-      <label>
-        Tranche
-        <input type="text" value={tranche} onChange={(e) => setTranche(e.target.value)} style={{ display: "block", width: "100%", padding: "0.5rem" }} />
       </label>
       <label>
         Équipement(s) concerné(s) <span style={{ fontWeight: 400, color: "var(--couleur-texte-discret)" }}>(un par ligne)</span>

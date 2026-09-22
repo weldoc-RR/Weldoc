@@ -7,9 +7,9 @@ import Link from "next/link";
 // Crée l'affaire (POST /api/affaires, qui met en place les 5 séquences par
 // défaut du dossier de fabrication) puis redirige directement vers la
 // fiche de suivi d'activité de cette affaire, pour que son en-tête
-// (activité, site/tranche, équipements, OT/tâches...) se remplisse tout de
-// suite plutôt que d'être oublié — voir le cahier des charges, "FICHE DE
-// SUIVI D'ACTIVITÉ AVEC CONTRÔLE TECHNIQUE PAR PHASE".
+// (activité, équipements concernés) se remplisse tout de suite plutôt que
+// d'être oublié — voir le cahier des charges, "FICHE DE SUIVI D'ACTIVITÉ
+// AVEC CONTRÔLE TECHNIQUE PAR PHASE".
 export default function NouvelleAffairePage() {
   const router = useRouter();
   const [numero, setNumero] = useState("");

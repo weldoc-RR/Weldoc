@@ -333,9 +333,6 @@ model Affaire {
   typeRealisation   TypeRealisation @default(CHANTIER)
   chantier          String?
   site              String?
-  // Tranche (site nucléaire découpé en tranches/unités) — associée au site
-  // ci-dessus, jamais dupliquée ailleurs.
-  tranche           String?
   responsableId     String?
   chargeAffairesId  String?
   coordinateurSoudageId String?

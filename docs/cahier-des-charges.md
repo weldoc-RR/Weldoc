@@ -131,7 +131,7 @@ Identification du joint, soudeur, QS, WPS/DMOS, QMOS, procédé, consommable, lo
 
 Référence : structure réelle d'un document type nucléaire/EDF ("fiche de suivi d'activité avec contrôle technique par phase"), qui vient enrichir le module SÉQUENCES ET PHASES ci-dessus et le parcours IDENTIFICATION ET SIGNATURE pour les affaires qui en ont besoin. Champs facultatifs, sans effet sur les affaires qui ne les utilisent pas (même principe additif que CONTRÔLES REQUIS/DOCUMENTS REQUIS).
 
-En-tête d'activité, porté par l'affaire (comme le RFI) : libellé de l'activité, site/tranche, équipement(s) concerné(s).
+En-tête d'activité, porté par l'affaire (comme le RFI) : libellé de l'activité, équipement(s) concerné(s).
 
 Par phase, en plus du contenu déjà prévu (procédure interne applicable) : libellé du contrôle technique, attendus du contrôle technique, numéro ADR spécifique à cette phase.
 

@@ -22,7 +22,6 @@ const UpdateSchema = z.object({
   // En-tête d'activité de la fiche de suivi (voir le cahier des charges,
   // "FICHE DE SUIVI D'ACTIVITÉ AVEC CONTRÔLE TECHNIQUE PAR PHASE") — mêmes
   // champs facultatifs que ci-dessus, omis = inchangé.
-  tranche: z.string().nullable().optional(),
   libelleActivite: z.string().nullable().optional(),
   equipementsConcernes: z.array(z.string().min(1)).optional(),
 });

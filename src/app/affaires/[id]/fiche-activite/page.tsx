@@ -157,9 +157,6 @@ export default async function FicheActivitePage({ params }: { params: { id: stri
           <strong>Activité :</strong> {affaire.libelleActivite || "—"}
         </p>
         <p>
-          <strong>Tranche :</strong> {affaire.tranche || "—"}
-        </p>
-        <p>
           <strong>Équipements concernés :</strong>{" "}
           {affaire.equipementsConcernes.length === 0 ? "—" : affaire.equipementsConcernes.join(", ")}
         </p>
@@ -172,7 +169,6 @@ export default async function FicheActivitePage({ params }: { params: { id: stri
             affaireId={affaire.id}
             valeurs={{
               libelleActivite: affaire.libelleActivite,
-              tranche: affaire.tranche,
               equipementsConcernes: affaire.equipementsConcernes,
             }}
           />

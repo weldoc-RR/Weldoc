@@ -131,13 +131,15 @@ Identification du joint, soudeur, QS, WPS/DMOS, QMOS, procédé, consommable, lo
 
 Référence : structure réelle d'un document type nucléaire/EDF ("fiche de suivi d'activité avec contrôle technique par phase"), qui vient enrichir le module SÉQUENCES ET PHASES ci-dessus et le parcours IDENTIFICATION ET SIGNATURE pour les affaires qui en ont besoin. Champs facultatifs, sans effet sur les affaires qui ne les utilisent pas (même principe additif que CONTRÔLES REQUIS/DOCUMENTS REQUIS).
 
-En-tête d'activité, porté par l'affaire (comme le RFI) : libellé de l'activité, site/tranche, métier, équipement(s) concerné(s), OT/tâche(s), domaine requis d'installation/événements générés, conditions particulières et préalables, numéro ADR du modèle de document utilisé.
+En-tête d'activité, porté par l'affaire (comme le RFI) : libellé de l'activité, site/tranche, équipement(s) concerné(s).
 
 Par phase, en plus du contenu déjà prévu (procédure interne applicable) : libellé du contrôle technique, attendus du contrôle technique, numéro ADR spécifique à cette phase.
 
 Historique des indices du document (indice, date, nature de l'évolution) : un nouvel enregistrement à chaque évolution de la fiche elle-même, jamais une modification du précédent — équivalent, pour ce document, de l'historique des révisions déjà prévu pour le RFI. Ne pas confondre avec l'AUDIT TRAIL, qui trace les données, pas le document.
 
-Signatures par phase : le parcours d'IDENTIFICATION ET SIGNATURE reste le même (QR/matricule → PIN → contrôle des droits → signature → horodatage), mais pour ce type de fiche chaque signature porte en plus la fonction tenue (exécutant, contrôleur technique, surveillant, vérificateur), l'habilitation, le NNI (identifiant nominatif du site) et l'entreprise/service du signataire. Une même personne peut tenir plusieurs fonctions sur une même phase ; chaque fonction correspond alors à sa propre signature.
+Signatures par phase : le parcours d'IDENTIFICATION ET SIGNATURE reste le même (QR/matricule → PIN → contrôle des droits → signature → horodatage), mais pour ce type de fiche chaque signature porte en plus la fonction tenue (exécutant, contrôleur technique, surveillant, vérificateur), l'habilitation et l'entreprise/service du signataire — le nom vient toujours de l'identification elle-même, jamais ressaisi. Une même personne peut tenir plusieurs fonctions sur une même phase ; chaque fonction correspond alors à sa propre signature.
+
+Préparation et mise en production : une personne tenant la fonction "Préparateur" liste les phases (ajout/suppression) directement depuis le document, puis le valide en signant (QR/matricule → PIN). Une fois validée, le séquencement des phases se verrouille : la fiche est alors prête pour la production, conformément au principe qu'une préparation actée n'est jamais modifiée après coup.
 
 ## TEMPS ET PRODUCTIVITÉ
 

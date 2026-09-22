@@ -141,11 +141,6 @@ export default async function FicheActivitePage({ params }: { params: { id: stri
           <div>
             <strong>Indice :</strong> {dernierIndice ?? "—"}
           </div>
-          {affaire.numeroAdrModele && (
-            <div>
-              <strong>N° ADR modèle :</strong> {affaire.numeroAdrModele}
-            </div>
-          )}
         </div>
       </div>
 
@@ -162,23 +157,11 @@ export default async function FicheActivitePage({ params }: { params: { id: stri
           <strong>Activité :</strong> {affaire.libelleActivite || "—"}
         </p>
         <p>
-          <strong>Tranche :</strong> {affaire.tranche || "—"} — <strong>Métier :</strong> {affaire.metier || "—"}
+          <strong>Tranche :</strong> {affaire.tranche || "—"}
         </p>
         <p>
           <strong>Équipements concernés :</strong>{" "}
           {affaire.equipementsConcernes.length === 0 ? "—" : affaire.equipementsConcernes.join(", ")}
-        </p>
-        <p>
-          <strong>OT / tâches :</strong> {affaire.otTaches.length === 0 ? "—" : affaire.otTaches.join(", ")}
-        </p>
-        <p>
-          <strong>Domaine requis d&apos;installation / événements générés :</strong> {affaire.domaineRequisInstallation || "—"}
-        </p>
-        <p>
-          <strong>Conditions particulières et préalables :</strong> {affaire.conditionsParticulieresPrealables || "—"}
-        </p>
-        <p>
-          <strong>Numéro ADR modèle :</strong> {affaire.numeroAdrModele || "—"}
         </p>
       </div>
 
@@ -190,12 +173,7 @@ export default async function FicheActivitePage({ params }: { params: { id: stri
             valeurs={{
               libelleActivite: affaire.libelleActivite,
               tranche: affaire.tranche,
-              metier: affaire.metier,
               equipementsConcernes: affaire.equipementsConcernes,
-              otTaches: affaire.otTaches,
-              domaineRequisInstallation: affaire.domaineRequisInstallation,
-              conditionsParticulieresPrealables: affaire.conditionsParticulieresPrealables,
-              numeroAdrModele: affaire.numeroAdrModele,
             }}
           />
         </div>

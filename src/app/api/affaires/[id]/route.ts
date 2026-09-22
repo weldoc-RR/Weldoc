@@ -24,12 +24,7 @@ const UpdateSchema = z.object({
   // champs facultatifs que ci-dessus, omis = inchangé.
   tranche: z.string().nullable().optional(),
   libelleActivite: z.string().nullable().optional(),
-  metier: z.string().nullable().optional(),
   equipementsConcernes: z.array(z.string().min(1)).optional(),
-  otTaches: z.array(z.string().min(1)).optional(),
-  domaineRequisInstallation: z.string().nullable().optional(),
-  conditionsParticulieresPrealables: z.string().nullable().optional(),
-  numeroAdrModele: z.string().nullable().optional(),
 });
 
 // PATCH /api/affaires/[id] — informations générales éditables de

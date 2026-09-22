@@ -349,12 +349,7 @@ model Affaire {
   // champs restent facultatifs : une affaire qui n'a pas ce type de fiche
   // les laisse simplement vides.
   libelleActivite   String?
-  metier            String?
   equipementsConcernes String[] @default([])
-  otTaches          String[] @default([])
-  domaineRequisInstallation String?
-  conditionsParticulieresPrealables String?
-  numeroAdrModele   String?
   // Nombre de joints prévus sur l'affaire, saisi une fois (ex. d'après le
   // plan d'isométrie) pour permettre un avancement "38 joints soudés sur
   // 120 prévus" en plus de l'avancement par phase — voir

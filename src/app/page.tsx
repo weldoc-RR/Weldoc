@@ -61,52 +61,32 @@ export default async function HomePage() {
         {affaires.map((a) => {
           const avancement = avancementParAffaire.get(a.id);
           return (
-            <li
-              key={a.id}
-              style={{
-                marginBottom: "1rem",
-                border: "1px solid var(--couleur-bordure)",
-                borderRadius: "var(--rayon-carte)",
-                boxShadow: "var(--ombre-legere)",
-                padding: "1rem 1.25rem",
-              }}
-            >
-              <div style={{ fontFamily: "var(--font-titres)", fontWeight: 700, fontSize: "1.05rem" }}>{a.numero}</div>
-              <div style={{ color: "var(--couleur-texte-attenue)", marginTop: "0.1rem" }}>
-                {a.client} / {a.projet} ({a.typeRealisation.toLowerCase()}) — {a.joints.length} joint(s), {a.fncs.length}{" "}
-                FNC
-              </div>
-              <p style={{ fontSize: "0.85rem", margin: "0.5rem 0 0 0" }}>
-                <Link href={`/affaires/${a.id}/fiche-activite`}>Fiche de suivi d&apos;activité →</Link>{" "}
-                · <Link href={`/affaires/${a.id}/dossier`}>Rapport de fin de fabrication →</Link>{" "}
-                · <Link href={`/affaires/${a.id}/photos`}>Book photo →</Link>{" "}
-                · <Link href={`/affaires/${a.id}/reglementaire`}>Dossier réglementaire →</Link>{" "}
-                · <Link href={`/affaires/${a.id}/planning`}>Planning →</Link>{" "}
-                · <Link href={`/affaires/${a.id}/organigramme`}>Organigramme →</Link>{" "}
-                · <Link href={`/affaires/${a.id}/pv-externes`}>PV externes →</Link>{" "}
-                · <Link href={`/affaires/${a.id}/etat-des-lieux`}>État des lieux →</Link>{" "}
-                · <Link href={`/affaires/${a.id}/notes-rex`}>Notes REX →</Link>
-              </p>
-              {avancement && (
-                <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", marginTop: "0.6rem" }}>
-                  <div style={{ width: 200, height: 8, background: "var(--couleur-fond-discret)", borderRadius: 999, overflow: "hidden" }}>
-                    <div style={{ width: `${avancement.pourcentageGlobal}%`, height: "100%", background: "var(--couleur-conforme)", borderRadius: 999 }} />
-                  </div>
-                  <span style={{ fontSize: "0.85rem" }}>
-                    <Link href={`/avancement/${a.id}`}>{avancement.pourcentageGlobal}% d&apos;avancement</Link>
-                  </span>
-                  {avancement.joints.prevus !== null && (
-                    <span style={{ fontSize: "0.85rem", color: "var(--couleur-texte-attenue)" }}>
-                      {avancement.joints.soudes}/{avancement.joints.prevus} joints soudés
-                    </span>
-                  )}
-                  {avancement.fnc.ouvertes > 0 && (
-                    <span style={{ fontSize: "0.85rem", color: "var(--couleur-non-conforme)" }}>
-                      {avancement.fnc.ouvertes} FNC ouverte(s)
-                    </span>
-                  )}
+            <li key={a.id} style={{ marginBottom: "1rem" }}>
+              <Link href={`/affaires/${a.id}`} className="carte-lien" style={{ display: "block", padding: "1rem 1.25rem" }}>
+                <div style={{ fontFamily: "var(--font-titres)", fontWeight: 700, fontSize: "1.05rem" }}>{a.numero}</div>
+                <div style={{ color: "var(--couleur-texte-attenue)", marginTop: "0.1rem" }}>
+                  {a.client} / {a.projet} ({a.typeRealisation.toLowerCase()}) — {a.joints.length} joint(s), {a.fncs.length}{" "}
+                  FNC
                 </div>
-              )}
+                {avancement && (
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", marginTop: "0.6rem" }}>
+                    <div style={{ width: 200, height: 8, background: "var(--couleur-fond-discret)", borderRadius: 999, overflow: "hidden" }}>
+                      <div style={{ width: `${avancement.pourcentageGlobal}%`, height: "100%", background: "var(--couleur-conforme)", borderRadius: 999 }} />
+                    </div>
+                    <span style={{ fontSize: "0.85rem" }}>{avancement.pourcentageGlobal}% d&apos;avancement</span>
+                    {avancement.joints.prevus !== null && (
+                      <span style={{ fontSize: "0.85rem", color: "var(--couleur-texte-attenue)" }}>
+                        {avancement.joints.soudes}/{avancement.joints.prevus} joints soudés
+                      </span>
+                    )}
+                    {avancement.fnc.ouvertes > 0 && (
+                      <span style={{ fontSize: "0.85rem", color: "var(--couleur-non-conforme)" }}>
+                        {avancement.fnc.ouvertes} FNC ouverte(s)
+                      </span>
+                    )}
+                  </div>
+                )}
+              </Link>
             </li>
           );
         })}
